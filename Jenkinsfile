@@ -1,38 +1,3 @@
-// pipeline {
-//     agent any
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
-
-//         stage('Build') {
-//             steps {
-//                 // For Windows Jenkins
-//                 bat 'mvn clean package -DskipTests'
-//             }
-//         }
-
-//         stage('Deploy to WSL') {
-//             steps {
-//                 echo 'Deploying to WSL...'
-//                 // Optional: WSL-specific deployment command (example below)
-
-//                 bat 'if not exist C:\\springboot-app mkdir C:\\springbootallversion-app'
-//                 bat 'copy target\\forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar C:\\springbootallversion-app\\'
-//             }
-//         }
-//     }
-
-//     post {
-//         failure {
-//             echo 'Deployment failed.'
-//         }
-//     }
-// }
-
-
 pipeline {
     agent any
 
@@ -67,14 +32,14 @@ pipeline {
                 if not exist C:\\springboot-app mkdir C:\\springboot-app
                 copy target\\forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar C:\\springboot-app\\
 
-                REM Restart Spring Boot on port 8081
-                wsl bash -c "sudo fuser -k 8081/tcp || true"
-                wsl bash -c "nohup java -jar /mnt/c/springboot-app/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar --spring.profiles.active=wsl --server.port=8081 > /mnt/c/springboot-app/log-8081.log 2>&1 &"
+                // REM Restart Spring Boot on port 8081
+                // wsl bash -c "sudo fuser -k 8081/tcp || true"
+                // wsl bash -c "nohup java -jar /mnt/c/springboot-app/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar --spring.profiles.active=wsl --server.port=8081 > /mnt/c/springboot-app/log-8081.log 2>&1 &"
 
-                REM Restart Spring Boot on port 8082
-                wsl bash -c "sudo fuser -k 8082/tcp || true"
-                wsl bash -c "nohup java -jar /mnt/c/springboot-app/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar --spring.profiles.active=wsl --server.port=8082 > /mnt/c/springboot-app/log-8082.log 2>&1 &"
-                '''
+                // REM Restart Spring Boot on port 8082
+                // wsl bash -c "sudo fuser -k 8082/tcp || true"
+                // wsl bash -c "nohup java -jar /mnt/c/springboot-app/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar --spring.profiles.active=wsl --server.port=8082 > /mnt/c/springboot-app/log-8082.log 2>&1 &"
+                // '''
             }
         }
     }
