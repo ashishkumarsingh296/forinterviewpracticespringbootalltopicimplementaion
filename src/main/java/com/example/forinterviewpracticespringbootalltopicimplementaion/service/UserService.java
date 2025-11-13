@@ -1,0 +1,86 @@
+package com.example.forinterviewpracticespringbootalltopicimplementaion.service;
+
+
+import com.example.forinterviewpracticespringbootalltopicimplementaion.common.ActionConstants;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.constants.EntityConstants;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.customanotation.Auditable;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.AddUserDto;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.ModifyUserDTO;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Role;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.User;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.exception.ResourceNotFoundException;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.mapper.UserMapper;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class UserService {
+
+    private final UserRepository repo;
+    public UserService(UserRepository repo) {
+        this.repo = repo;
+    }
+
+    @Transactional
+    @Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER)
+    public ModifyUserDTO create(AddUserDto dto) {
+        if (dto.getEmail() != null && repo.existsByEmail(dto.getEmail())) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+        User u = UserMapper.toEntity(dto);
+        User saved = repo.save(u);
+        return UserMapper.toDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public ModifyUserDTO getById(Long id) {
+        User u = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("User" , id));
+        return UserMapper.toDto(u);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ModifyUserDTO> getAll() {
+        return repo.findAll().stream().map(UserMapper::toDto).collect(Collectors.toList());
+    }
+
+    @Transactional
+    @Auditable(action = ActionConstants.UPDATE, entity = EntityConstants.USER)
+    public ModifyUserDTO update(ModifyUserDTO dto) {
+        User existing = repo.findById(dto.getId()).orElseThrow(() -> new ResourceNotFoundException("User", dto.getId()));
+        existing.setName(dto.getName());
+        // check email change uniqueness
+        if (dto.getEmail() != null && !dto.getEmail().equals(existing.getEmail())) {
+            if (repo.existsByEmail(dto.getEmail())) {
+                throw new IllegalArgumentException("Email already in use");
+            }
+            existing.setEmail(dto.getEmail());
+        }
+
+        existing.setRoles(dto.getRoles());
+
+
+        User updated = repo.save(existing);
+        return UserMapper.toDto(updated);
+    }
+
+    @Transactional
+    @Auditable(action = ActionConstants.DELETE, entity = EntityConstants.USER)
+    public ModifyUserDTO delete(Long id) {
+        User user = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User" , id));
+
+        repo.delete(user);
+
+        return UserMapper.toDto(user);
+    }
+    public Page<ModifyUserDTO> getAll(Pageable pageable) {
+        return repo.findAll(pageable).map(UserMapper::toDto);
+    }
+}
