@@ -1,11 +1,5 @@
 pipeline {
     agent any
-
-    environment {
-        APP_DIR = '/home/aashu/Kems'
-        PROFILE = 'wsl'
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -15,21 +9,21 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                // For Windows Jenkins
+                bat 'mvn clean package -DskipTests'
             }
         }
 
         stage('Deploy to WSL') {
             steps {
-                sh './scripts/deploy.sh'
+                echo 'Deploying to WSL...'
+                // Optional: WSL-specific deployment command (example below)
+                bat 'wsl cp target\\forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar /mnt/c/springboot-app/'
             }
         }
     }
 
     post {
-        success {
-            echo 'Deployment to WSL completed successfully!'
-        }
         failure {
             echo 'Deployment failed.'
         }
