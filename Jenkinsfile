@@ -18,8 +18,9 @@ pipeline {
             steps {
                 echo 'Deploying to WSL...'
                 // Optional: WSL-specific deployment command (example below)
-                bat 'copy target\\forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar C:\\springboot-app\\'
 
+                bat 'if not exist C:\\springboot-app mkdir C:\\springbootallversion-app'
+                bat 'copy target\\forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar C:\\springbootallversion-app\\'
             }
         }
     }
