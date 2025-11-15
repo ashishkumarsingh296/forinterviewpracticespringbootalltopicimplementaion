@@ -4,7 +4,8 @@ pipeline {
     environment {
         APP_NAME = "forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar"
         WINDOWS_DEPLOY_DIR = "C:\\springboot-app"
-        WSL_SCRIPT = "/mnt/c/Jenkins/workspace/${JOB_NAME}/scripts/deploy_wsl.sh"
+        WSL_SCRIPT = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy_wsl.sh
+"
     }
 
     stages {
