@@ -243,21 +243,20 @@ pipeline {
         }
     }
 
-    post {
-        success {
-            echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
-        }
-        failure {
-            echo "❌ Deployment failed. Restoring last backups..."
-            bat """
-                wsl bash -c "
-                LATEST1=\$(ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1)
-                LATEST2=\$(ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1)
-                cp \$LATEST1 ${WSL_APP1}
-                cp \$LATEST2 ${WSL_APP2}
-                echo 'Restored backups to original paths'
-                "
-            """
-        }
+post {
+    failure {
+        echo "❌ Deployment failed. Restoring last backups..."
+        bat """
+            wsl bash -c "
+            set -e
+            LATEST1=\\\$(ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1)
+            LATEST2=\\\$(ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1)
+            cp \$LATEST1 ${WSL_APP1}
+            cp \$LATEST2 ${WSL_APP2}
+            echo 'Restored backups to original paths'
+            "
+        """
     }
+}
+
 }
