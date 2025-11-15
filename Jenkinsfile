@@ -80,21 +80,18 @@
 //     }
 // }
 
-
-
-
 pipeline {
     agent any
 
     parameters {
-        choice(name: 'DEPLOY_ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose which environment to deploy')
+        choice(name: 'DEPLOY_ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Which environment to deploy')
     }
 
     environment {
         IMAGE_NAME = "myapp:latest"
-        WAR_FILE = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
-        DEV_PORT = "8081"
-        QA_PORT = "8082"
+        DEV_WAR = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
+        QA_WAR = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
+        PORT = "8080"
     }
 
     stages {
@@ -110,29 +107,47 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Prepare WARs for Docker') {
             steps {
-                sh "docker build --build-arg WAR_FILE=${WAR_FILE} -t ${IMAGE_NAME} ."
+                script {
+                    if (params.DEPLOY_ENV == 'DEV') {
+                        env.WARS_TO_COPY = "${DEV_WAR}:dev.war"
+                    } else if (params.DEPLOY_ENV == 'QA') {
+                        env.WARS_TO_COPY = "${QA_WAR}:qa.war"
+                    } else {
+                        env.WARS_TO_COPY = "${DEV_WAR}:dev.war ${QA_WAR}:qa.war"
+                    }
+                }
             }
         }
 
-        stage('Deploy Containers') {
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                docker build \\
+                  ${WARS_TO_COPY.split().collect { "--build-arg ${it}" }.join(' ')} \\
+                  -t ${IMAGE_NAME} .
+                """
+            }
+        }
+
+        stage('Deploy Docker Container') {
+            steps {
+                sh """
+                docker rm -f multi-tomcat || true
+                docker run -d --name multi-tomcat -p ${PORT}:8080 ${IMAGE_NAME}
+                """
+            }
+        }
+
+        stage('Health Check') {
             steps {
                 script {
                     if (params.DEPLOY_ENV == 'DEV' || params.DEPLOY_ENV == 'BOTH') {
-                        sh """
-                        docker rm -f dev-container || true
-                        docker run -d --name dev-container -p ${DEV_PORT}:8080 ${IMAGE_NAME}
-                        """
-                        sh "curl -sSf http://127.0.0.1:${DEV_PORT}/ || echo 'DEV Deployment failed'"
+                        sh "curl -sSf http://127.0.0.1:${PORT}/dev/ || echo 'DEV failed'"
                     }
-
                     if (params.DEPLOY_ENV == 'QA' || params.DEPLOY_ENV == 'BOTH') {
-                        sh """
-                        docker rm -f qa-container || true
-                        docker run -d --name qa-container -p ${QA_PORT}:8080 ${IMAGE_NAME}
-                        """
-                        sh "curl -sSf http://127.0.0.1:${QA_PORT}/ || echo 'QA Deployment failed'"
+                        sh "curl -sSf http://127.0.0.1:${PORT}/qa/ || echo 'QA failed'"
                     }
                 }
             }
@@ -140,7 +155,10 @@ pipeline {
     }
 
     post {
-        success { echo "✅ Deployment completed successfully!" }
-        failure { echo "❌ Deployment failed. Check logs for details." }
+        success { echo "✅ Deployment successful for ${params.DEPLOY_ENV}!" }
+        failure { echo "❌ Deployment failed. Check logs." }
     }
 }
+
+
+
