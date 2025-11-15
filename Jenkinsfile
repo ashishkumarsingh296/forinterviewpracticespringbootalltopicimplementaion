@@ -7,7 +7,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 echo "Pulling latest code..."
@@ -25,59 +24,37 @@ pipeline {
         stage('Copy JAR & Script to Windows Shared Folder') {
             steps {
                 echo "Copying JAR & deploy script to C:\\springboot-app..."
-
                 bat """
                     if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
-
-                    echo Copying JAR...
-                    copy /Y target\\${JAR_NAME} ${WIN_SHARE}\\
-
-                    echo Copying deploy-wsl-multi.sh...
-                    copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
-
+                    copy /Y target\\${JAR_NAME} ${WIN_SHARE}\
+                    copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\
                     dir ${WIN_SHARE}
                 """
             }
         }
 
-stage('Fix Line Endings in WSL') {
-    steps {
-        bat '''
-        echo Converting script to Unix format inside WSL...
-        wsl dos2unix /mnt/c/springboot-app/deploy-wsl-multi.sh
-        '''
-    }
-}
-    
-        
+        stage('Fix Line Endings in WSL') {
+            steps {
+                bat 'wsl dos2unix /mnt/c/springboot-app/deploy-wsl-multi.sh'
+            }
+        }
+
         stage('Deploy on WSL') {
             steps {
-                echo "Deploying on WSL using deploy-wsl-multi.sh..."
-
                 bat """
-                    echo Listing /mnt/c/springboot-app from WSL...
-                    wsl ls -l /mnt/c/springboot-app
-
-                    echo Making script executable...
                     wsl chmod +x /mnt/c/springboot-app/deploy-wsl-multi.sh
-
-                    echo Running script in WSL...
                     wsl /mnt/c/springboot-app/deploy-wsl-multi.sh ${JAR_NAME} wsl 8081 8082
                 """
             }
         }
 
         stage('Post Deployment Check (from WSL)') {
-    steps {
-        echo "Checking health for both instances (8081 & 8082)..."
-
-        bat """
+            steps {
+                bat """
 wsl bash -c '
 check_health() {
   local PORT=\$1
-
   echo -n "Checking port \${PORT}... "
-
   if curl -sSf "http://127.0.0.1:\${PORT}/actuator/health" > /dev/null 2>&1; then
       echo "OK"
   else
@@ -85,29 +62,13 @@ check_health() {
       return 1
   fi
 }
-
 check_health 8081 || echo "❌ 8081 FAILED"
 check_health 8082 || echo "❌ 8082 FAILED"
 '
 """
+            }
+        }
     }
-}
-
-
-        // stage('Post Deployment Check (from WSL)') {
-        //     steps {
-        //         echo "Checking health of both instances from WSL..."
-
-        //         bat """
-        //             echo Checking 8081...
-        //             wsl curl -sSf http://127.0.0.1:8081/actuator/health || echo FAILED_8081
-
-        //             echo Checking 8082...
-        //             wsl curl -sSf http://127.0.0.1:8082/actuator/health || echo FAILED_8082
-        //         """
-        //     }
-        // }
-    // }
 
     post {
         success {
