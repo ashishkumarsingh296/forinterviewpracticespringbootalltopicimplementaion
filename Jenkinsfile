@@ -67,7 +67,7 @@ wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082
 """
     }
 }
-
+    }
 
     post {
         success {
