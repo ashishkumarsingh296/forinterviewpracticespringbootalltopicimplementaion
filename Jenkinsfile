@@ -113,16 +113,16 @@ pipeline {
 
         failure {
             echo "❌ Deployment failed. Restoring last backups..."
-            bat """
-                wsl bash -c "
-                set -e
-                LATEST1=\\\\\$(ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1)
-                LATEST2=\\\\\$(ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1)
-                cp \$LATEST1 ${WSL_APP1}
-                cp \$LATEST2 ${WSL_APP2}
-                echo 'Restored last backups to original paths'
-                "
-            """
+            // bat """
+            //     wsl bash -c "
+            //     set -e
+            //     LATEST1=\\\\\$(ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1)
+            //     LATEST2=\\\\\$(ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1)
+            //     cp \$LATEST1 ${WSL_APP1}
+            //     cp \$LATEST2 ${WSL_APP2}
+            //     echo 'Restored last backups to original paths'
+            //     "
+            // """
         }
     }
 }
