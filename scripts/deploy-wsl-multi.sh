@@ -40,7 +40,9 @@ if ! curl -sSf "http://127.0.0.1:${PORT2}/actuator/health" | grep -q '"UP"'; the
   echo "Instance2 failed health"; exit 1
 fi
 
-# reload nginx (in WSL)
+# reload nginx (in WSL okgit add --renormalize deploy-wsl-multi.sh
+                         #git commit -m "Normalize LF line endings"
+                         #git push)
 sudo systemctl reload nginx || sudo nginx -s reload
 
 
