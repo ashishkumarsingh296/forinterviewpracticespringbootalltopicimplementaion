@@ -115,15 +115,43 @@ wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082
 }
     }
 
-    post {
-        success {
-            echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
-        }
-        failure {
-             bat """
-                wsl ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP1}
-                wsl ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP2}
-             """
-        }
+    // post {
+    //     success {
+    //         echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
+    //     }
+    //     failure {
+    //          bat """
+    //             wsl ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP1}
+    //             wsl ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP2}
+    //          """
+    //     }
+    // }
+post {
+    success {
+        echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
     }
+    failure {
+        echo "❌ Deployment failed. Restoring last backups..."
+
+        bat """
+        wsl bash -c '
+            set -e
+            LATEST1=\$(ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1)
+            LATEST2=\$(ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1)
+
+            if [ -f "\$LATEST1" ]; then
+                cp "\$LATEST1" ${WSL_APP1}
+                echo "Restored \$LATEST1 to ${WSL_APP1}"
+            fi
+
+            if [ -f "\$LATEST2" ]; then
+                cp "\$LATEST2" ${WSL_APP2}
+                echo "Restored \$LATEST2 to ${WSL_APP2}"
+            fi
+        '
+        """
+    }
+}
+
+    
 }
