@@ -83,8 +83,11 @@ parameters {
                     wsl cp ${WSL_APP2} ${BACKUP_DIR}/app2-\$TIMESTAMP.jar || true
                     
                     # Keep only last ${MAX_BACKUPS} backups
-                    wsl ls -1t ${BACKUP_DIR}/app1-*.jar | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm -f
-                    wsl ls -1t ${BACKUP_DIR}/app2-*.jar | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm -f
+                    wsl ls -1t ${BACKUP_DIR}/app1-*.jar | tail -n +\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+                    wsl ls -1t ${BACKUP_DIR}/app2-*.jar | tail -n +\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+
+                    // wsl ls -1t ${BACKUP_DIR}/app1-*.jar | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm -f
+                    // wsl ls -1t ${BACKUP_DIR}/app2-*.jar | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm -f
                 """
             }
         }
