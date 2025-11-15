@@ -40,6 +40,16 @@ pipeline {
             }
         }
 
+stage('Fix Line Endings in WSL') {
+    steps {
+        bat '''
+        echo Converting script to Unix format inside WSL...
+        wsl dos2unix /mnt/c/springboot-app/deploy-wsl-multi.sh
+        '''
+    }
+}
+    
+        
         stage('Deploy on WSL') {
             steps {
                 echo "Deploying on WSL using deploy-wsl-multi.sh..."
