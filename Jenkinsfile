@@ -1,9 +1,20 @@
 pipeline {
     agent any
 
+parameters {
+        string(name: 'PROFILE', defaultValue: 'wsl', description: 'Spring profile to use')
+        string(name: 'PORT1', defaultValue: '8081', description: 'Port for instance 1')
+        string(name: 'PORT2', defaultValue: '8082', description: 'Port for instance 2')
+    }
+
     environment {
         JAR_NAME = 'forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar'
         WIN_SHARE = 'C:\\springboot-app'
+        WSL_APP1 = '/home/aashu/Kems/app1.jar'
+        WSL_APP2 = '/home/aashu/Kems/app2.jar'
+        LOG_DIR = '/home/aashu/Kems/logs'
+        BACKUP_DIR = '/home/aashu/Kems/backups'
+        MAX_BACKUPS = 5
     }
 
     stages {
@@ -26,24 +37,55 @@ pipeline {
         echo "Copying JAR & deploy script to C:\\springboot-app..."
 
         bat """
-if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
+              if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
 
-echo Copying JAR...
-copy /Y target\\${JAR_NAME} ${WIN_SHARE}\\
+                echo Copying JAR...
+                copy /Y target\\${JAR_NAME} ${WIN_SHARE}\\
 
-echo Copying deploy-wsl-multi.sh...
-copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
+                 echo Copying deploy-wsl-multi.sh...
+                copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
 
-echo Listing files...
-dir ${WIN_SHARE}
-"""
+                echo Listing files...
+                dir ${WIN_SHARE}
+                """
     }
 }
 
 
         stage('Fix Line Endings in WSL') {
             steps {
-                bat 'wsl dos2unix /mnt/c/springboot-app/deploy-wsl-multi.sh'
+                bat """
+                    echo Converting script to Unix format inside WSL...
+                    wsl dos2unix /mnt/c/springboot-app/deploy-wsl-multi.sh
+                """            
+            }
+        }
+
+        stage('Pre-Deployment Checks') {
+            steps {
+                echo "Checking disk space and ports before deployment..."
+                bat """
+                    wsl df -h
+                    wsl lsof -i :%PORT1%
+                    wsl lsof -i :%PORT2%
+                """
+            }
+        }
+
+
+        stage('Backup Existing JARs') {
+            steps {
+                echo "Backing up existing JARs with timestamp..."
+                bat """
+                    wsl mkdir -p ${BACKUP_DIR}
+                    wsl TIMESTAMP=\$(date +%Y%m%d%H%M%S)
+                    wsl cp ${WSL_APP1} ${BACKUP_DIR}/app1-\$TIMESTAMP.jar || true
+                    wsl cp ${WSL_APP2} ${BACKUP_DIR}/app2-\$TIMESTAMP.jar || true
+                    
+                    # Keep only last ${MAX_BACKUPS} backups
+                    wsl ls -1t ${BACKUP_DIR}/app1-*.jar | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm -f
+                    wsl ls -1t ${BACKUP_DIR}/app2-*.jar | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm -f
+                """
             }
         }
 
@@ -74,7 +116,10 @@ wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082
             echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
         }
         failure {
-            echo "❌ Deployment Failed – check stages (especially Deploy on WSL)."
+             bat """
+                wsl ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP1}
+                wsl ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP2}
+             """
         }
     }
 }
