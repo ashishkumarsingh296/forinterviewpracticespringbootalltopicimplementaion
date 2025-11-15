@@ -21,17 +21,25 @@ pipeline {
             }
         }
 
-        stage('Copy JAR & Script to Windows Shared Folder') {
-            steps {
-                echo "Copying JAR & deploy script to C:\\springboot-app..."
-                bat """
-                    if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
-                    copy /Y target\\${JAR_NAME} ${WIN_SHARE}\
-                    copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\
-                    dir ${WIN_SHARE}
-                """
-            }
-        }
+       stage('Copy JAR & Script to Windows Shared Folder') {
+    steps {
+        echo "Copying JAR & deploy script to C:\\springboot-app..."
+
+        bat """
+if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
+
+echo Copying JAR...
+copy /Y target\\${JAR_NAME} ${WIN_SHARE}\\
+
+echo Copying deploy-wsl-multi.sh...
+copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
+
+echo Listing files...
+dir ${WIN_SHARE}
+"""
+    }
+}
+
 
         stage('Fix Line Endings in WSL') {
             steps {
