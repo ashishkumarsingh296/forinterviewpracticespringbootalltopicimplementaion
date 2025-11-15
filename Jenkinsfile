@@ -1,4 +1,4 @@
-   pipeline {
+pipeline {
     agent any
 
     parameters {
@@ -6,15 +6,7 @@
         choice(name: 'RESTART_SERVER', choices: ['NO','YES'], description: "Restart Tomcat required")
         string(name: 'PROFILE', defaultValue: 'wsl', description: 'Spring profile to use')
     }
-    stages {
-        stage('Checkout') {
-            steps {
-                echo "Pulling latest code..."
-                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-            }
-        }
 
-        
     environment {
         WORKSPACE_WSL = '/home/aashu/Kems'
         DEV_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_dev"
@@ -25,7 +17,16 @@
         MAX_BACKUPS = 5
         JAR_NAME = 'forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar'
         LOG_DIR = "${WORKSPACE_WSL}/logs"
+        WIN_SHARE = 'C:\\springboot-app'
     }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "Pulling latest code..."
+                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+            }
+        }
 
         stage('Build JAR') {
             steps {
@@ -34,11 +35,10 @@
             }
         }
 
-       stage('Copy JAR & Script to Windows Shared Folder') {
-    steps {
-        echo "Copying JAR & deploy script to C:\\springboot-app..."
-
-        bat """
+        stage('Copy JAR & Script to Windows Shared Folder') {
+            steps {
+                echo "Copying JAR & deploy script to C:\\springboot-app..."
+                bat """
 if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
 
 echo Copying JAR...
@@ -50,9 +50,8 @@ copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
 echo Listing files...
 dir ${WIN_SHARE}
 """
-    }
-}
-
+            }
+        }
 
         stage('Fix Line Endings in WSL') {
             steps {
@@ -63,23 +62,21 @@ dir ${WIN_SHARE}
         stage('Deploy on WSL') {
             steps {
                 bat """
-                    wsl chmod +x /mnt/c/springboot-app/deploy-wsl-multi.sh
-                    wsl /mnt/c/springboot-app/deploy-wsl-multi.sh ${JAR_NAME} wsl 8081 8082
-                """
+wsl chmod +x /mnt/c/springboot-app/deploy-wsl-multi.sh
+wsl /mnt/c/springboot-app/deploy-wsl-multi.sh ${JAR_NAME} wsl 8081 8082
+"""
             }
         }
 
-
-    stage('Post Deployment Check (from WSL)') {
-    steps {
-        echo "Checking health for both instances (8081 & 8082)..."
-
-        bat """
+        stage('Post Deployment Check (from WSL)') {
+            steps {
+                echo "Checking health for both instances (8081 & 8082)..."
+                bat """
 wsl curl -sSf http://127.0.0.1:8081/actuator/health && echo 8081 OK || echo 8081 FAILED
 wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082 FAILED
 """
-    }
-}
+            }
+        }
     }
 
     post {
