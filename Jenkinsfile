@@ -103,7 +103,7 @@ pipeline {
 
         stage('Build WAR') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                bat 'mvn clean package -DskipTests'
             }
         }
 
@@ -123,7 +123,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh """
+                bat """
                 docker build \\
                   ${WARS_TO_COPY.split().collect { "--build-arg ${it}" }.join(' ')} \\
                   -t ${IMAGE_NAME} .
@@ -133,7 +133,7 @@ pipeline {
 
         stage('Deploy Docker Container') {
             steps {
-                sh """
+                bat """
                 docker rm -f multi-tomcat || true
                 docker run -d --name multi-tomcat -p ${PORT}:8080 ${IMAGE_NAME}
                 """
@@ -144,10 +144,10 @@ pipeline {
             steps {
                 script {
                     if (params.DEPLOY_ENV == 'DEV' || params.DEPLOY_ENV == 'BOTH') {
-                        sh "curl -sSf http://127.0.0.1:${PORT}/dev/ || echo 'DEV failed'"
+                        bat "curl -sSf http://127.0.0.1:${PORT}/dev/ || echo 'DEV failed'"
                     }
                     if (params.DEPLOY_ENV == 'QA' || params.DEPLOY_ENV == 'BOTH') {
-                        sh "curl -sSf http://127.0.0.1:${PORT}/qa/ || echo 'QA failed'"
+                        bat "curl -sSf http://127.0.0.1:${PORT}/qa/ || echo 'QA failed'"
                     }
                 }
             }
