@@ -12,7 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "Pulling latest code..."
-                git branch: 'main', url: 'https://github.com/your-repo/your-project.git'
+                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
