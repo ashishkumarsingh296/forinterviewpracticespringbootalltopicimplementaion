@@ -22,10 +22,11 @@ echo ">>> Backing up previous JARs (if any)..."
 [ -f "${WSL_APP1}" ] && cp -f "${WSL_APP1}" "${BACK1}" || true
 [ -f "${WSL_APP2}" ] && cp -f "${WSL_APP2}" "${BACK2}" || true
 
-echo ">>> Stopping old Java processes..."
-pkill -f "${WSL_APP1}" || true
-pkill -f "${WSL_APP2}" || true
-sleep 1
+echo ">>> Stopping old Java processes by PORT..."
+fuser -k ${PORT1}/tcp || true
+fuser -k ${PORT2}/tcp || true
+sleep 2
+
 
 echo ">>> Starting new instances..."
 nohup java -jar "${WSL_APP1}" --spring.profiles.active="${PROFILE}" --server.port="${PORT1}" > "${LOG1}" 2>&1 &
