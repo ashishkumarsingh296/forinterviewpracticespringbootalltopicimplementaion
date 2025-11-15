@@ -67,19 +67,47 @@ stage('Fix Line Endings in WSL') {
             }
         }
 
+
         stage('Post Deployment Check (from WSL)') {
-            steps {
-                echo "Checking health of both instances from WSL..."
+    echo "Checking health for both instances (8081 & 8082)..."
 
-                bat """
-                    echo Checking 8081...
-                    wsl curl -sSf http://127.0.0.1:8081/actuator/health || echo FAILED_8081
+    bat """
+echo Checking health for ports 8081 & 8082...
 
-                    echo Checking 8082...
-                    wsl curl -sSf http://127.0.0.1:8082/actuator/health || echo FAILED_8082
-                """
-            }
-        }
+wsl bash -c '
+check_health() {
+  local PORT=\$1
+
+  echo -n "Checking port \${PORT}... "
+
+  if curl -sSf "http://127.0.0.1:\${PORT}/actuator/health" > /dev/null 2>&1; then
+      echo "OK"
+  else
+      echo "FAILED"
+      return 1
+  fi
+}
+
+check_health 8081 || echo "❌ 8081 FAILED"
+check_health 8082 || echo "❌ 8082 FAILED"
+'
+"""
+}
+
+
+        // stage('Post Deployment Check (from WSL)') {
+        //     steps {
+        //         echo "Checking health of both instances from WSL..."
+
+        //         bat """
+        //             echo Checking 8081...
+        //             wsl curl -sSf http://127.0.0.1:8081/actuator/health || echo FAILED_8081
+
+        //             echo Checking 8082...
+        //             wsl curl -sSf http://127.0.0.1:8082/actuator/health || echo FAILED_8082
+        //         """
+        //     }
+        // }
     }
 
     post {
