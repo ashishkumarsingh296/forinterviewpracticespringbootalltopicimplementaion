@@ -95,17 +95,33 @@ pipeline {
             }
         }
 
-        stage('Deploy on WSL') {
-            steps {
-                echo "Deploying on WSL using deploy_wsl.sh..."
+//         stage('Deploy on WSL') {
+//             steps {
+//                 echo "Deploying on WSL using deploy_wsl.sh..."
+//
+//                 bat """
+// wsl chmod +x /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy-wsl-multi.sh
+// wsl /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy-wsl-multi.sh forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar wsl 8081 8082
+// """
+//             }
+//         }
 
-                bat """
-wsl chmod +x /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy-wsl-multi.sh
-wsl /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy-wsl-multi.sh forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar wsl 8081 8082
-"""
-            }
-        }
+stage('Deploy on WSL') {
+    steps {
+        sh """
+        chmod +x scripts/deploy-wsl-multi.sh
+
+        bash scripts/deploy-wsl-multi.sh \
+            forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar \
+            wsl \
+            8081 \
+            8082
+        """
     }
+}
+
+
+}
 
     post {
         success {
