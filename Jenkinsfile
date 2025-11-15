@@ -56,21 +56,21 @@ pipeline {
             }
         }
 
-        stage('Backup Existing JAR') {
-            steps {
-                echo "Backing up existing JARs for ${params.ENVIRONMENT}..."
-                bat """
-wsl bash -c '
-mkdir -p ${BACKUP_DIR}
-TIMESTAMP=\\\$(date +%Y%m%d%H%M%S)
-if [ -f ${TARGET_DIR}/webapps/app.war ]; then
-    cp ${TARGET_DIR}/webapps/app.war ${BACKUP_DIR}/app-${params.ENVIRONMENT}-\$TIMESTAMP.war
-fi
-ls -1t ${BACKUP_DIR}/app-${params.ENVIRONMENT}-*.war | tail -n +\$((MAX_BACKUPS + 1)) | xargs -r rm -f
-'
-"""
-            }
-        }
+//         stage('Backup Existing JAR') {
+//             steps {
+//                 echo "Backing up existing JARs for ${params.ENVIRONMENT}..."
+//                 bat """
+// wsl bash -c '
+// mkdir -p ${BACKUP_DIR}
+// TIMESTAMP=\\\$(date +%Y%m%d%H%M%S)
+// if [ -f ${TARGET_DIR}/webapps/app.war ]; then
+//     cp ${TARGET_DIR}/webapps/app.war ${BACKUP_DIR}/app-${params.ENVIRONMENT}-\$TIMESTAMP.war
+// fi
+// ls -1t ${BACKUP_DIR}/app-${params.ENVIRONMENT}-*.war | tail -n +\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+// '
+// """
+//             }
+//         }
 
         stage('Deploy Application') {
             steps {
@@ -117,14 +117,7 @@ wsl curl -sSf http://127.0.0.1:${TARGET_PORT}/actuator/health && echo OK || echo
         }
         failure {
             echo "❌ Deployment failed. Restoring last backup for ${params.ENVIRONMENT}..."
-            bat """
-wsl bash -c '
-LATEST=\\\$(ls -1t ${BACKUP_DIR}/app-${params.ENVIRONMENT}-*.war | head -n 1)
-if [ -f "\\\$LATEST" ]; then
-    cp "\\\$LATEST" ${TARGET_DIR}/webapps/app.war
-fi
-'
-"""
+
         }
     }
 }
