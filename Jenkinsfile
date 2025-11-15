@@ -86,6 +86,10 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose which environment to deploy')
+    }
+
     environment {
         IMAGE_NAME = "myapp:latest"
         WAR_FILE = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
@@ -96,63 +100,47 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo "Pulling latest code..."
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
         stage('Build WAR') {
             steps {
-                echo "Building WAR..."
                 sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "Building Docker image..."
-                sh "docker build -t ${IMAGE_NAME} ."
+                sh "docker build --build-arg WAR_FILE=${WAR_FILE} -t ${IMAGE_NAME} ."
             }
         }
 
-        stage('Deploy DEV Container') {
+        stage('Deploy Containers') {
             steps {
-                echo "Deploying DEV container on port ${DEV_PORT}..."
-                sh """
-                docker rm -f dev-container || true
-                docker run -d --name dev-container -p ${DEV_PORT}:8080 ${IMAGE_NAME}
-                """
-            }
-        }
+                script {
+                    if (params.DEPLOY_ENV == 'DEV' || params.DEPLOY_ENV == 'BOTH') {
+                        sh """
+                        docker rm -f dev-container || true
+                        docker run -d --name dev-container -p ${DEV_PORT}:8080 ${IMAGE_NAME}
+                        """
+                        sh "curl -sSf http://127.0.0.1:${DEV_PORT}/ || echo 'DEV Deployment failed'"
+                    }
 
-        stage('Deploy QA Container') {
-            steps {
-                echo "Deploying QA container on port ${QA_PORT}..."
-                sh """
-                docker rm -f qa-container || true
-                docker run -d --name qa-container -p ${QA_PORT}:8080 ${IMAGE_NAME}
-                """
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                echo "Checking DEV container health..."
-                sh "curl -sSf http://127.0.0.1:${DEV_PORT}/actuator/health || echo 'DEV Deployment failed'"
-
-                echo "Checking QA container health..."
-                sh "curl -sSf http://127.0.0.1:${QA_PORT}/actuator/health || echo 'QA Deployment failed'"
+                    if (params.DEPLOY_ENV == 'QA' || params.DEPLOY_ENV == 'BOTH') {
+                        sh """
+                        docker rm -f qa-container || true
+                        docker run -d --name qa-container -p ${QA_PORT}:8080 ${IMAGE_NAME}
+                        """
+                        sh "curl -sSf http://127.0.0.1:${QA_PORT}/ || echo 'QA Deployment failed'"
+                    }
+                }
             }
         }
     }
 
     post {
-        success {
-            echo "✅ DEV and QA Deployment successful!"
-        }
-        failure {
-            echo "❌ Deployment failed. Check logs."
-        }
+        success { echo "✅ Deployment completed successfully!" }
+        failure { echo "❌ Deployment failed. Check logs for details." }
     }
 }
-
