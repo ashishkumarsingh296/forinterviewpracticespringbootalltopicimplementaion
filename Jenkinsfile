@@ -1,23 +1,26 @@
 pipeline {
     agent any
 
-  parameters {
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['DEV','QA','DQA','ORACLE'], description: "Choose environment for local WSL deployment")
+        choice(name: 'RESTART_SERVER', choices: ['NO','YES'], description: "Restart Tomcat required")
         string(name: 'PROFILE', defaultValue: 'wsl', description: 'Spring profile to use')
-        string(name: 'PORT1', defaultValue: '8081', description: 'Port for instance 1')
-        string(name: 'PORT2', defaultValue: '8082', description: 'Port for instance 2')
     }
 
     environment {
-        JAR_NAME = 'forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar'
-        WIN_SHARE = 'C:\\springboot-app'
-        WSL_APP1 = '/home/aashu/Kems/app1.jar'
-        WSL_APP2 = '/home/aashu/Kems/app2.jar'
-        LOG_DIR = '/home/aashu/Kems/logs'
-        BACKUP_DIR = '/home/aashu/Kems/backups'
+        WORKSPACE_WSL = '/home/aashu/Kems'
+        DEV_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_dev"
+        QA_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_qa"
+        DQA_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_dqa"
+        ORACLE_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_oracle"
+        BACKUP_DIR = "${WORKSPACE_WSL}/backups"
         MAX_BACKUPS = 5
+        JAR_NAME = 'forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar'
+        LOG_DIR = "${WORKSPACE_WSL}/logs"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo "Pulling latest code..."
@@ -32,72 +35,96 @@ pipeline {
             }
         }
 
-       stage('Copy JAR & Script to Windows Shared Folder') {
-    steps {
-        echo "Copying JAR & deploy script to C:\\springboot-app..."
-
-        bat """
-if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
-
-echo Copying JAR...
-copy /Y target\\${JAR_NAME} ${WIN_SHARE}\\
-
-echo Copying deploy-wsl-multi.sh...
-copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
-
-echo Listing files...
-dir ${WIN_SHARE}
-"""
-    }
-}
-
-
-        stage('Fix Line Endings in WSL') {
+        stage('Select Target Environment') {
             steps {
-                bat 'wsl dos2unix /mnt/c/springboot-app/deploy-wsl-multi.sh'
+                script {
+                    if (params.ENVIRONMENT == 'DEV') {
+                        env.TARGET_DIR = env.DEV_TOMCAT_HOME
+                        env.TARGET_PORT = '8081'
+                    } else if (params.ENVIRONMENT == 'QA') {
+                        env.TARGET_DIR = env.QA_TOMCAT_HOME
+                        env.TARGET_PORT = '8082'
+                    } else if (params.ENVIRONMENT == 'DQA') {
+                        env.TARGET_DIR = env.DQA_TOMCAT_HOME
+                        env.TARGET_PORT = '8083'
+                    } else if (params.ENVIRONMENT == 'ORACLE') {
+                        env.TARGET_DIR = env.ORACLE_TOMCAT_HOME
+                        env.TARGET_PORT = '8084'
+                    }
+                    echo "Deploying to ${env.TARGET_DIR} on port ${env.TARGET_PORT}"
+                }
             }
         }
 
-          stage('Pre-Deployment Checks') {
+        stage('Backup Existing JAR') {
             steps {
-                echo "Checking disk space and ports before deployment..."
+                echo "Backing up existing JARs for ${params.ENVIRONMENT}..."
                 bat """
-                    wsl df -h
-                    wsl lsof -i :%PORT1%
-                    wsl lsof -i :%PORT2%
-                """
-            }
-        }
-
-        stage('Deploy on WSL') {
-            steps {
-                bat """
-                    wsl chmod +x /mnt/c/springboot-app/deploy-wsl-multi.sh
-                    wsl /mnt/c/springboot-app/deploy-wsl-multi.sh ${JAR_NAME} wsl 8081 8082
-                """
-            }
-        }
-
-
-    stage('Post Deployment Check (from WSL)') {
-    steps {
-        echo "Checking health for both instances (8081 & 8082)..."
-
-        bat """
-wsl curl -sSf http://127.0.0.1:8081/actuator/health && echo 8081 OK || echo 8081 FAILED
-wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082 FAILED
+wsl bash -c '
+mkdir -p ${BACKUP_DIR}
+TIMESTAMP=\\\$(date +%Y%m%d%H%M%S)
+if [ -f ${TARGET_DIR}/webapps/app.war ]; then
+    cp ${TARGET_DIR}/webapps/app.war ${BACKUP_DIR}/app-${params.ENVIRONMENT}-\$TIMESTAMP.war
+fi
+ls -1t ${BACKUP_DIR}/app-${params.ENVIRONMENT}-*.war | tail -n +\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+'
 """
-    }
-}
+            }
+        }
+
+        stage('Deploy Application') {
+            steps {
+                echo "Deploying JAR to ${params.ENVIRONMENT}..."
+                bat """
+wsl bash -c '
+mkdir -p ${TARGET_DIR}/webapps
+cp ${WORKSPACE}/target/${JAR_NAME} ${TARGET_DIR}/webapps/app.war
+'
+"""
+            }
+        }
+
+        stage('Restart Server') {
+            when {
+                expression { params.RESTART_SERVER == 'YES' }
+            }
+            steps {
+                echo "Restarting server for ${params.ENVIRONMENT}..."
+                bat """
+wsl bash -c '
+cd ${TARGET_DIR}/bin
+if [ -f shutdown.sh ]; then ./shutdown.sh; fi
+sleep 5
+if [ -f startup.sh ]; then ./startup.sh; fi
+'
+"""
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                echo "Checking health for ${params.ENVIRONMENT}..."
+                bat """
+wsl curl -sSf http://127.0.0.1:${TARGET_PORT}/actuator/health && echo OK || echo FAILED
+"""
+            }
+        }
     }
 
     post {
         success {
-            echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
+            echo "🚀 Deployment Success: ${params.ENVIRONMENT} is running on port ${TARGET_PORT}"
         }
         failure {
-            echo "❌ Deployment Failed – check stages (especially Deploy on WSL)."
+            echo "❌ Deployment failed. Restoring last backup for ${params.ENVIRONMENT}..."
+            bat """
+wsl bash -c '
+LATEST=\\\$(ls -1t ${BACKUP_DIR}/app-${params.ENVIRONMENT}-*.war | head -n 1)
+if [ -f "\\\$LATEST" ]; then
+    cp "\\\$LATEST" ${TARGET_DIR}/webapps/app.war
+fi
+'
+"""
         }
     }
 }
-
