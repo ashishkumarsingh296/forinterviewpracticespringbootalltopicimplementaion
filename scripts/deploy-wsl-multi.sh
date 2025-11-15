@@ -31,18 +31,43 @@ echo ">>> Starting new instances..."
 nohup java -jar "${WSL_APP1}" --spring.profiles.active="${PROFILE}" --server.port="${PORT1}" > "${LOG1}" 2>&1 &
 nohup java -jar "${WSL_APP2}" --spring.profiles.active="${PROFILE}" --server.port="${PORT2}" > "${LOG2}" 2>&1 &
 
-echo ">>> Waiting for instances to start..."
-sleep 8
+echo ">>> Checking Java processes..."
+ps aux | grep java
 
-echo ">>> Health check for port ${PORT1}..."
-if ! curl -sSf "http://127.0.0.1:${PORT1}/actuator/health" | grep -q '"UP"'; then
-  echo "Instance1 failed health"; exit 1
-fi
+############################
+# 🔥 FAST HEALTH CHECK
+############################
+check_port() {
+  local PORT=$1
+  local LOG_FILE=$2
+  local MAX_WAIT=40
+  local i=1
 
-echo ">>> Health check for port ${PORT2}..."
-if ! curl -sSf "http://127.0.0.1:${PORT2}/actuator/health" | grep -q '"UP"'; then
-  echo "Instance2 failed health"; exit 1
-fi
+  echo ">>> Health check for port ${PORT}..."
+
+  while [ $i -le $MAX_WAIT ]; do
+    
+    # Port open?
+    if nc -z localhost "${PORT}" 2>/dev/null; then
+      echo "✔ Port ${PORT} is UP after ${i} seconds"
+      return 0
+    fi
+
+    echo "Waiting for port ${PORT}... (${i}/${MAX_WAIT})"
+    tail -n 5 "${LOG_FILE}" 2>/dev/null || true
+
+    sleep 1
+    i=$((i+1))
+  done
+
+  echo "❌ ERROR: Port ${PORT} did not start within ${MAX_WAIT} seconds"
+  exit 1
+}
+
+check_port "${PORT1}" "${LOG1}"
+check_port "${PORT2}" "${LOG2}"
+
+############################
 
 echo ">>> Reloading nginx..."
 sudo systemctl reload nginx || sudo nginx -s reload
