@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        JAR_NAME = 'forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar'
+        WIN_SHARE = 'C:\\springboot-app'
+    }
+
     stages {
 
         stage('Checkout') {
@@ -17,35 +22,52 @@ pipeline {
             }
         }
 
-        stage('Copy Files to Windows Shared Folder') {
+        stage('Copy JAR & Script to Windows Shared Folder') {
             steps {
-                echo "Copying JAR & Script to C:\\springboot-app..."
+                echo "Copying JAR & deploy script to C:\\springboot-app..."
 
-                bat '''
-                    if not exist C:\\springboot-app mkdir C:\\springboot-app
+                bat """
+                    if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
 
-                    REM Copy JAR
-                    copy /Y target\\forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar C:\\springboot-app\\
+                    echo Copying JAR...
+                    copy /Y target\\${JAR_NAME} ${WIN_SHARE}\\
 
-                    REM Copy Script
-                    copy /Y scripts\\deploy-wsl-multi.sh C:\\springboot-app\\
-                '''
+                    echo Copying deploy-wsl-multi.sh...
+                    copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
+
+                    dir ${WIN_SHARE}
+                """
             }
         }
 
         stage('Deploy on WSL') {
             steps {
-                echo "Running Deployment in WSL..."
+                echo "Deploying on WSL using deploy-wsl-multi.sh..."
 
-                bat '''
-                wsl chmod +x /mnt/c/springboot-app/deploy-wsl-multi.sh
+                bat """
+                    echo Listing /mnt/c/springboot-app from WSL...
+                    wsl ls -l /mnt/c/springboot-app
 
-                wsl /mnt/c/springboot-app/deploy-wsl-multi.sh \
-                    forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar \
-                    wsl \
-                    8081 \
-                    8082
-                '''
+                    echo Making script executable...
+                    wsl chmod +x /mnt/c/springboot-app/deploy-wsl-multi.sh
+
+                    echo Running script in WSL...
+                    wsl /mnt/c/springboot-app/deploy-wsl-multi.sh ${JAR_NAME} wsl 8081 8082
+                """
+            }
+        }
+
+        stage('Post Deployment Check (from WSL)') {
+            steps {
+                echo "Checking health of both instances from WSL..."
+
+                bat """
+                    echo Checking 8081...
+                    wsl curl -sSf http://127.0.0.1:8081/actuator/health || echo FAILED_8081
+
+                    echo Checking 8082...
+                    wsl curl -sSf http://127.0.0.1:8082/actuator/health || echo FAILED_8082
+                """
             }
         }
     }
@@ -55,7 +77,7 @@ pipeline {
             echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
         }
         failure {
-            echo "❌ Deployment Failed"
+            echo "❌ Deployment Failed – check stages (especially Deploy on WSL)."
         }
     }
 }
