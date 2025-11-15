@@ -67,12 +67,11 @@ stage('Fix Line Endings in WSL') {
             }
         }
 
-stage('Post Deployment Check (from WSL)') {
-    echo "Checking health for both instances (8081 & 8082)..."
+        stage('Post Deployment Check (from WSL)') {
+    steps {
+        echo "Checking health for both instances (8081 & 8082)..."
 
-    bat """
-echo Checking health for ports 8081 & 8082...
-
+        bat """
 wsl bash -c '
 check_health() {
   local PORT=\$1
@@ -91,8 +90,9 @@ check_health 8081 || echo "❌ 8081 FAILED"
 check_health 8082 || echo "❌ 8082 FAILED"
 '
 """
-}
     }
+}
+
 
         // stage('Post Deployment Check (from WSL)') {
         //     steps {
