@@ -1,24 +1,3 @@
-pipeline {
-    agent any
-
-    parameters {
-        choice(name: 'ENVIRONMENT', choices: ['DEV','QA','DQA','ORACLE'], description: "Choose environment for local WSL deployment")
-        choice(name: 'RESTART_SERVER', choices: ['NO','YES'], description: "Restart Tomcat required")
-        string(name: 'PROFILE', defaultValue: 'wsl', description: 'Spring profile to use')
-    }
-
-    environment {
-        WORKSPACE_WSL = '/home/aashu/Kems'
-        DEV_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_dev"
-        QA_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_qa"
-        DQA_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_dqa"
-        ORACLE_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_oracle"
-        BACKUP_DIR = "${WORKSPACE_WSL}/backups"
-        MAX_BACKUPS = 5
-        JAR_NAME = 'forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar'
-        LOG_DIR = "${WORKSPACE_WSL}/logs"
-    }
-
    pipeline {
     agent any
 
