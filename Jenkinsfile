@@ -67,8 +67,7 @@ stage('Fix Line Endings in WSL') {
             }
         }
 
-
-        stage('Post Deployment Check (from WSL)') {
+stage('Post Deployment Check (from WSL)') {
     echo "Checking health for both instances (8081 & 8082)..."
 
     bat """
@@ -93,7 +92,7 @@ check_health 8082 || echo "❌ 8082 FAILED"
 '
 """
 }
-
+    }
 
         // stage('Post Deployment Check (from WSL)') {
         //     steps {
@@ -108,7 +107,7 @@ check_health 8082 || echo "❌ 8082 FAILED"
         //         """
         //     }
         // }
-    }
+    // }
 
     post {
         success {
