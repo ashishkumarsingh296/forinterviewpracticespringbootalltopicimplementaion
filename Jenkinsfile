@@ -100,8 +100,8 @@ pipeline {
                 echo "Deploying on WSL using deploy_wsl.sh..."
 
                 bat """
-wsl chmod +x /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy_wsl.sh
-wsl /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy_wsl.sh forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar wsl 8081 8082
+wsl chmod +x /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy-wsl-multi.sh
+wsl /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/scripts/deploy-wsl-multi.sh forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar wsl 8081 8082
 """
             }
         }
