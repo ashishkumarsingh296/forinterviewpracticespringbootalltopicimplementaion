@@ -73,24 +73,46 @@ parameters {
         }
 
 
-     stage('Backup Existing JARs') {
+//      stage('Backup Existing JARs') {
+//     steps {
+//         echo "Backing up existing JARs with timestamp..."
+//         bat """
+//             wsl mkdir -p ${BACKUP_DIR}
+//             wsl TIMESTAMP=\\\$(date +%Y%m%d%H%M%S)
+//             wsl cp ${WSL_APP1} ${BACKUP_DIR}/app1-\\\$TIMESTAMP.jar || true
+//             wsl cp ${WSL_APP2} ${BACKUP_DIR}/app2-\\\$TIMESTAMP.jar || true
+
+//             # Keep only last ${MAX_BACKUPS} backups
+//             wsl ls -1t ${BACKUP_DIR}/app1-*.jar | tail -n +\\\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+//             wsl ls -1t ${BACKUP_DIR}/app2-*.jar | tail -n +\\\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+
+//             # List backups
+//             wsl ls -l ${BACKUP_DIR}
+//         """
+//     }
+// }
+
+        stage('Backup Existing JARs') {
     steps {
         echo "Backing up existing JARs with timestamp..."
         bat """
-            wsl mkdir -p ${BACKUP_DIR}
-            wsl TIMESTAMP=\\\$(date +%Y%m%d%H%M%S)
-            wsl cp ${WSL_APP1} ${BACKUP_DIR}/app1-\\\$TIMESTAMP.jar || true
-            wsl cp ${WSL_APP2} ${BACKUP_DIR}/app2-\\\$TIMESTAMP.jar || true
+        wsl bash -c '
+            mkdir -p ${BACKUP_DIR}
+            TIMESTAMP=\\\$(date +%Y%m%d%H%M%S)
+
+            cp ${WSL_APP1} ${BACKUP_DIR}/app1-\\\$TIMESTAMP.jar || true
+            cp ${WSL_APP2} ${BACKUP_DIR}/app2-\\\$TIMESTAMP.jar || true
 
             # Keep only last ${MAX_BACKUPS} backups
-            wsl ls -1t ${BACKUP_DIR}/app1-*.jar | tail -n +\\\$((MAX_BACKUPS + 1)) | xargs -r rm -f
-            wsl ls -1t ${BACKUP_DIR}/app2-*.jar | tail -n +\\\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+            ls -1t ${BACKUP_DIR}/app1-*.jar | tail -n +\\\$((MAX_BACKUPS + 1)) | xargs -r rm -f
+            ls -1t ${BACKUP_DIR}/app2-*.jar | tail -n +\\\$((MAX_BACKUPS + 1)) | xargs -r rm -f
 
-            # List backups
-            wsl ls -l ${BACKUP_DIR}
+            echo "Backups after cleanup:"
+            ls -l ${BACKUP_DIR}
+        '
         """
     }
-}
+
 
 
         stage('Deploy on WSL') {
@@ -115,39 +137,17 @@ wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082
 }
     }
 
-    // post {
-    //     success {
-    //         echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
-    //     }
-    //     failure {
-    //          bat """
-    //             wsl ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP1}
-    //             wsl ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1 | xargs -r -I {} cp {} ${WSL_APP2}
-    //          """
-    //     }
-    // }
 post {
-    success {
-        echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
-    }
     failure {
-        echo "❌ Deployment failed. Restoring last backups..."
-
+        echo "Restoring last backup due to failure..."
         bat """
         wsl bash -c '
             set -e
-            LATEST1=\$(ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1)
-            LATEST2=\$(ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1)
+            LATEST1=\\\$(ls -1t ${BACKUP_DIR}/app1-*.jar | head -n 1)
+            LATEST2=\\\$(ls -1t ${BACKUP_DIR}/app2-*.jar | head -n 1)
 
-            if [ -f "\$LATEST1" ]; then
-                cp "\$LATEST1" ${WSL_APP1}
-                echo "Restored \$LATEST1 to ${WSL_APP1}"
-            fi
-
-            if [ -f "\$LATEST2" ]; then
-                cp "\$LATEST2" ${WSL_APP2}
-                echo "Restored \$LATEST2 to ${WSL_APP2}"
-            fi
+            [ -f "\\\$LATEST1" ] && cp "\\\$LATEST1" ${WSL_APP1} && echo "Restored \\\$LATEST1"
+            [ -f "\\\$LATEST2" ] && cp "\\\$LATEST2" ${WSL_APP2} && echo "Restored \\\$LATEST2"
         '
         """
     }
