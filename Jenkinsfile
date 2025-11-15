@@ -56,27 +56,18 @@ dir ${WIN_SHARE}
             }
         }
 
-        stage('Post Deployment Check (from WSL)') {
-            steps {
-                bat """
-wsl bash -c '
-check_health() {
-  local PORT=\$1
-  echo -n "Checking port \${PORT}... "
-  if curl -sSf "http://127.0.0.1:\${PORT}/actuator/health" > /dev/null 2>&1; then
-      echo "OK"
-  else
-      echo "FAILED"
-      return 1
-  fi
-}
-check_health 8081 || echo "❌ 8081 FAILED"
-check_health 8082 || echo "❌ 8082 FAILED"
-'
+
+    stage('Post Deployment Check (from WSL)') {
+    steps {
+        echo "Checking health for both instances (8081 & 8082)..."
+
+        bat """
+wsl curl -sSf http://127.0.0.1:8081/actuator/health && echo 8081 OK || echo 8081 FAILED
+wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082 FAILED
 """
-            }
-        }
     }
+}
+
 
     post {
         success {
