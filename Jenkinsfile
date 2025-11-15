@@ -2,25 +2,21 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ENVIRONMENT', choices: ['DEV','QA','DQA','ORACLE'], description: "Choose environment for local WSL deployment")
-        choice(name: 'RESTART_SERVER', choices: ['NO','YES'], description: "Restart Tomcat required")
-        string(name: 'PROFILE', defaultValue: 'wsl', description: 'Spring profile to use')
+        choice(name: 'ENVIRONMENT', choices: ['DEV','QA'], description: "Choose environment for deployment")
     }
 
     environment {
-        WORKSPACE_WSL = '/home/aashu/Kems'
-        DEV_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_dev"
-        QA_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_qa"
-        DQA_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_dqa"
-        ORACLE_TOMCAT_HOME = "${WORKSPACE_WSL}/tomcat_oracle"
-        BACKUP_DIR = "${WORKSPACE_WSL}/backups"
-        MAX_BACKUPS = 5
-        JAR_NAME = 'forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.jar'
-        LOG_DIR = "${WORKSPACE_WSL}/logs"
-        WIN_SHARE = 'C:\\springboot-app'
+        # WSL Ubuntu DEV
+        DEV_TOMCAT_HOME = "/home/aashu/tomcat_dev"
+        # WSL Debian QA
+        QA_TOMCAT_HOME  = "/home/ashu/tomcat_qa"
+        BACKUP_DIR = "/home/aashu/backups"
+        WAR_NAME = "forinterviewpracticespringbootalltopicimplementaion.war"
+        PROJECT_DIR = "C:\\springboot-app"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo "Pulling latest code..."
@@ -28,63 +24,58 @@ pipeline {
             }
         }
 
-        stage('Build JAR') {
+        stage('Build WAR') {
             steps {
-                echo "Building Spring Boot JAR..."
-                bat 'mvn clean package -DskipTests'
+                echo "Building WAR for ${params.ENVIRONMENT}..."
+                bat "cd ${PROJECT_DIR} && mvn clean package -DskipTests"
             }
         }
 
-        stage('Copy JAR & Script to Windows Shared Folder') {
+        stage('Deploy WAR to WSL') {
             steps {
-                echo "Copying JAR & deploy script to C:\\springboot-app..."
-                bat """
-if not exist ${WIN_SHARE} mkdir ${WIN_SHARE}
-
-echo Copying JAR...
-copy /Y target\\${JAR_NAME} ${WIN_SHARE}\\
-
-echo Copying deploy-wsl-multi.sh...
-copy /Y scripts\\deploy-wsl-multi.sh ${WIN_SHARE}\\
-
-echo Listing files...
-dir ${WIN_SHARE}
-"""
+                script {
+                    if (params.ENVIRONMENT == 'DEV') {
+                        echo "Deploying WAR to Ubuntu WSL (DEV)..."
+                        bat """
+                        wsl cp /mnt/c/springboot-app/target/${WAR_NAME} ${DEV_TOMCAT_HOME}/webapps/
+                        wsl ${DEV_TOMCAT_HOME}/bin/shutdown.sh || true
+                        wsl ${DEV_TOMCAT_HOME}/bin/startup.sh
+                        """
+                    } else if (params.ENVIRONMENT == 'QA') {
+                        echo "Deploying WAR to Debian WSL (QA)..."
+                        bat """
+                        wsl -d Debian cp /mnt/c/springboot-app/target/${WAR_NAME} ${QA_TOMCAT_HOME}/webapps/
+                        wsl -d Debian ${QA_TOMCAT_HOME}/bin/shutdown.sh || true
+                        wsl -d Debian ${QA_TOMCAT_HOME}/bin/startup.sh
+                        """
+                    }
+                }
             }
         }
 
-        stage('Fix Line Endings in WSL') {
+        stage('Post Deployment Health Check') {
             steps {
-                bat 'wsl dos2unix /mnt/c/springboot-app/deploy-wsl-multi.sh'
-            }
-        }
-
-        stage('Deploy on WSL') {
-            steps {
-                bat """
-wsl chmod +x /mnt/c/springboot-app/deploy-wsl-multi.sh
-wsl /mnt/c/springboot-app/deploy-wsl-multi.sh ${JAR_NAME} wsl 8081 8082
-"""
-            }
-        }
-
-        stage('Post Deployment Check (from WSL)') {
-            steps {
-                echo "Checking health for both instances (8081 & 8082)..."
-                bat """
-wsl curl -sSf http://127.0.0.1:8081/actuator/health && echo 8081 OK || echo 8081 FAILED
-wsl curl -sSf http://127.0.0.1:8082/actuator/health && echo 8082 OK || echo 8082 FAILED
-"""
+                script {
+                    if (params.ENVIRONMENT == 'DEV') {
+                        bat """
+                        wsl curl -sSf http://127.0.0.1:8081/actuator/health && echo DEV OK || echo DEV FAILED
+                        """
+                    } else if (params.ENVIRONMENT == 'QA') {
+                        bat """
+                        wsl -d Debian curl -sSf http://127.0.0.1:8082/actuator/health && echo QA OK || echo QA FAILED
+                        """
+                    }
+                }
             }
         }
     }
 
     post {
         success {
-            echo "🚀 Deployment Success: App running on 8081 & 8082 via Nginx Load Balancer"
+            echo "✅ Deployment to ${params.ENVIRONMENT} completed successfully!"
         }
         failure {
-            echo "❌ Deployment Failed – check stages (especially Deploy on WSL)."
+            echo "❌ Deployment to ${params.ENVIRONMENT} failed. Check logs."
         }
     }
 }
