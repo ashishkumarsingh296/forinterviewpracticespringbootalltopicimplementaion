@@ -185,12 +185,12 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ENV', choices: ['DEV', 'QA'], description: 'Choose Environment')
+        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
     }
 
     environment {
         IMAGE_NAME = "java-multi-env"
-        WAR_FILE = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
+        JAR_FILE = "target/*SNAPSHOT.jar"
     }
 
     stages {
@@ -201,51 +201,63 @@ pipeline {
             }
         }
 
-        stage('Build WAR') {
+        stage('Build') {
             steps {
                 bat "mvn clean package -DskipTests"
             }
         }
 
-        stage('Build Docker Image (Windows)') {
+        stage('Build Docker Image') {
             steps {
                 bat """
                 docker build ^
-                  --build-arg APP_WAR=${WAR_FILE} ^
-                  -t ${IMAGE_NAME}:${params.ENV} .
+                  -t ${IMAGE_NAME}:latest .
                 """
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy DEV') {
+            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
             steps {
                 bat """
-                docker stop myapp || echo Not running
-                docker rm myapp || echo Not found
+                docker stop myapp-dev || echo Not running
+                docker rm myapp-dev || echo Not found
 
-               docker run -d ^
-                  --name myapp ^
-                   -p 8081:8080 ^
-                   -e SPRING_PROFILES_ACTIVE=wsl ^
-                   ${IMAGE_NAME}:${params.ENV}
-                 """
-
+                docker run -d ^
+                  --name myapp-dev ^
+                  -p 8081:8080 ^
+                  -e SPRING_PROFILES_ACTIVE=dev ^
+                  --add-host redis:172.21.37.255 ^
+                  ${IMAGE_NAME}:latest
+                """
             }
         }
 
-        stage('Health Check') {
+        stage('Deploy QA') {
+            when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
             steps {
-                bat "curl -s http://localhost:8081 || echo Health Check Failed"
+                bat """
+                docker stop myapp-qa || echo Not running
+                docker rm myapp-qa || echo Not found
+
+                docker run -d ^
+                  --name myapp-qa ^
+                  -p 8082:8080 ^
+                  -e SPRING_PROFILES_ACTIVE=qa ^
+                  --add-host redis:172.21.37.255 ^
+                  ${IMAGE_NAME}:latest
+                """
             }
         }
+
     }
 
     post {
         success {
-            echo "✅ Deployment Successful!"
+            echo "Deployment Successful!"
         }
         failure {
-            echo "❌ Deployment Failed. Check the logs."
+            echo "Deployment Failed!"
         }
     }
 }
