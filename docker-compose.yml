@@ -1,41 +1,79 @@
 version: '3.8'
 
 services:
-  db:
+
+  db-dev:
     image: mysql:8
-    container_name: mydb
-    restart: always
+    container_name: mydb-dev
     environment:
       MYSQL_DATABASE: testdb
       MYSQL_USER: springuser
       MYSQL_PASSWORD: springpass
       MYSQL_ROOT_PASSWORD: rootpass
     ports:
-      - "3306:3306"
+      - "3307:3306"
+    networks:
+      - appnet
     volumes:
-      - db_data:/var/lib/mysql
+      - db_dev_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      retries: 5
+      interval: 5s
+      retries: 10
 
-  app:
-    build: .                  # Dockerfile in current directory
-    image: java-multi-env:latest
-    container_name: myapp
-    restart: on-failure
+  db-qa:
+    image: mysql:8
+    container_name: mydb-qa
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/testdb
-      SPRING_DATASOURCE_USERNAME: springuser
-      SPRING_DATASOURCE_PASSWORD: springpass
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: springuser
+      MYSQL_PASSWORD: springpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3308:3306"
+    networks:
+      - appnet
+    volumes:
+      - db_qa_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
+
+  app-dev:
+    image: java-multi-env:${VERSION}
+    container_name: myapp-dev
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
     depends_on:
-      db:
+      db-dev:
         condition: service_healthy
     ports:
       - "8081:8080"
+    networks:
+      - appnet
+
+  app-qa:
+    image: java-multi-env:${VERSION}
+    container_name: myapp-qa
+    environment:
+      SPRING_PROFILES_ACTIVE: qa
+    depends_on:
+      db-qa:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
 
 volumes:
-  db_data:
+  db_dev_data:
+  db_qa_data:
+
 
 
 # version: '3.8'
