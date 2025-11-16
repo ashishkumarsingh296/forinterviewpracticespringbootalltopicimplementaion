@@ -226,7 +226,7 @@ pipeline {
                 docker run -d ^
                   --name myapp-dev ^
                   -p 8081:8080 ^
-                  -e SPRING_PROFILES_ACTIVE=dev ^
+                  -e SPRING_PROFILES_ACTIVE=wsl ^
                   --add-host redis:172.21.37.255 ^
                   ${IMAGE_NAME}:latest
                 """
@@ -243,7 +243,7 @@ pipeline {
                 docker run -d ^
                   --name myapp-qa ^
                   -p 8082:8080 ^
-                  -e SPRING_PROFILES_ACTIVE=qa ^
+                  -e SPRING_PROFILES_ACTIVE=wsl ^
                   --add-host redis:172.21.37.255 ^
                   ${IMAGE_NAME}:latest
                 """
