@@ -153,7 +153,6 @@ pipeline {
     environment {
         IMAGE_NAME = "java-multi-env"
         VERSION = "${BUILD_NUMBER}"
-        WORK_DIR = "${WORKSPACE}"
     }
 
     stages {
@@ -182,10 +181,7 @@ pipeline {
 
         stage('Copy Compose Files') {
             steps {
-                bat """
-                    copy ${WORKSPACE}\\docker-compose.yml .
-                    copy ${WORKSPACE}\\nginx.conf .
-                """
+                echo "Compose files already in workspace, skipping copy."
             }
         }
 
@@ -194,31 +190,25 @@ pipeline {
                 script {
 
                     if (params.ENV == "DEV") {
-                        echo "🚀 Deploying DEV only..."
-
                         bat """
-                            docker-compose down -v
                             set VERSION=${VERSION}
+                            docker-compose down -v
                             docker-compose up -d --build db-dev app-dev load-balancer
                         """
                     }
 
                     if (params.ENV == "QA") {
-                        echo "🚀 Deploying QA only..."
-
                         bat """
-                            docker-compose down -v
                             set VERSION=${VERSION}
+                            docker-compose down -v
                             docker-compose up -d --build db-qa app-qa load-balancer
                         """
                     }
 
                     if (params.ENV == "BOTH") {
-                        echo "🚀 Deploying BOTH DEV + QA..."
-
                         bat """
-                            docker-compose down -v
                             set VERSION=${VERSION}
+                            docker-compose down -v
                             docker-compose up -d --build
                         """
                     }
