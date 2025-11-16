@@ -1,15 +1,16 @@
-# Use official Tomcat base image
-FROM tomcat:9.0-jdk21
+FROM tomcat:9-jdk17
 
 # Remove default apps
 RUN rm -rf /usr/local/tomcat/webapps/*
 
-# Copy WAR into webapps folder
-ARG WAR_FILE
-COPY ${WAR_FILE} /usr/local/tomcat/webapps/ROOT.war
+# Build arguments for WAR files
+ARG DEV_WAR
+ARG QA_WAR
 
-# Expose Tomcat port
+# Copy WARs (if provided)
+COPY ${DEV_WAR:-not-exist}.war /usr/local/tomcat/webapps/dev.war
+COPY ${QA_WAR:-not-exist}.war /usr/local/tomcat/webapps/qa.war
+
 EXPOSE 8080
 
-# Start Tomcat
 CMD ["catalina.sh", "run"]
