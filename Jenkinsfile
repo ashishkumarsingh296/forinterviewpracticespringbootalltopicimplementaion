@@ -1,79 +1,78 @@
-// pipeline {
-//     agent any
+pipeline {
+    agent any
 
-//     parameters {
-//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-//     }
+    parameters {
+        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
+    }
 
-//     environment {
-//         IMAGE_NAME = "java-multi-env"
-//         VERSION = "${env.BUILD_NUMBER}"  // Jenkins build number
-//         JAR_FILE = "target/*SNAPSHOT.jar"
-//     }
+    environment {
+        IMAGE_NAME = "java-multi-env"
+        VERSION = "${env.BUILD_NUMBER}"  // Jenkins build number
+        JAR_FILE = "target/*SNAPSHOT.jar"
+    }
 
-//     stages {
+    stages {
 
-//         stage('Checkout Code') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+            }
+        }
 
-//         stage('Build') {
-//             steps {
-//                 bat "mvn clean package -DskipTests"
-//             }
-//         }
+        stage('Build') {
+            steps {
+                bat "mvn clean package -DskipTests"
+            }
+        }
 
-//         stage('Build Docker Image') {
-//             steps {
-//                 bat """
-//                 // docker build -t java-multi-env:latest .
-//                 docker build -t ${IMAGE_NAME}:${VERSION} .
-//                 """
-//             }
-//         }
+        stage('Build Docker Image') {
+            steps {
+                bat """
+                docker build -t ${IMAGE_NAME}:${VERSION} .
+                """
+            }
+        }
 
-//    stage('Deploy') {
-//     steps {
-//         script {
-//             def envChoice = params.ENV
-//             def version = env.BUILD_NUMBER
+   stage('Deploy') {
+    steps {
+        script {
+            def envChoice = params.ENV
+            def version = env.BUILD_NUMBER
 
-//             if(envChoice == 'DEV') {
-//                 bat """
-//                 docker-compose down
-//                 docker-compose up -d --build --no-deps --force-recreate app-dev
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
-//                 """
-//             } else if(envChoice == 'QA') {
-//                 bat """
-//                 docker-compose down
-//                 docker-compose up -d --build --no-deps --force-recreate app-qa
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
-//                 """
-//             } else if(envChoice == 'BOTH') {
-//                 bat """
-//                 docker-compose down
-//                 docker-compose up -d --build --force-recreate
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
-//                 """
-//             }
-//         }
-//     }
-//   }
-// }
+            if(envChoice == 'DEV') {
+                bat """
+                docker-compose down
+                docker-compose up -d --build --no-deps --force-recreate app-dev
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
+                """
+            } else if(envChoice == 'QA') {
+                bat """
+                docker-compose down
+                docker-compose up -d --build --no-deps --force-recreate app-qa
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
+                """
+            } else if(envChoice == 'BOTH') {
+                bat """
+                docker-compose down
+                docker-compose up -d --build --force-recreate
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
+                """
+            }
+        }
+    }
+  }
+}
 
-//     post {
-//         success {
-//             echo "Deployment Successful!"
-//         }
-//         failure {
-//             echo "Deployment Failed!"
-//         }
-//     }
-// }
+    post {
+        success {
+            echo "Deployment Successful!"
+        }
+        failure {
+            echo "Deployment Failed!"
+        }
+    }
+}
 ////////////////////////aaa////////////////
 
 
@@ -143,86 +142,3 @@
 // }
 
 
-pipeline {
-    agent any
-
-    parameters {
-        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-    }
-
-    environment {
-        IMAGE_NAME = "java-multi-env"
-        VERSION = "${BUILD_NUMBER}"
-    }
-
-    stages {
-
-        stage('Checkout Source Code') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-            }
-        }
-
-        stage('Build JAR') {
-            steps {
-                bat "mvn clean package -DskipTests"
-            }
-        }
-
-        stage('Build Versioned Docker Image') {
-            steps {
-                bat """
-                    docker build -t ${IMAGE_NAME}:${VERSION} .
-                    docker tag ${IMAGE_NAME}:${VERSION} ${IMAGE_NAME}:latest
-                """
-            }
-        }
-
-        stage('Copy Compose Files') {
-            steps {
-                echo "Compose files already in workspace, skipping copy."
-            }
-        }
-
-        stage('Deploy Using Docker Compose') {
-            steps {
-                script {
-
-                    if (params.ENV == "DEV") {
-                        bat """
-                            set VERSION=${VERSION}
-                            docker-compose down -v
-                            docker-compose up -d --build db-dev app-dev load-balancer
-                        """
-                    }
-
-                    if (params.ENV == "QA") {
-                        bat """
-                            set VERSION=${VERSION}
-                            docker-compose down -v
-                            docker-compose up -d --build db-qa app-qa load-balancer
-                        """
-                    }
-
-                    if (params.ENV == "BOTH") {
-                        bat """
-                            set VERSION=${VERSION}
-                            docker-compose down -v
-                            docker-compose up -d --build
-                        """
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "🎉 Deployment Successful!"
-        }
-        failure {
-            echo "❌ Deployment Failed!"
-        }
-    }
-}
