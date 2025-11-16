@@ -34,30 +34,36 @@ pipeline {
             }
         }
 
-   
-         stage('Deploy DEV') {
-           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-         steps {
-          bat """
-          cd %WORKSPACE%
-          docker-compose down
-          docker-compose up -d --build
-         """
-      }
-        }
+   stage('Deploy') {
+    steps {
+        script {
+            def envChoice = params.ENV
+            def version = env.BUILD_NUMBER
 
-        stage('Deploy QA') {
-            when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-            steps {
+            if(envChoice == 'DEV') {
                 bat """
-                cd %WORKSPACE%
                 docker-compose down
-                docker-compose -f docker-compose.qa.yml up -d
+                docker-compose up -d --build --no-deps --force-recreate app-dev
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
+                """
+            } else if(envChoice == 'QA') {
+                bat """
+                docker-compose down
+                docker-compose up -d --build --no-deps --force-recreate app-qa
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
+                """
+            } else if(envChoice == 'BOTH') {
+                bat """
+                docker-compose down
+                docker-compose up -d --build --force-recreate
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
+                docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
                 """
             }
         }
-
     }
+  }
+}
 
     post {
         success {
