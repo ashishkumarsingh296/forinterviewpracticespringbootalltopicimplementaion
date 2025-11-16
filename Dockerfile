@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY target/*.jar app.jar
 
-EXPOSE 8080
+# Accept Spring profile from environment variable
+ENV SPRING_PROFILE=wsl
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --spring.profiles.active=${SPRING_PROFILE}"]

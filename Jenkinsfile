@@ -226,7 +226,8 @@ pipeline {
                 docker run -d ^
                   --name myapp ^
                   -p 8081:8080 ^
-                  ${IMAGE_NAME}:${params.ENV}
+                  -e SPRING_PROFILE=wsl ^
+                   ${IMAGE_NAME}:${params.ENV}
                 """
             }
         }
