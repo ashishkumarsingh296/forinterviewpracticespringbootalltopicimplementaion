@@ -185,58 +185,65 @@ pipeline {
     agent any
 
     parameters {
-        choice(
-            name: 'ENV',
-            choices: ['DEV', 'QA'],
-            description: 'Choose Environment'
-        )
+        choice(name: 'ENV', choices: ['DEV', 'QA'], description: 'Choose Environment')
+    }
+
+    environment {
+        IMAGE_NAME = "java-multi-env"
+        WAR_FILE = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
     }
 
     stages {
 
-        stage('Git Checkout') {
+        stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-        stage('Maven Build') {
+        stage('Build WAR') {
             steps {
                 bat "mvn clean package -DskipTests"
             }
         }
 
-        stage('Docker Build') {
+        stage('Build Docker Image (Windows)') {
             steps {
-                script {
-                    def WAR_FILE = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
-
-                    sh """
-                    docker build \
-                        --build-arg DEV_WAR=${WAR_FILE} \
-                        -t myapp:${params.ENV} .
-                    """
-                }
+                bat """
+                docker build ^
+                  --build-arg APP_WAR=${WAR_FILE} ^
+                  -t ${IMAGE_NAME}:${params.ENV} .
+                """
             }
         }
 
-        stage('Deploy Container (WSL)') {
+        stage('Deploy Container') {
             steps {
-                sh """
-                docker rm -f myapp || true
-                docker run -d -p 8081:8080 --name myapp myapp:${params.ENV}
+                bat """
+                docker stop myapp || echo Not running
+                docker rm myapp || echo Not found
+
+                docker run -d ^
+                  --name myapp ^
+                  -p 8081:8080 ^
+                  ${IMAGE_NAME}:${params.ENV}
                 """
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                bat "curl -s http://localhost:8081 || echo Health Check Failed"
             }
         }
     }
 
     post {
         success {
-            echo "Deployment Successful!"
+            echo "✅ Deployment Successful!"
         }
         failure {
-            echo "❌ Deployment failed. Check Jenkins console."
+            echo "❌ Deployment Failed. Check the logs."
         }
     }
 }
-
