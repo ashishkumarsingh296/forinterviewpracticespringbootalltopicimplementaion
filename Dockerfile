@@ -6,6 +6,6 @@ WORKDIR /app
 COPY target/*.jar app.jar
 
 # Accept profile from environment
-ENV SPRING_PROFILE=wsl
+ENV SPRING_PROFILES_ACTIVE=wsl
+ENTRYPOINT ["java","-jar","app.jar"]
 
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --spring.profiles.active=${SPRING_PROFILE}"]
