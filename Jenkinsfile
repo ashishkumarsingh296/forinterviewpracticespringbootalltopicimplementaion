@@ -152,104 +152,87 @@ pipeline {
 
     environment {
         IMAGE_NAME = "java-multi-env"
-        JAR_FILE = "target/*SNAPSHOT.jar"
+        VERSION = "${BUILD_NUMBER}"
+        WORK_DIR = "${WORKSPACE}"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout Source Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+                git branch: 'main',
+                    url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-        stage('Build') {
+        stage('Build JAR') {
             steps {
                 bat "mvn clean package -DskipTests"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Versioned Docker Image') {
             steps {
                 bat """
-              docker build -t java-multi-env:latest .
-
+                    docker build -t ${IMAGE_NAME}:${VERSION} .
+                    docker tag ${IMAGE_NAME}:${VERSION} ${IMAGE_NAME}:latest
                 """
             }
         }
 
-        // stage('Deploy DEV') {
-        //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-        //     steps {
-        //         bat """
-        //         // docker stop myapp-dev || echo Not running
-        //         // docker rm myapp-dev || echo Not found
-
-        //         // docker run -d ^
-        //         //   --name myapp-dev ^
-        //         //   -p 8081:8080 ^
-        //         //   -e SPRING_PROFILES_ACTIVE=wsl ^
-        //         //   --add-host redis:172.21.37.255 ^
-        //         //   ${IMAGE_NAME}:latest
-        //         docker stop myapp-dev || echo Not running
-        //         docker rm myapp-dev || echo Not found
-        //         docker run -d ^
-        //         --name myapp-dev ^
-        //         -p 8081:8080 ^
-        //         -e SPRING_PROFILES_ACTIVE=wsl ^
-        //          ${IMAGE_NAME}:latest
-        //         """
-        //     }
-        // }
-
-        // stage('Deploy QA') {
-        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-        //     steps {
-        //         bat """
-        //         docker stop myapp-qa || echo Not running
-        //         docker rm myapp-qa || echo Not found
-        //         docker run -d ^
-        //         --name myapp-qa ^
-        //         -p 8082:8080 ^
-        //         -e SPRING_PROFILES_ACTIVE=wsl ^
-        //          ${IMAGE_NAME}:latest
-        //         """
-        //     }
-        // }
-
-
-         stage('Deploy DEV') {
-           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-         steps {
-          bat """
-          cd %WORKSPACE%
-          docker-compose down
-          docker-compose up -d --build
-         """
-      }
-        }
-
-        stage('Deploy QA') {
-            when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+        stage('Copy Compose Files') {
             steps {
                 bat """
-                cd %WORKSPACE%
-                docker-compose down
-                docker-compose -f docker-compose.qa.yml up -d
+                    copy ${WORKSPACE}\\docker-compose.yml .
+                    copy ${WORKSPACE}\\nginx.conf .
                 """
             }
         }
 
+        stage('Deploy Using Docker Compose') {
+            steps {
+                script {
+
+                    if (params.ENV == "DEV") {
+                        echo "🚀 Deploying DEV only..."
+
+                        bat """
+                            docker-compose down -v
+                            set VERSION=${VERSION}
+                            docker-compose up -d --build db-dev app-dev load-balancer
+                        """
+                    }
+
+                    if (params.ENV == "QA") {
+                        echo "🚀 Deploying QA only..."
+
+                        bat """
+                            docker-compose down -v
+                            set VERSION=${VERSION}
+                            docker-compose up -d --build db-qa app-qa load-balancer
+                        """
+                    }
+
+                    if (params.ENV == "BOTH") {
+                        echo "🚀 Deploying BOTH DEV + QA..."
+
+                        bat """
+                            docker-compose down -v
+                            set VERSION=${VERSION}
+                            docker-compose up -d --build
+                        """
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo "Deployment Successful!"
+            echo "🎉 Deployment Successful!"
         }
         failure {
-            echo "Deployment Failed!"
+            echo "❌ Deployment Failed!"
         }
     }
 }
-
-
