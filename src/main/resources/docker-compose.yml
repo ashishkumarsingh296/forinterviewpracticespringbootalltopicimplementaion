@@ -4,6 +4,7 @@ services:
   db:
     image: mysql:8
     container_name: mydb
+    restart: always
     environment:
       MYSQL_DATABASE: testdb
       MYSQL_USER: springuser
@@ -11,10 +12,13 @@ services:
       MYSQL_ROOT_PASSWORD: rootpass
     ports:
       - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
 
   app:
     image: java-multi-env:latest
     container_name: myapp
+    restart: on-failure
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/testdb
       SPRING_DATASOURCE_USERNAME: springuser
@@ -23,3 +27,6 @@ services:
       - db
     ports:
       - "8080:8080"
+
+volumes:
+  db_data:
