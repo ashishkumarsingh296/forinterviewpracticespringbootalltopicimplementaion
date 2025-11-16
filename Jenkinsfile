@@ -84,81 +84,97 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'DEPLOY_ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Which environment to deploy')
+        choice(name: 'DEPLOY_ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Which environment to deploy?')
     }
 
     environment {
         IMAGE_NAME = "myapp:latest"
         DEV_WAR = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
-        QA_WAR = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
-        PORT = "8080"
+        QA_WAR  = "target/forinterviewpracticespringbootalltopicimplementaion-0.0.1-SNAPSHOT.war"
     }
 
     stages {
+
+        /* 1. Checkout */
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+                git branch: 'main',
+                    url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-        stage('Build WAR') {
+        /* 2. Build WAR */
+        stage('Build') {
             steps {
                 bat 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Prepare WARs for Docker') {
+        /* 3. Build Docker Image */
+        stage('Docker Build') {
             steps {
                 script {
-                    if (params.DEPLOY_ENV == 'DEV') {
-                        env.WARS_TO_COPY = "${DEV_WAR}:dev.war"
-                    } else if (params.DEPLOY_ENV == 'QA') {
-                        env.WARS_TO_COPY = "${QA_WAR}:qa.war"
-                    } else {
-                        env.WARS_TO_COPY = "${DEV_WAR}:dev.war ${QA_WAR}:qa.war"
+                    def args = ""
+
+                    if (params.DEPLOY_ENV == 'DEV' || params.DEPLOY_ENV == 'BOTH')
+                        args += "--build-arg DEV_WAR=${DEV_WAR} "
+
+                    if (params.DEPLOY_ENV == 'QA' || params.DEPLOY_ENV == 'BOTH')
+                        args += "--build-arg QA_WAR=${QA_WAR} "
+
+                    bat """
+                        docker build ${args} -t ${IMAGE_NAME} .
+                    """
+                }
+            }
+        }
+
+        /* 4. Run Docker Containers Separately */
+        stage('Deploy') {
+            steps {
+                script {
+
+                    if (params.DEPLOY_ENV == 'DEV' || params.DEPLOY_ENV == 'BOTH') {
+                        bat "docker rm -f dev-container || true"
+                        bat "docker run -d --name dev-container -p 8081:8080 ${IMAGE_NAME}"
+                    }
+
+                    if (params.DEPLOY_ENV == 'QA' || params.DEPLOY_ENV == 'BOTH') {
+                        bat "docker rm -f qa-container || true"
+                        bat "docker run -d --name qa-container -p 8082:8080 ${IMAGE_NAME}"
                     }
                 }
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                bat """
-                docker build \\
-                  ${WARS_TO_COPY.split().collect { "--build-arg ${it}" }.join(' ')} \\
-                  -t ${IMAGE_NAME} .
-                """
-            }
-        }
-
-        stage('Deploy Docker Container') {
-            steps {
-                bat """
-                docker rm -f multi-tomcat || true
-                docker run -d --name multi-tomcat -p ${PORT}:8080 ${IMAGE_NAME}
-                """
-            }
-        }
-
+        /* 5. Health Check */
         stage('Health Check') {
             steps {
                 script {
                     if (params.DEPLOY_ENV == 'DEV' || params.DEPLOY_ENV == 'BOTH') {
-                        bat "curl -sSf http://127.0.0.1:${PORT}/dev/ || echo 'DEV failed'"
+                        bat "curl -sSf http://127.0.0.1:8081/dev/ || echo DEV Failed"
                     }
                     if (params.DEPLOY_ENV == 'QA' || params.DEPLOY_ENV == 'BOTH') {
-                        bat "curl -sSf http://127.0.0.1:${PORT}/qa/ || echo 'QA failed'"
+                        bat "curl -sSf http://127.0.0.1:8082/qa/ || echo QA Failed"
                     }
                 }
             }
         }
     }
 
+    /* 6. Post Notifications (Email + Console) */
     post {
-        success { echo "✅ Deployment successful for ${params.DEPLOY_ENV}!" }
-        failure { echo "❌ Deployment failed. Check logs." }
+        success {
+            mail to: 'ashish@example.com',
+                 subject: "SUCCESS: Deployment to ${params.DEPLOY_ENV}",
+                 body: "Deployment successfully completed."
+            echo "🎉 Deployment Success"
+        }
+        failure {
+            mail to: 'ashish@example.com',
+                 subject: "FAILED: Deployment to ${params.DEPLOY_ENV}",
+                 body: "Deployment failed. Please check Jenkins logs."
+            echo "❌ Deployment failed"
+        }
     }
 }
-
-
-
