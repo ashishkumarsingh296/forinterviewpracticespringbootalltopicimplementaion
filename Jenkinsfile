@@ -143,7 +143,7 @@
 // }
 
 
-ipeline {
+pipeline {
     agent any
 
     parameters {
