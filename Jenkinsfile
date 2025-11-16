@@ -216,41 +216,64 @@ pipeline {
             }
         }
 
-        stage('Deploy DEV') {
-            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-            steps {
-                bat """
-                // docker stop myapp-dev || echo Not running
-                // docker rm myapp-dev || echo Not found
+        // stage('Deploy DEV') {
+        //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         // docker stop myapp-dev || echo Not running
+        //         // docker rm myapp-dev || echo Not found
 
-                // docker run -d ^
-                //   --name myapp-dev ^
-                //   -p 8081:8080 ^
-                //   -e SPRING_PROFILES_ACTIVE=wsl ^
-                //   --add-host redis:172.21.37.255 ^
-                //   ${IMAGE_NAME}:latest
-                docker stop myapp-dev || echo Not running
-                docker rm myapp-dev || echo Not found
-                docker run -d ^
-                --name myapp-dev ^
-                -p 8081:8080 ^
-                -e SPRING_PROFILES_ACTIVE=wsl ^
-                 ${IMAGE_NAME}:latest
-                """
-            }
+        //         // docker run -d ^
+        //         //   --name myapp-dev ^
+        //         //   -p 8081:8080 ^
+        //         //   -e SPRING_PROFILES_ACTIVE=wsl ^
+        //         //   --add-host redis:172.21.37.255 ^
+        //         //   ${IMAGE_NAME}:latest
+        //         docker stop myapp-dev || echo Not running
+        //         docker rm myapp-dev || echo Not found
+        //         docker run -d ^
+        //         --name myapp-dev ^
+        //         -p 8081:8080 ^
+        //         -e SPRING_PROFILES_ACTIVE=wsl ^
+        //          ${IMAGE_NAME}:latest
+        //         """
+        //     }
+        // }
+
+        // stage('Deploy QA') {
+        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         docker stop myapp-qa || echo Not running
+        //         docker rm myapp-qa || echo Not found
+        //         docker run -d ^
+        //         --name myapp-qa ^
+        //         -p 8082:8080 ^
+        //         -e SPRING_PROFILES_ACTIVE=wsl ^
+        //          ${IMAGE_NAME}:latest
+        //         """
+        //     }
+        // }
+
+
+         stage('Deploy DEV') {
+           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+         steps {
+          bat """
+          cd %WORKSPACE%
+          docker-compose down
+          docker-compose up -d --build
+         """
+      }
         }
 
         stage('Deploy QA') {
             when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
             steps {
                 bat """
-                docker stop myapp-qa || echo Not running
-                docker rm myapp-qa || echo Not found
-                docker run -d ^
-                --name myapp-qa ^
-                -p 8082:8080 ^
-                -e SPRING_PROFILES_ACTIVE=wsl ^
-                 ${IMAGE_NAME}:latest
+                cd %WORKSPACE%
+                docker-compose down
+                docker-compose -f docker-compose.qa.yml up -d
                 """
             }
         }
