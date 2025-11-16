@@ -37,7 +37,6 @@
 # volumes:
 #   db_data:
 
-
 version: '3.8'
 
 services:
@@ -53,6 +52,11 @@ services:
       - "3307:3306"
     networks:
       - myapp-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   db-qa:
     image: mysql:8
@@ -66,6 +70,11 @@ services:
       - "3308:3306"
     networks:
       - myapp-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   app-dev:
     image: java-multi-env:${VERSION}
@@ -75,7 +84,8 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      - db-dev
+      db-dev:
+        condition: service_healthy
     networks:
       - myapp-network
 
@@ -87,23 +97,14 @@ services:
     ports:
       - "8082:8080"
     depends_on:
-      - db-qa
-    networks:
-      - myapp-network
-
-  load-balancer:
-    image: nginx:alpine
-    container_name: myapp-lb
-    ports:
-      - "8080:80"
-    depends_on:
-      - app-dev
-      - app-qa
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      db-qa:
+        condition: service_healthy
     networks:
       - myapp-network
 
 networks:
   myapp-network:
     driver: bridge
+
+
+
