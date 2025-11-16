@@ -93,6 +93,7 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
+        
 
         stage('Build') {
             steps {
@@ -107,6 +108,12 @@ pipeline {
                 """
             }
         }
+        stage('Debug Workspace') {
+    steps {
+        bat "dir"
+        bat "type docker-compose.yml"
+    }
+}
 
         stage('Deploy') {
             steps {
