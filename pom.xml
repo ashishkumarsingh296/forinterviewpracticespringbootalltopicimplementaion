@@ -10,8 +10,6 @@
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>forinterviewpracticespringbootalltopicimplementaion</artifactId>
-	<packaging>war</packaging>
-	<version>0.0.1-SNAPSHOT</version>
 	<name>forinterviewpracticespringbootalltopicimplementaion</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
