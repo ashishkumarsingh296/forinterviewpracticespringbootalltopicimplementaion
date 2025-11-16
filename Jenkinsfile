@@ -211,7 +211,8 @@ pipeline {
             steps {
                 bat """
               set DOCKER_HOST=tcp://localhost:2375
-              docker build -t ${IMAGE_NAME}:latest 
+              docker build -t java-multi-env:latest .
+
                 """
             }
         }
