@@ -2,6 +2,8 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableAsync;
 
@@ -13,5 +15,10 @@ public class ForinterviewpracticespringbootalltopicimplementaionApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ForinterviewpracticespringbootalltopicimplementaionApplication.class, args);
 	}
+//This tells Spring Boot how to run inside an external Tomcat server.
+//	@Override
+//	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+//		return application.sources(ForinterviewpracticespringbootalltopicimplementaionApplication.class);
+//	}
 
 }
