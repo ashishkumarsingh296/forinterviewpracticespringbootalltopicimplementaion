@@ -223,12 +223,13 @@ pipeline {
                 docker stop myapp || echo Not running
                 docker rm myapp || echo Not found
 
-                docker run -d ^
+               docker run -d ^
                   --name myapp ^
-                  -p 8081:8080 ^
-                  -e SPRING_PROFILE=wsl ^
+                   -p 8081:8080 ^
+                   -e SPRING_PROFILES_ACTIVE=wsl ^
                    ${IMAGE_NAME}:${params.ENV}
-                """
+                 """
+
             }
         }
 
