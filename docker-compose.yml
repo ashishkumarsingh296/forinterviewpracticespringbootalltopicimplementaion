@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   db-dev:
     image: mysql:8
     container_name: mydb-dev
@@ -66,6 +65,16 @@ services:
     networks:
       - appnet
 
+  load-balancer:
+    image: nginx:alpine
+    container_name: myapp-lb
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - appnet
+
 networks:
   appnet:
     driver: bridge
@@ -73,6 +82,7 @@ networks:
 volumes:
   db_dev_data:
   db_qa_data:
+
 
 
 
