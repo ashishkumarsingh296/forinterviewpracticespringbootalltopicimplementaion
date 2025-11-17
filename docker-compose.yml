@@ -1,9 +1,6 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8
-    restart: always
     environment:
       MYSQL_DATABASE: testdb
       MYSQL_USER: springuser
@@ -21,20 +18,14 @@ services:
   app:
     build: .
     image: java-single-env:latest
-    restart: on-failure
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/testdb
       SPRING_DATASOURCE_USERNAME: springuser
       SPRING_DATASOURCE_PASSWORD: springpass
       SPRING_PROFILES_ACTIVE: wsl
-
     depends_on:
       db:
         condition: service_healthy
-    deploy:
-      replicas: 1          # Start with 1, scale dynamically
-    ports:
-      - "8080"             # Nginx will handle load balancing
 
   nginx:
     image: nginx:latest
@@ -47,6 +38,7 @@ services:
 
 volumes:
   db_data:
+
 
 
 
