@@ -1,3 +1,38 @@
+# version: "3.8"
+
+# services:
+#   mynewapp:
+#     build: .
+#     image: mynewapp:latest
+#     ports:
+#       - "8080"
+#     environment:
+#       - SPRING_PROFILES_ACTIVE=wsl
+#     deploy:
+#       replicas: 1
+#       resources:
+#         limits:
+#           cpus: "0.5"
+#           memory: 512M
+#       restart_policy:
+#         condition: on-failure
+#     healthcheck:
+#       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+#       interval: 20s
+#       retries: 3
+
+#   nginx:
+#     image: nginx:latest
+#     ports:
+#       - "80:80"
+#     volumes:
+#        - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+#     depends_on:
+#       - mynewapp
+
+
+
 version: "3.8"
 
 services:
@@ -5,17 +40,10 @@ services:
     build: .
     image: mynewapp:latest
     ports:
-      - "8080"
+      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=wsl
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 512M
-      restart_policy:
-        condition: on-failure
+    restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 20s
@@ -27,6 +55,5 @@ services:
       - "80:80"
     volumes:
        - ./nginx.conf:/etc/nginx/nginx.conf:ro
-
     depends_on:
       - mynewapp
