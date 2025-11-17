@@ -75,7 +75,7 @@
 
 
 pipeline {
-    agent any
+    agent any{
 
     environment {
         WSL_PROJECT="/home/ashishdev/project"
