@@ -5,8 +5,10 @@ services:
     image: mysql:8
     container_name: interviewallversion2-db
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: interviewdb
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: springuser
+      MYSQL_PASSWORD: springpass
+      MYSQL_ROOT_PASSWORD: rootpass
     ports:
       - "3307:3306"
     networks:
