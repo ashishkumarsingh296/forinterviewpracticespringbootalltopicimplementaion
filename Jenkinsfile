@@ -4,6 +4,7 @@ pipeline {
 
     parameters {
         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
+        string(name: 'REPLICAS', defaultValue: '2', description: 'Number of app replicas for load balancing')
     }
 
     environment {
@@ -27,62 +28,26 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat """
-              docker build -t java-single-env:latest .
-
-                """
+                bat "docker build -t ${IMAGE_NAME}:latest ."
             }
         }
 
-        // stage('Deploy DEV') {
-        //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-        //     steps {
-        //         bat """
-        //         // docker stop myapp-dev || echo Not running
-        //         // docker rm myapp-dev || echo Not found
-
-        //         // docker run -d ^
-        //         //   --name myapp-dev ^
-        //         //   -p 8081:8080 ^
-        //         //   -e SPRING_PROFILES_ACTIVE=wsl ^
-        //         //   --add-host redis:172.21.37.255 ^
-        //         //   ${IMAGE_NAME}:latest
-        //         docker stop myapp-dev || echo Not running
-        //         docker rm myapp-dev || echo Not found
-        //         docker run -d ^
-        //         --name myapp-dev ^
-        //         -p 8081:8080 ^
-        //         -e SPRING_PROFILES_ACTIVE=wsl ^
-        //          ${IMAGE_NAME}:latest
-        //         """
-        //     }
-        // }
-
-        // stage('Deploy QA') {
-        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-        //     steps {
-        //         bat """
-        //         docker stop myapp-qa || echo Not running
-        //         docker rm myapp-qa || echo Not found
-        //         docker run -d ^
-        //         --name myapp-qa ^
-        //         -p 8082:8080 ^
-        //         -e SPRING_PROFILES_ACTIVE=wsl ^
-        //          ${IMAGE_NAME}:latest
-        //         """
-        //     }
-        // }
-
-
-         stage('Deploy DEV') {
-           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-         steps {
-          bat """
-          cd %WORKSPACE%
-          docker-compose down
-          docker-compose up -d --build
-         """
-      }
+        stage('Deploy with Load Balancer') {
+            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+            steps {
+                bat """
+                cd %WORKSPACE%
+                
+                REM Stop and remove existing containers
+                docker-compose down
+                
+                REM Scale app service based on REPLICAS
+                docker-compose up -d --build --scale app=${params.REPLICAS}
+                
+                REM Reload Nginx to pick up new replicas
+                docker exec nginx-lb nginx -s reload || echo "Nginx reload failed (maybe first start)"
+                """
+            }
         }
 
         stage('Deploy QA') {
@@ -94,7 +59,6 @@ pipeline {
                 """
             }
         }
-
     }
 
     post {
@@ -106,6 +70,118 @@ pipeline {
         }
     }
 }
+
+
+
+
+
+// pipeline {
+//     agent any
+
+//     parameters {
+//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
+//     }
+
+//     environment {
+//         IMAGE_NAME = "java-single-env"
+//         JAR_FILE = "target/*SNAPSHOT.jar"
+//     }
+
+//     stages {
+
+//         stage('Checkout Code') {
+//             steps {
+//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+//             }
+//         }
+
+//         stage('Build') {
+//             steps {
+//                 bat "mvn clean package -DskipTests"
+//             }
+//         }
+
+//         stage('Build Docker Image') {
+//             steps {
+//                 bat """
+//               docker build -t java-single-env:latest .
+
+//                 """
+//             }
+//         }
+
+//         // stage('Deploy DEV') {
+//         //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+//         //     steps {
+//         //         bat """
+//         //         // docker stop myapp-dev || echo Not running
+//         //         // docker rm myapp-dev || echo Not found
+
+//         //         // docker run -d ^
+//         //         //   --name myapp-dev ^
+//         //         //   -p 8081:8080 ^
+//         //         //   -e SPRING_PROFILES_ACTIVE=wsl ^
+//         //         //   --add-host redis:172.21.37.255 ^
+//         //         //   ${IMAGE_NAME}:latest
+//         //         docker stop myapp-dev || echo Not running
+//         //         docker rm myapp-dev || echo Not found
+//         //         docker run -d ^
+//         //         --name myapp-dev ^
+//         //         -p 8081:8080 ^
+//         //         -e SPRING_PROFILES_ACTIVE=wsl ^
+//         //          ${IMAGE_NAME}:latest
+//         //         """
+//         //     }
+//         // }
+
+//         // stage('Deploy QA') {
+//         //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+//         //     steps {
+//         //         bat """
+//         //         docker stop myapp-qa || echo Not running
+//         //         docker rm myapp-qa || echo Not found
+//         //         docker run -d ^
+//         //         --name myapp-qa ^
+//         //         -p 8082:8080 ^
+//         //         -e SPRING_PROFILES_ACTIVE=wsl ^
+//         //          ${IMAGE_NAME}:latest
+//         //         """
+//         //     }
+//         // }
+
+
+//          stage('Deploy DEV') {
+//            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+//          steps {
+//           bat """
+//           cd %WORKSPACE%
+//           docker-compose down
+//           docker-compose up -d --build
+//          """
+//       }
+//         }
+
+//         stage('Deploy QA') {
+//             when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+//             steps {
+//                 bat """
+//                 cd %WORKSPACE%
+//                 docker-compose down
+//                 """
+//             }
+//         }
+
+//     }
+
+//     post {
+//         success {
+//             echo "Deployment Successful!"
+//         }
+//         failure {
+//             echo "Deployment Failed!"
+//         }
+//     }
+// }
 
 
 
