@@ -1,13 +1,15 @@
- version: "3.9"
+
+
+version: "3.9"
 
 services:
   db:
     image: mysql:8
     environment:
-       MYSQL_DATABASE: testdb
+      MYSQL_DATABASE: testdb
       MYSQL_USER: springuser
       MYSQL_PASSWORD: springpass
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_ROOT_PASSWORD: root
     ports:
       - "3307:3306"
     networks:
@@ -36,13 +38,6 @@ services:
 networks:
   app-net:
     driver: bridge
-
-
-
-
-
-
-
 
 # version: '3.8'
 
