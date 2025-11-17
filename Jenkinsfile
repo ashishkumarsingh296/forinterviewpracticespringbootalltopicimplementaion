@@ -1,9 +1,84 @@
+// pipeline {
+//     agent any
+
+//     environment {
+//         WSL_PROJECT="/home/ashishdev/project"
+//         DOCKER_IMAGE="myapp"
+//     }
+
+//     stages {
+
+//         stage('Checkout Code') {
+//             steps {
+//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+//             }
+//         }
+
+//       stage('Copy to WSL Workspace') {
+//     steps {
+//         bat """
+//         wsl cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* $WSL_PROJECT/
+//         """
+//     }
+// }
+
+
+//         stage('Build JAR & Docker Image in WSL') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+//                 wsl bash -c "cd $WSL_PROJECT && docker-compose build --no-cache"
+//                 """
+//             }
+//         }
+
+//         stage('Deploy Application') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT && docker-compose up -d"
+//                 """
+//             }
+//         }
+
+//         stage('Auto-Scaling') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT/scripts && ./deploy.sh"
+//                 """
+//             }
+//         }
+
+//         stage('Health Check') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "curl -f http://localhost || echo 'App not reachable!'"
+//                 """
+//             }
+//         }
+//     }
+
+//     post {
+//         success {
+//             echo "Deployment completed successfully!"
+//         }
+//         failure {
+//             echo "Deployment failed. Check logs for details."
+//             // Optional: configure SMTP if you want mail notifications
+//         }
+//     }
+// }
+
+
+
+
+
+
+
 pipeline {
     agent any
 
     environment {
         WSL_PROJECT="/home/ashishdev/project"
-        // WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion" // Update your workspace name
         DOCKER_IMAGE="myapp"
     }
 
@@ -15,16 +90,7 @@ pipeline {
             }
         }
 
-      stage('Copy to WSL Workspace') {
-    steps {
-        bat """
-        wsl cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* $WSL_PROJECT/
-        """
-    }
-}
-
-
-        stage('Build JAR & Docker Image in WSL') {
+        stage('Build JAR & Docker Image') {
             steps {
                 bat """
                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
@@ -36,15 +102,8 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 bat """
+                wsl bash -c "cd $WSL_PROJECT && docker-compose down"
                 wsl bash -c "cd $WSL_PROJECT && docker-compose up -d"
-                """
-            }
-        }
-
-        stage('Auto-Scaling') {
-            steps {
-                bat """
-                wsl bash -c "cd $WSL_PROJECT/scripts && ./deploy.sh"
                 """
             }
         }
@@ -64,7 +123,6 @@ pipeline {
         }
         failure {
             echo "Deployment failed. Check logs for details."
-            // Optional: configure SMTP if you want mail notifications
         }
     }
 }
