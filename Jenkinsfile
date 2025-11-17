@@ -1,14 +1,15 @@
 
 pipeline {
-    agent any
+
+    agent { label 'your-windows-agent' }   // IMPORTANT FIX
 
     parameters {
-        choice(name: 'ENV', choices: ['DEV'], description: 'Choose environment to deploy')
+        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
     }
 
     environment {
         IMAGE_NAME = "java-single-env"
-        JAR_FILE = "target/*SNAPSHOT.jar"
+        JAR_FILE   = "target/*SNAPSHOT.jar"
     }
 
     stages {
@@ -27,37 +28,33 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat """
-              docker build -t java-single-env:latest .
-
+                bat """ 
+                    docker build -t ${IMAGE_NAME}:latest .
                 """
             }
         }
 
-  
-
-
-         stage('Deploy DEV') {
-           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-         steps {
-          bat """
-          cd %WORKSPACE%
-          docker-compose down
-          docker-compose up -d --build
-         """
-          }
+        stage('Deploy DEV') {
+            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+            steps {
+                bat """
+                    cd "%WORKSPACE%"
+                    docker-compose down
+                    docker-compose up -d --build
+                """
+            }
         }
 
-        // stage('Deploy QA') {
-        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-        //     steps {
-        //         bat """
-        //         cd %WORKSPACE%
-        //         docker-compose down
-        //         docker-compose -f docker-compose.qa.yml up -d
-        //         """
-        //     }
-        // }
+        stage('Deploy QA') {
+            when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+            steps {
+                bat """
+                    cd "%WORKSPACE%"
+                    docker-compose down
+                    docker-compose -f docker-compose.qa.yml up -d --build
+                """
+            }
+        }
 
     }
 
