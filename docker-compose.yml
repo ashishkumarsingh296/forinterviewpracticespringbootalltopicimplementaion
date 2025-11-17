@@ -43,9 +43,9 @@ services:
       - db
     environment:
       SPRING_PROFILES_ACTIVE=wsl
-      SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/mydatabase
-      SPRING_DATASOURCE_USERNAME=myuser
-      SPRING_DATASOURCE_PASSWORD=mypassword
+      SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/testdb
+      SPRING_DATASOURCE_USERNAME=springuser
+      SPRING_DATASOURCE_PASSWORD=springpass
     ports:
       - "8080:8080"   # App exposed on host 8080
     healthcheck:
