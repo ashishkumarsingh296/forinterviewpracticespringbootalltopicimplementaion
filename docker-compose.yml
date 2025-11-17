@@ -39,21 +39,38 @@ services:
   mynewapp:
     build: .
     image: mynewapp:latest
-    ports:
-      - "8080:8080"
+    depends_on:
+      - db
     environment:
-      - SPRING_PROFILES_ACTIVE=wsl
-    restart: on-failure
+      SPRING_PROFILES_ACTIVE=wsl
+      SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/mydatabase
+      SPRING_DATASOURCE_USERNAME=myuser
+      SPRING_DATASOURCE_PASSWORD=mypassword
+    ports:
+      - "8080:8080"   # App exposed on host 8080
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 20s
       retries: 3
+    restart: unless-stopped
+
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD=rootpass
+      MYSQL_DATABASE=mydatabase
+      MYSQL_USER=myuser
+      MYSQL_PASSWORD=mypassword
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
 
   nginx:
     image: nginx:latest
+    depends_on:
+      - mynewapp
     ports:
       - "80:80"
     volumes:
-       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - mynewapp
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
