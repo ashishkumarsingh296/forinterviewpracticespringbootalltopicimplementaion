@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        WSL_PROJECT="/home/username/project"
+        WSL_PROJECT="/home/ashishdev/project"
         WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\forinterviewpracticespringbootalltopicimplementaion" // adjust if needed
         DOCKER_IMAGE="myapp"
     }
@@ -17,7 +17,7 @@ pipeline {
 
         stage('Copy to WSL Workspace') {
             steps {
-                sh """
+                bat"""
                 wsl cp -r /mnt/c/Users/jenkins/workspace/forinterviewpracticespringbootalltopicimplementaion/* $WSL_PROJECT/
                 """
             }
@@ -25,7 +25,7 @@ pipeline {
 
         stage('Build JAR & Docker Image in WSL') {
             steps {
-                sh """
+                bat """
                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
                 wsl bash -c "cd $WSL_PROJECT && docker-compose build --no-cache"
                 """
@@ -34,7 +34,7 @@ pipeline {
 
         stage('Deploy Application') {
             steps {
-                sh """
+                bat """
                 wsl bash -c "cd $WSL_PROJECT && docker-compose up -d"
                 """
             }
@@ -42,7 +42,7 @@ pipeline {
 
         stage('Auto-Scaling') {
             steps {
-                sh """
+                bat """
                 wsl bash -c "cd $WSL_PROJECT/scripts && ./deploy.sh"
                 """
             }
@@ -50,7 +50,7 @@ pipeline {
 
         stage('Health Check') {
             steps {
-                sh """
+                bat """
                 wsl bash -c "curl -f http://localhost || echo 'App not reachable!'"
                 """
             }
@@ -62,7 +62,7 @@ pipeline {
             echo "Deployment completed successfully!"
         }
         failure {
-            mail to: 'devops@company.com',
+            mail to: 'ashishkumarsingh296@gmail.com',
                  subject: "Deployment Failed",
                  body: "Check Jenkins logs for details."
         }
