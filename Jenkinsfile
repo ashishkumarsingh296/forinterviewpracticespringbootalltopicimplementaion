@@ -40,22 +40,26 @@ pipeline {
             }
         }
 
-        stage('Auto-Scaling Check') {
+        stage('Start Auto-Scaling Monitor') {
             steps {
-                bat "bash %WORKSPACE%/monitor.sh"
+                // Run monitor.ps1 in background so Jenkins can finish
+                bat """
+                powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File %WORKSPACE%\\monitor.ps1' -WindowStyle Hidden"
+                """
             }
         }
     }
 
     post {
         success {
-            echo "Deployment and Auto-Scaling Completed Successfully!"
+            echo "Deployment and Auto-Scaling Started Successfully!"
         }
         failure {
             echo "Deployment Failed!"
         }
     }
 }
+
 
 
 
