@@ -64,31 +64,33 @@ pipeline {
     environment {
         IMAGE_NAME = "java-single-env"
         JAR_FILE = "target/*SNAPSHOT.jar"
-        DOCKER_COMPOSE_PATH = "C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\docker-compose.yml"
-        SCRIPT_PATH = "C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\monitor-and-scale.ps1"
+        DOCKER_COMPOSE_PATH = "\"C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\docker-compose.yml\""
+        SCRIPT_PATH = "\"C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\monitor-and-scale.ps1\""
     }
 
     stages {
 
-    stage('Checkout Code') {
+        stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-         stage('Build') {
+        stage('Build') {
             steps {
-                bat "mvn clean package -DskipTests"
+                bat 'mvn clean package -DskipTests'
             }
         }
 
         stage('Build & Deploy') {
             steps {
-                echo "Building Docker images..."
-                bat "docker-compose -f %DOCKER_COMPOSE_PATH% build"
-                
+                echo "Building Docker image..."
+
+                // IMPORTANT: use docker compose (space), not docker-compose
+                bat "docker compose -f %DOCKER_COMPOSE_PATH% build"
+
                 echo "Starting containers..."
-                bat "docker-compose -f %DOCKER_COMPOSE_PATH% up -d"
+                bat "docker compose -f %DOCKER_COMPOSE_PATH% up -d"
             }
         }
 
@@ -109,6 +111,7 @@ pipeline {
         }
     }
 }
+
 
 
 
