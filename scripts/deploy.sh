@@ -1,26 +1,27 @@
 #!/bin/bash
-# Auto-scale Spring Boot app in WSL based on CPU
 
-MAX_INSTANCES=5
-MIN_INSTANCES=1
-CPU_THRESHOLD=70
+# Number of app replicas based on CPU usage (example)
+MAX_REPLICAS=5
+MIN_REPLICAS=1
 
-current_replicas=$(docker ps -q --filter "name=myapp" | wc -l)
+# Fetch average CPU usage of existing containers
+CPU_AVG=$(docker stats --no-stream --format "{{.CPUPerc}}" myapp | tr -d '%' | awk '{sum+=$1} END {print sum/NR}')
 
-cpu_usage=$(docker stats myapp --no-stream --format "{{.CPUPerc}}" | sed 's/%//g' | awk '{sum+=$1} END {print sum/NR}')
-
-echo "Current replicas: $current_replicas, CPU Usage: $cpu_usage"
-
-if (( $(echo "$cpu_usage > $CPU_THRESHOLD" | bc -l) )) && [ $current_replicas -lt $MAX_INSTANCES ]; then
-    new_replicas=$((current_replicas+1))
-    echo "Scaling up to $new_replicas instances..."
-    docker-compose up -d --scale myapp=$new_replicas
-    docker exec nginx nginx -s reload
-elif (( $(echo "$cpu_usage < 30" | bc -l) )) && [ $current_replicas -gt $MIN_INSTANCES ]; then
-    new_replicas=$((current_replicas-1))
-    echo "Scaling down to $new_replicas instances..."
-    docker-compose up -d --scale myapp=$new_replicas
-    docker exec nginx nginx -s reload
+# Determine desired replicas
+if (( $(echo "$CPU_AVG > 50" | bc -l) )); then
+    REPLICAS=$(( $(docker ps -q --filter "name=myapp" | wc -l) + 1 ))
+elif (( $(echo "$CPU_AVG < 20" | bc -l) )); then
+    REPLICAS=$(( $(docker ps -q --filter "name=myapp" | wc -l) - 1 ))
 else
-    echo "No scaling action required"
+    REPLICAS=$(docker ps -q --filter "name=myapp" | wc -l)
 fi
+
+# Clamp replicas
+if [ $REPLICAS -gt $MAX_REPLICAS ]; then REPLICAS=$MAX_REPLICAS; fi
+if [ $REPLICAS -lt $MIN_REPLICAS ]; then REPLICAS=$MIN_REPLICAS; fi
+
+# Scale Docker Compose
+docker-compose up -d --scale myapp=$REPLICAS
+
+# Reload Nginx if using as load balancer
+nginx -s reload
