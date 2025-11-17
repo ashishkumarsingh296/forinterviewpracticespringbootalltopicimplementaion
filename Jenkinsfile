@@ -2,46 +2,69 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HOST="tcp://localhost:2375"
+        WSL_PROJECT="/home/username/project"  // WSL workspace
+        WINDOWS_PROJECT="C:\\Users\\jenkins\\workspace\\forinterviewpracticespringbootalltopicimplementaion" // adjust if needed
+        DOCKER_IMAGE="myapp"
     }
 
     stages {
-        stage('Build') {
+
+        stage('Checkout Code') {
             steps {
-                bat './mvnw clean package -DskipTests'
+                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-        stage('Docker Build') {
+        stage('Copy to WSL Workspace') {
             steps {
-                sh 'docker build -t myapp:latest .'
+                sh """
+                wsl cp -r /mnt/c/Users/jenkins/workspace/forinterviewpracticespringbootalltopicimplementaion/* $WSL_PROJECT/
+                """
             }
         }
 
-        stage('Deploy to WSL') {
+        stage('Build JAR & Docker Image in WSL') {
             steps {
-                bat 'docker-compose -f docker-compose.yml up -d'
+                sh """
+                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+                wsl bash -c "cd $WSL_PROJECT && docker-compose build --no-cache"
+                """
             }
         }
 
-        stage('Trigger Auto-Scaling') {
+        stage('Deploy Application') {
             steps {
-                bat 'bash scripts/deploy.sh'
+                sh """
+                wsl bash -c "cd $WSL_PROJECT && docker-compose up -d"
+                """
+            }
+        }
+
+        stage('Auto-Scaling') {
+            steps {
+                sh """
+                wsl bash -c "cd $WSL_PROJECT/scripts && ./deploy.sh"
+                """
             }
         }
 
         stage('Health Check') {
             steps {
-                bat 'curl -f http://localhost || echo "App not reachable!"'
+                sh """
+                wsl bash -c "curl -f http://localhost || echo 'App not reachable!'"
+                """
             }
         }
     }
 
     post {
+        success {
+            echo "Deployment completed successfully!"
+        }
         failure {
-            mail to: 'ashishkumarsingh296@gmail.com',
+            mail to: 'devops@company.com',
                  subject: "Deployment Failed",
-                 body: "Check Jenkins logs"
+                 body: "Check Jenkins logs for details."
         }
     }
 }
