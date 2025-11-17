@@ -1,28 +1,31 @@
 # monitor.ps1
-$maxIterations = 20          # Number of monitoring cycles
-$checkInterval = 5           # Seconds between checks
-$cpuThresholdUp = 70         # CPU % to scale up
-$cpuThresholdDown = 10       # CPU % to scale down
-$replicas = 1                # Starting replicas
+$serviceName = "app"
+$maxReplicas = 4
+$minReplicas = 1
+$cpuThresholdUp = 50   # scale up if average CPU > 50%
+$cpuThresholdDown = 20 # scale down if average CPU < 20%
 
-for ($i=0; $i -lt $maxIterations; $i++) {
-    # Simulate reading average CPU from Docker container
-    # Replace this with your actual CPU fetch command
-    $cpu = Get-Random -Minimum 0 -Maximum 100
+# Get current replicas
+$currentReplicas = (docker ps --filter "name=$serviceName" --format "{{.Names}}" | Measure-Object).Count
 
-    Write-Output "Average CPU: $cpu% | Current replicas: $replicas"
+# Simulate getting average CPU usage (replace with your real monitoring logic)
+$averageCPU = (Get-Random -Minimum 0 -Maximum 100) # for demo, replace with actual CPU calculation
 
-    if ($cpu -gt $cpuThresholdUp) {
-        $replicas++
-        Write-Output "Scaling up to $replicas replicas"
-        docker-compose up -d --scale app=$replicas
-    } elseif ($cpu -lt $cpuThresholdDown -and $replicas -gt 1) {
-        $replicas--
-        Write-Output "Scaling down to $replicas replicas"
-        docker-compose up -d --scale app=$replicas
-    }
+Write-Host "Average CPU: $averageCPU% | Current replicas: $currentReplicas"
 
-    Start-Sleep -Seconds $checkInterval
+# Scaling logic
+if ($averageCPU -gt $cpuThresholdUp -and $currentReplicas -lt $maxReplicas) {
+    $newReplicas = $currentReplicas + 1
+    if ($newReplicas -gt $maxReplicas) { $newReplicas = $maxReplicas }
+    Write-Host "Scaling UP to $newReplicas replicas..."
+    docker-compose up -d --scale $serviceName=$newReplicas
 }
-
-Write-Output "Monitoring complete. Final replicas: $replicas"
+elseif ($averageCPU -lt $cpuThresholdDown -and $currentReplicas -gt $minReplicas) {
+    $newReplicas = $currentReplicas - 1
+    if ($newReplicas -lt $minReplicas) { $newReplicas = $minReplicas }
+    Write-Host "Scaling DOWN to $newReplicas replicas..."
+    docker-compose up -d --scale $serviceName=$newReplicas
+}
+else {
+    Write-Host "No scaling needed."
+}
