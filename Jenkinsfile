@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         WSL_PROJECT="/home/ashishdev/project"
-        WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion" // Update your workspace name
+        // WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion" // Update your workspace name
         DOCKER_IMAGE="myapp"
     }
 
