@@ -1,6 +1,6 @@
 # monitor.ps1 - Windows PowerShell autoscale
 
-$service = "interviewallversion_app"  # adjust if needed
+$service = "interviewallversion-app"  # adjust if needed
 $maxCPU = 70
 $minCPU = 20
 $scaleStep = 1
@@ -11,8 +11,8 @@ while ($true) {
 
     # Get CPU usage of matching containers
     $cpuUsage = docker stats --no-stream --format "{{.Name}} {{.CPUPerc}}" |
-        Where-Object { $_ -match "$service" } |
-        ForEach-Object { ($_ -split ' ')[1] -replace '%','' -as [double] }
+    Where-Object { $_ -match "$service" } |
+    ForEach-Object { ($_ -split ' ')[1] -replace '%','' -as [double] }    
 
     if ($cpuUsage.Count -eq 0) { $cpuUsage = @(0) }
 
