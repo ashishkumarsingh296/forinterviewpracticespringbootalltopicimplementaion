@@ -2,7 +2,7 @@
 $replicas = 1
 $maxRequestsPerReplica = 20
 $minRequestsPerReplica = 5
-$maxReplicas = 4
+$maxReplicas = 5
 
 # Placeholder: Replace with actual logic to get requests per replica
 # For example, parse Nginx access logs or call app metrics endpoint
