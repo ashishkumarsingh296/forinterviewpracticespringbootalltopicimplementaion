@@ -4,7 +4,6 @@ pipeline {
 
     parameters {
         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-        string(name: 'REPLICAS', defaultValue: '2', description: 'Number of app replicas for load balancing')
     }
 
     environment {
@@ -32,20 +31,14 @@ pipeline {
             }
         }
 
-        stage('Deploy with Load Balancer') {
+        stage('Deploy DEV') {
             when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
             steps {
                 bat """
                 cd %WORKSPACE%
-                
-                REM Stop and remove existing containers
                 docker-compose down
-                
-                REM Scale app service based on REPLICAS
-                docker-compose up -d --build --scale app=${params.REPLICAS}
-                
-                REM Reload Nginx to pick up new replicas
-                docker exec nginx-lb nginx -s reload || echo "Nginx reload failed (maybe first start)"
+                docker-compose up -d --build --scale app=2
+                docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
                 """
             }
         }
@@ -56,21 +49,19 @@ pipeline {
                 bat """
                 cd %WORKSPACE%
                 docker-compose down
+                docker-compose up -d --build --scale app=2
+                docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
                 """
             }
         }
+
     }
 
     post {
-        success {
-            echo "Deployment Successful!"
-        }
-        failure {
-            echo "Deployment Failed!"
-        }
+        success { echo "Deployment Successful!" }
+        failure { echo "Deployment Failed!" }
     }
 }
-
 
 
 
