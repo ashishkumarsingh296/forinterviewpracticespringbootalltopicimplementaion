@@ -18,7 +18,7 @@ pipeline {
         stage('Copy to WSL Workspace') {
             steps {
                 bat """
-                wsl sudo cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* /home/ashishdev/project/
+                wsl  cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* /home/ashishdev/project/
                 // wsl cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* $WSL_PROJECT/
                 """
             }
