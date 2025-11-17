@@ -57,70 +57,61 @@
 //     }
 // }
 
-
 pipeline {
     agent any
 
-    environment {
-        WSL_PROJECT_DIR = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion"
-        DOCKER_COMPOSE_FILE = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/docker-compose.yml"
-        SCALE_SCRIPT = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/monitor-and-scale.ps1"
-    }
-
     stages {
 
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+                git branch: 'main', url: 'https://github.com/YOUR/REPO.git'
             }
         }
 
-        stage('Build Jar') {
+        stage('Build JAR') {
             steps {
-                bat "mvn clean package -DskipTests"
+                powershell './mvnw clean package -DskipTests'
             }
         }
 
-        stage('Build Docker Images in WSL') {
+        stage('Copy Artifact to WSL') {
             steps {
-                echo "Running docker build inside WSL..."
-
-                bat """
-                wsl bash -c "cd $WSL_PROJECT_DIR && docker compose -f $DOCKER_COMPOSE_FILE build"
-                """
+                powershell '''
+                wsl -d Ubuntu mkdir -p /home/aashu/app
+                cp target/*.jar \\\\wsl$\\Ubuntu\\home\\aashu\\app\\app.jar
+                '''
             }
         }
 
-        stage('Run Containers in WSL') {
+        stage('Build Docker Image in WSL') {
             steps {
-                echo "Starting services via WSL docker compose..."
-
-                bat """
-                wsl bash -c "cd $WSL_PROJECT_DIR && docker compose -f $DOCKER_COMPOSE_FILE up -d"
-                """
+                powershell '''
+                wsl -d Ubuntu "cd /home/aashu/app && docker build -t spring-app:latest ."
+                '''
             }
         }
 
-        stage('Auto-Scale App Replicas') {
+        stage('Deploy in WSL using Docker Compose') {
             steps {
-                echo "Executing auto-scaling script..."
-                
-                bat """
-                powershell -ExecutionPolicy Bypass -File "$SCALE_SCRIPT"
-                """
+                powershell '''
+                wsl -d Ubuntu "cd /home/aashu/app && docker-compose down"
+                wsl -d Ubuntu "cd /home/aashu/app && docker-compose up -d --build"
+                '''
             }
         }
     }
 
-    post {
-        success {
-            echo "Deployment & Auto Scaling Successful!"
-        }
-        failure {
-            echo "Deployment Failed — Check Jenkins Logs."
-        }
+     post {
+        success { echo "Deployment Successful!" }
+        failure { echo "Deployment Failed!" }
     }
+
 }
+
+
+
+
+
 
 
 
