@@ -22,17 +22,18 @@
 
 
 
+$nginxContainer = "interviewallversion2-nginx-1"   # <- FIX THIS
+
 $replicas = 1
 $maxRequestsPerReplica = 20
 $minRequestsPerReplica = 5
 $maxReplicas = 5
 
 while ($true) {
-    # Count requests in last 10 seconds from NGINX container
     $time = (Get-Date).AddSeconds(-10).ToString("dd/MMM/yyyy:HH:mm:ss")
     $cmd = "awk '\$4 >= ""[$time"" {print}' /var/log/nginx/access.log | wc -l"
 
-    $requests = docker exec interviewallversion2-nginx sh -c $cmd
+    $requests = docker exec $nginxContainer sh -c $cmd
     $requests = [int]$requests
 
     Write-Host "Requests in last 10 seconds: $requests"
@@ -45,11 +46,12 @@ while ($true) {
         Write-Host "Scaling UP: New replicas = $replicas"
         docker-compose up -d --scale app=$replicas
     }
-    elseif ($requestsPerReplica -lt $minRequestsPerReplica -and $replicas -gt 1) {
+    elseif ($requestsPerReplica -lt $minRequestsPerReplica -and $replicas > 1) {
         $replicas -= 1
         Write-Host "Scaling DOWN: New replicas = $replicas"
         docker-compose up -d --scale app=$replicas
-    } else {
+    }
+    else {
         Write-Host "No scaling needed."
     }
 
