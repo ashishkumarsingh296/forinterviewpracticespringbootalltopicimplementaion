@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         WSL_PROJECT="/home/ashishdev/project"
-        WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace" // adjust if needed
+        WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion" // Update your workspace name
         DOCKER_IMAGE="myapp"
     }
 
@@ -17,8 +17,8 @@ pipeline {
 
         stage('Copy to WSL Workspace') {
             steps {
-                bat"""
-                wsl cp -r /mnt/c/Users/jenkins/workspace/forinterviewpracticespringbootalltopicimplementaion/* $WSL_PROJECT/
+                bat """
+                wsl cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* $WSL_PROJECT/
                 """
             }
         }
@@ -62,9 +62,8 @@ pipeline {
             echo "Deployment completed successfully!"
         }
         failure {
-            mail to: 'ashishkumarsingh296@gmail.com',
-                 subject: "Deployment Failed",
-                 body: "Check Jenkins logs for details."
+            echo "Deployment failed. Check logs for details."
+            // Optional: configure SMTP if you want mail notifications
         }
     }
 }
