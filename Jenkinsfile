@@ -1,58 +1,111 @@
 // one WSL instance
 
+// pipeline {
+//     agent any
+
+//     environment {
+//         IMAGE_NAME = "java-single-env"
+//         JAR_FILE = "target/*SNAPSHOT.jar"
+//     }
+
+//     stages {
+
+//         stage('Checkout Code') {
+//             steps {
+//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+//             }
+//         }
+
+//         stage('Build') {
+//             steps {
+//                 bat "mvn clean package -DskipTests"
+//             }
+//         }
+
+//         stage('Build Docker Image') {
+//             steps {
+//                 bat """
+//                 docker build -t ${IMAGE_NAME}:latest .
+//                 """
+//             }
+//         }
+
+//       stage('Deploy Stack') {
+//     steps {
+//         bat """
+//         cd %WORKSPACE%
+//         docker-compose down
+//         docker-compose up -d --build
+//         """
+//     }
+// }
+
+// stage('Auto-Scaling Check') {
+//     steps {
+//         bat "powershell -ExecutionPolicy Bypass -File %WORKSPACE%\\monitor.ps1"
+//     }
+// }
+//     }
+
+//     post {
+//         success {
+//             echo "Deployment and Auto-Scaling Started Successfully!"
+//         }
+//         failure {
+//             echo "Deployment Failed!"
+//         }
+//     }
+// }
+
+
 pipeline {
     agent any
 
     environment {
         IMAGE_NAME = "java-single-env"
         JAR_FILE = "target/*SNAPSHOT.jar"
+        DOCKER_COMPOSE_PATH = "C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\docker-compose.yml"
+        SCRIPT_PATH = "C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\monitor-and-scale.ps1"
     }
 
     stages {
 
-        stage('Checkout Code') {
+    stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-        stage('Build') {
+         stage('Build') {
             steps {
                 bat "mvn clean package -DskipTests"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Deploy') {
             steps {
-                bat """
-                docker build -t ${IMAGE_NAME}:latest .
-                """
+                echo "Building Docker images..."
+                bat "docker-compose -f %DOCKER_COMPOSE_PATH% build"
+                
+                echo "Starting containers..."
+                bat "docker-compose -f %DOCKER_COMPOSE_PATH% up -d"
             }
         }
 
-      stage('Deploy Stack') {
-    steps {
-        bat """
-        cd %WORKSPACE%
-        docker-compose down
-        docker-compose up -d --build
-        """
-    }
-}
-
-stage('Auto-Scaling Check') {
-    steps {
-        bat "powershell -ExecutionPolicy Bypass -File %WORKSPACE%\\monitor.ps1"
-    }
-}
+        stage('Monitor & Auto-Scale') {
+            steps {
+                echo "Running auto-scaling script..."
+                bat "powershell -ExecutionPolicy Bypass -File %SCRIPT_PATH%"
+            }
+        }
     }
 
     post {
         success {
-            echo "Deployment and Auto-Scaling Started Successfully!"
+            echo 'Deployment and scaling completed successfully!'
         }
         failure {
-            echo "Deployment Failed!"
+            echo 'Deployment failed. Check logs.'
         }
     }
 }
