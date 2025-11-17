@@ -1,13 +1,9 @@
 // one WSL instance
+
 pipeline {
     agent any
 
-    parameters {
-        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-    }
-
     environment {
-        SPRING_PROFILE = "${params.ENV.toLowerCase()}" // dev, qa, etc.
         IMAGE_NAME = "java-single-env"
         JAR_FILE = "target/*SNAPSHOT.jar"
     }
@@ -28,52 +24,118 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t ${IMAGE_NAME}:latest ."
+                bat """
+                docker build -t ${IMAGE_NAME}:latest .
+                """
             }
         }
 
-        
+        stage('Deploy Stack') {
+            steps {
+                bat """
+                cd %WORKSPACE%
+                docker-compose down
+                docker-compose up -d --build
+                """
+            }
+        }
 
-        stage('Deploy DEV') {
-        //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-        //     steps {
-        //         bat """
-        //         cd %WORKSPACE%
-        //         docker-compose down
-
-        //         docker-compose up -d --build --scale app=2
-        //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
-        //         """
-        //     }
-
-        steps {
-        bat """
-        cd %WORKSPACE%
-        docker-compose down
-        docker-compose up -d --build
-        """
-    }
-         }
-
-        // stage('Deploy QA') {
-        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-        //     steps {
-        //         bat """
-        //         cd %WORKSPACE%
-        //         docker-compose down
-        //         docker-compose up -d --build --scale app=2
-        //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
-        //         """
-        //     }
-        // }
-
+        stage('Auto-Scaling Check') {
+            steps {
+                bat "bash %WORKSPACE%/monitor.sh"
+            }
+        }
     }
 
     post {
-        success { echo "Deployment Successful!" }
-        failure { echo "Deployment Failed!" }
+        success {
+            echo "Deployment and Auto-Scaling Completed Successfully!"
+        }
+        failure {
+            echo "Deployment Failed!"
+        }
     }
 }
+
+
+
+
+
+// pipeline {
+//     agent any
+
+//     parameters {
+//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
+//     }
+
+//     environment {
+//         SPRING_PROFILE = "${params.ENV.toLowerCase()}" // dev, qa, etc.
+//         IMAGE_NAME = "java-single-env"
+//         JAR_FILE = "target/*SNAPSHOT.jar"
+//     }
+
+//     stages {
+
+//         stage('Checkout Code') {
+//             steps {
+//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+//             }
+//         }
+
+//         stage('Build') {
+//             steps {
+//                 bat "mvn clean package -DskipTests"
+//             }
+//         }
+
+//         stage('Build Docker Image') {
+//             steps {
+//                 bat "docker build -t ${IMAGE_NAME}:latest ."
+//             }
+//         }
+
+        
+
+//         stage('Deploy DEV') {
+//         //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+//         //     steps {
+//         //         bat """
+//         //         cd %WORKSPACE%
+//         //         docker-compose down
+
+//         //         docker-compose up -d --build --scale app=2
+//         //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
+//         //         """
+//         //     }
+
+//         steps {
+//         bat """
+//         cd %WORKSPACE%
+//         docker-compose down
+//         docker-compose up -d --build
+//         """
+//     }
+//          }
+
+//         // stage('Deploy QA') {
+//         //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+//         //     steps {
+//         //         bat """
+//         //         cd %WORKSPACE%
+//         //         docker-compose down
+//         //         docker-compose up -d --build --scale app=2
+//         //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
+//         //         """
+//         //     }
+//         // }
+
+//     }
+
+//     post {
+//         success { echo "Deployment Successful!" }
+//         failure { echo "Deployment Failed!" }
+//     }
+// }
 
 
 
