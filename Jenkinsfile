@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = "java-multi-env"
+        IMAGE_NAME = "java-single-env"
         JAR_FILE = "target/*SNAPSHOT.jar"
     }
 
@@ -28,7 +28,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 bat """
-              docker build -t java-multi-env:latest .
+              docker build -t java-single-env:latest .
 
                 """
             }
