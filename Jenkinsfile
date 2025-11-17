@@ -30,24 +30,21 @@ pipeline {
             }
         }
 
-        stage('Deploy Stack') {
-            steps {
-                bat """
-                cd %WORKSPACE%
-                docker-compose down
-                docker-compose up -d --build
-                """
-            }
-        }
+      stage('Deploy Stack') {
+    steps {
+        bat """
+        cd %WORKSPACE%
+        docker-compose down
+        docker-compose up -d --build
+        """
+    }
+}
 
-        stage('Start Auto-Scaling Monitor') {
-            steps {
-                // Run monitor.ps1 in background so Jenkins can finish
-                bat """
-                powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File %WORKSPACE%\\monitor.ps1' -WindowStyle Hidden"
-                """
-            }
-        }
+stage('Auto-Scaling Check') {
+    steps {
+        bat "powershell -ExecutionPolicy Bypass -File %WORKSPACE%\\monitor.ps1"
+    }
+}
     }
 
     post {
