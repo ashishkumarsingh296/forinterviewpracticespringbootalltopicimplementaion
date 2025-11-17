@@ -7,6 +7,7 @@ pipeline {
     }
 
     environment {
+        SPRING_PROFILE = "${params.ENV.toLowerCase()}" // dev, qa, etc.
         IMAGE_NAME = "java-single-env"
         JAR_FILE = "target/*SNAPSHOT.jar"
     }
@@ -31,29 +32,40 @@ pipeline {
             }
         }
 
-        stage('Deploy DEV') {
-            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-            steps {
-                bat """
-                cd %WORKSPACE%
-                docker-compose down
-                docker-compose up -d --build --scale app=2
-                docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
-                """
-            }
-        }
+        
 
-        stage('Deploy QA') {
-            when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-            steps {
-                bat """
-                cd %WORKSPACE%
-                docker-compose down
-                docker-compose up -d --build --scale app=2
-                docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
-                """
-            }
-        }
+        stage('Deploy DEV') {
+        //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         cd %WORKSPACE%
+        //         docker-compose down
+
+        //         docker-compose up -d --build --scale app=2
+        //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
+        //         """
+        //     }
+
+        steps {
+        bat """
+        cd %WORKSPACE%
+        docker-compose down
+        SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} docker-compose up -d --build
+        """
+    }
+         }
+
+        // stage('Deploy QA') {
+        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         cd %WORKSPACE%
+        //         docker-compose down
+        //         docker-compose up -d --build --scale app=2
+        //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
+        //         """
+        //     }
+        // }
 
     }
 
