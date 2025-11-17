@@ -75,13 +75,14 @@
 
 
 pipeline {
-    agent any{
+    agent any
 
     environment {
         WSL_PROJECT="/home/ashishdev/project"
         DOCKER_IMAGE="myapp"
     }
-    
+
+    stages {   // <-- THIS WAS MISSING
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
@@ -113,7 +114,7 @@ pipeline {
                 """
             }
         }
-    }
+    }   // <-- closes stages
 
     post {
         success {
