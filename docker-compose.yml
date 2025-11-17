@@ -1,11 +1,10 @@
-//single server configuration
 version: '3.8'
 
 services:
-
-  db-dev:
+  db:
     image: mysql:8
-    container_name: mydb-dev
+    container_name: mydb
+    restart: always
     environment:
       MYSQL_DATABASE: testdb
       MYSQL_USER: springuser
@@ -13,30 +12,30 @@ services:
       MYSQL_ROOT_PASSWORD: rootpass
     ports:
       - "3306:3306"
-    networks:
-      - myapp-network
+    volumes:
+      - db_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      interval: 10s
+      retries: 5
 
-  app-dev:
-    image: java-multi-env:latest
-    container_name: myapp-dev
+  app:
+    build: .                  # Dockerfile in current directory
+    image: java-single-env:latest
+    container_name: myapp
+    restart: on-failure
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/testdb
+      SPRING_DATASOURCE_USERNAME: springuser
+      SPRING_DATASOURCE_PASSWORD: springpass
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8081:8080"
-    depends_on:
-      db-dev:
-        condition: service_healthy
-    networks:
-      - myapp-network
 
-networks:
-  myapp-network:
-    driver: bridge
+volumes:
+  db_data:
 
 
 
