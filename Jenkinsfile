@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        WSL_PROJECT="/home/username/project"  // WSL workspace
-        WINDOWS_PROJECT="C:\\Users\\jenkins\\workspace\\forinterviewpracticespringbootalltopicimplementaion" // adjust if needed
+        WSL_PROJECT="/home/username/project"
+        WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\forinterviewpracticespringbootalltopicimplementaion" // adjust if needed
         DOCKER_IMAGE="myapp"
     }
 
