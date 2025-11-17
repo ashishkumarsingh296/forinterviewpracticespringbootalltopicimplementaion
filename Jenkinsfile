@@ -98,7 +98,7 @@ pipeline {
             steps {
                 bat """
                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
-                wsl bash -c "cd $WSL_PROJECT && docker-compose build --no-cache"
+                wsl bash -c "cd $WSL_PROJECT && docker compose build --no-cache"
                 """
             }
         }
@@ -106,8 +106,8 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 bat """
-                wsl bash -c "cd $WSL_PROJECT && docker-compose down"
-                wsl bash -c "cd $WSL_PROJECT && docker-compose up -d"
+                wsl bash -c "cd $WSL_PROJECT && docker compose down"
+                wsl bash -c "cd $WSL_PROJECT && docker compose up -d"
                 """
             }
         }
