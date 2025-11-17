@@ -89,13 +89,16 @@ pipeline {
             }
         }
 
-              stage('Copy to WSL Workspace') {
+        stage('Copy Files to WSL') {
     steps {
         bat """
-        wsl cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* $WSL_PROJECT/
+        wsl mkdir -p /home/ashishdev/project
+        wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/ /home/ashishdev/project/
+        wsl chmod +x /home/ashishdev/project/mvnw
         """
     }
 }
+
 
         stage('Build JAR & Docker Image') {
             steps {
