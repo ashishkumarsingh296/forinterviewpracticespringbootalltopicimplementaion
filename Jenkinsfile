@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
+        choice(name: 'ENV', choices: ['DEV'], description: 'Choose environment to deploy')
     }
 
     environment {
@@ -34,46 +34,30 @@ pipeline {
             }
         }
 
-     stage('Deploy Using Docker Compose') {
-           steps {
-              script {
-            if (params.ENV == 'DEV') {
-                bat """
-                    docker-compose down
-                    docker-compose up -d --build db-dev app-dev load-balancer
-                """
-            } 
-            else {
-                echo "❌ '${params.ENV}' deployment is disabled!"
-                currentBuild.result = 'FAILURE'
-                error("Deployment for '${params.ENV}' is blocked.")
-            }
+  
+
+
+         stage('Deploy DEV') {
+           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+         steps {
+          bat """
+          cd %WORKSPACE%
+          docker-compose down
+          docker-compose up -d --build
+         """
+          }
         }
-    }
-}
 
-
-      //    stage('Deploy DEV') {
-      //      when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-      //    steps {
-      //     bat """
-      //     cd %WORKSPACE%
-      //     docker-compose down
-      //     docker-compose up -d --build
-      //    """
-      // }
-      //   }
-
-        stage('Deploy QA') {
-            when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-            steps {
-                bat """
-                cd %WORKSPACE%
-                docker-compose down
-                docker-compose -f docker-compose.qa.yml up -d
-                """
-            }
-        }
+        // stage('Deploy QA') {
+        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         cd %WORKSPACE%
+        //         docker-compose down
+        //         docker-compose -f docker-compose.qa.yml up -d
+        //         """
+        //     }
+        // }
 
     }
 
