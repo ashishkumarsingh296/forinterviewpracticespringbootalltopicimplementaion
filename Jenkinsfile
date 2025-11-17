@@ -114,69 +114,69 @@ pipeline {
 ////////////////////////multi-server-configuration////////////////
 
 
-pipeline {
-    agent any
+// pipeline {
+//     agent any
 
-    parameters {
-        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-    }
+//     parameters {
+//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
+//     }
 
-    environment {
-        IMAGE_NAME = "java-multi-env"
-        VERSION = "1.0.${BUILD_NUMBER}"
-    }
+//     environment {
+//         IMAGE_NAME = "java-multi-env"
+//         VERSION = "1.0.${BUILD_NUMBER}"
+//     }
 
-    stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-            }
-        }
+//     stages {
+//         stage('Checkout Code') {
+//             steps {
+//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+//             }
+//         }
         
 
-        stage('Build') {
-            steps {
-                bat "mvn clean package -DskipTests"
-            }
-        }
+//         stage('Build') {
+//             steps {
+//                 bat "mvn clean package -DskipTests"
+//             }
+//         }
 
-        stage('Build Docker Image') {
-            steps {
-                bat """
-                    docker build -t ${IMAGE_NAME}:${VERSION} .
-                """
-            }
-        }
-        stage('Debug Workspace') {
-    steps {
-        bat "dir"
-        bat "type docker-compose.yml"
-    }
-}
+//         stage('Build Docker Image') {
+//             steps {
+//                 bat """
+//                     docker build -t ${IMAGE_NAME}:${VERSION} .
+//                 """
+//             }
+//         }
+//         stage('Debug Workspace') {
+//     steps {
+//         bat "dir"
+//         bat "type docker-compose.yml"
+//     }
+// }
 
-        stage('Deploy') {
-            steps {
-                script {
-                    if (params.ENV == 'DEV') {
-                        bat "docker-compose up -d --build app-dev db-dev load-balancer"
-                    } else if (params.ENV == 'QA') {
-                        bat "docker-compose up -d --build app-qa db-qa load-balancer"
-                    } else {
-                        bat "docker-compose up -d --build"
-                    }
-                }
-            }
-        }
-    }
+//         stage('Deploy') {
+//             steps {
+//                 script {
+//                     if (params.ENV == 'DEV') {
+//                         bat "docker-compose up -d --build app-dev db-dev load-balancer"
+//                     } else if (params.ENV == 'QA') {
+//                         bat "docker-compose up -d --build app-qa db-qa load-balancer"
+//                     } else {
+//                         bat "docker-compose up -d --build"
+//                     }
+//                 }
+//             }
+//         }
+//     }
 
-    post {
-        success {
-            echo "Deployment Successful!"
-        }
-        failure {
-            echo "Deployment Failed!"
-        }
-    }
-}
+//     post {
+//         success {
+//             echo "Deployment Successful!"
+//         }
+//         failure {
+//             echo "Deployment Failed!"
+//         }
+//     }
+// }
 
 
