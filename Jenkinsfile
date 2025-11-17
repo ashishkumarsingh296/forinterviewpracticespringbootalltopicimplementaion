@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         WSL_PROJECT="/home/ashishdev/project"
-        WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\forinterviewpracticespringbootalltopicimplementaion" // adjust if needed
+        WINDOWS_PROJECT="C:\\ProgramData\\Jenkins\\.jenkins\\workspace" // adjust if needed
         DOCKER_IMAGE="myapp"
     }
 
