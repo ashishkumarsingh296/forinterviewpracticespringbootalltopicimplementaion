@@ -82,16 +82,16 @@ pipeline {
         DOCKER_IMAGE="myapp"
     }
 
-    stages {
+//     stages {
 
-        stage('Prepare WSL Home Project Folder') {
-    steps {
-        bat '''
-            wsl.exe mkdir -p /home/ashishdev/project
-            wsl.exe sudo chown -R ashishdev:ashishdev /home/ashishdev/project
-        '''
-    }
-}
+//         stage('Prepare WSL Home Project Folder') {
+//     steps {
+//         bat '''
+//             wsl.exe mkdir -p /home/ashishdev/project
+//             wsl.exe sudo chown -R ashishdev:ashishdev /home/ashishdev/project
+//         '''
+//     }
+// }
 
         stage('Checkout Code') {
             steps {
