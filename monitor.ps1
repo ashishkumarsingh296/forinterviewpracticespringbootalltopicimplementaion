@@ -1,36 +1,44 @@
-# monitor.ps1 - Windows PowerShell autoscale
-
-$service = "interviewallversion-app"  # adjust if needed
-$maxCPU = 70
-$minCPU = 20
-$scaleStep = 1
+# monitor.ps1
+$serviceName = "interviewallversion-app"
 $maxReplicas = 5
 $minReplicas = 1
+$scaleCooldown = 15  # seconds between scaling actions
+$cpuThresholdUp = 70   # % to scale up
+$cpuThresholdDown = 20 # % to scale down
+
+function Get-AverageCPU {
+    $stats = docker stats --no-stream --format "{{.Name}} {{.CPUPerc}}" |
+        Where-Object { $_ -match $serviceName }
+
+    $cpuValues = @()
+    foreach ($line in $stats) {
+        $cpuRaw = ($line -split ' ')[1] -replace '%',''
+        $cpuValues += [double]::Parse($cpuRaw) / [Environment]::ProcessorCount
+    }
+
+    if ($cpuValues.Count -eq 0) { return 0 }
+    return ($cpuValues | Measure-Object -Average).Average
+}
 
 while ($true) {
+    $avgCPU = Get-AverageCPU
+    $replicas = (docker ps --filter "name=$serviceName" -q).Count
 
-    # Get CPU usage of matching containers
-    $cpuUsage = docker stats --no-stream --format "{{.Name}} {{.CPUPerc}}" |
-    Where-Object { $_ -match "$service" } |
-    ForEach-Object { ($_ -split ' ')[1] -replace '%','' -as [double] }    
+    Write-Host "Average CPU: $([math]::Round($avgCPU,2))% | Current replicas: $replicas"
 
-    if ($cpuUsage.Count -eq 0) { $cpuUsage = @(0) }
-
-    $avgCPU = ($cpuUsage | Measure-Object -Average).Average
-    $currentReplicas = (docker ps --filter "name=$service" -q).Count
-
-    Write-Host "Average CPU: $([math]::Round($avgCPU,2))% | Current replicas: $currentReplicas"
-
-    if ($avgCPU -gt $maxCPU -and $currentReplicas -lt $maxReplicas) {
-        $newReplicas = $currentReplicas + $scaleStep
+    if ($avgCPU -gt $cpuThresholdUp -and $replicas -lt $maxReplicas) {
+        $newReplicas = $replicas + 1
         Write-Host "Scaling up to $newReplicas replicas"
-        docker-compose -f "$env:WORKSPACE\docker-compose.yml" up -d --scale app=$newReplicas
+        docker-compose up -d --scale $serviceName=$newReplicas
+        Start-Sleep -Seconds $scaleCooldown
     }
-    elseif ($avgCPU -lt $minCPU -and $currentReplicas -gt $minReplicas) {
-        $newReplicas = $currentReplicas - $scaleStep
+    elseif ($avgCPU -lt $cpuThresholdDown -and $replicas -gt $minReplicas) {
+        $newReplicas = $replicas - 1
         Write-Host "Scaling down to $newReplicas replicas"
-        docker-compose -f "$env:WORKSPACE\docker-compose.yml" up -d --scale app=$newReplicas
+        docker-compose up -d --scale $serviceName=$newReplicas
+        Start-Sleep -Seconds $scaleCooldown
     }
-
-    Start-Sleep -Seconds 10
+    else {
+        Start-Sleep -Seconds 5
+    }
 }
