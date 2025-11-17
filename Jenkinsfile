@@ -1,79 +1,117 @@
-// pipeline {
-//     agent any
 
-//     parameters {
-//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-//     }
+pipeline {
+    agent any
 
-//     environment {
-//         IMAGE_NAME = "java-multi-env"
-//         VERSION = "${env.BUILD_NUMBER}"  // Jenkins build number
-//         JAR_FILE = "target/*SNAPSHOT.jar"
-//     }
+    parameters {
+        choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
+    }
 
-//     stages {
+    environment {
+        IMAGE_NAME = "java-multi-env"
+        JAR_FILE = "target/*SNAPSHOT.jar"
+    }
 
-//         stage('Checkout Code') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
+    stages {
 
-//         stage('Build') {
-//             steps {
-//                 bat "mvn clean package -DskipTests"
-//             }
-//         }
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+            }
+        }
 
-//         stage('Build Docker Image') {
-//             steps {
-//                 bat """
-//                 docker build -t ${IMAGE_NAME}:${VERSION} .
-//                 """
-//             }
-//         }
+        stage('Build') {
+            steps {
+                bat "mvn clean package -DskipTests"
+            }
+        }
 
-//    stage('Deploy') {
-//     steps {
-//         script {
-//             def envChoice = params.ENV
-//             def version = env.BUILD_NUMBER
+        stage('Build Docker Image') {
+            steps {
+                bat """
+              docker build -t java-multi-env:latest .
 
-//             if(envChoice == 'DEV') {
-//                 bat """
-//                 docker-compose down
-//                 docker-compose up -d --build --no-deps --force-recreate app-dev
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
-//                 """
-//             } else if(envChoice == 'QA') {
-//                 bat """
-//                 docker-compose down
-//                 docker-compose up -d --build --no-deps --force-recreate app-qa
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
-//                 """
-//             } else if(envChoice == 'BOTH') {
-//                 bat """
-//                 docker-compose down
-//                 docker-compose up -d --build --force-recreate
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:dev-${version}
-//                 docker tag java-multi-env:${version} myworkspace/java-multi-env:qa-${version}
-//                 """
-//             }
-//         }
-//     }
-//   }
-// }
+                """
+            }
+        }
 
-//     post {
-//         success {
-//             echo "Deployment Successful!"
-//         }
-//         failure {
-//             echo "Deployment Failed!"
-//         }
-//     }
-// }
-////////////////////////aaa////////////////
+        // stage('Deploy DEV') {
+        //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         // docker stop myapp-dev || echo Not running
+        //         // docker rm myapp-dev || echo Not found
+
+        //         // docker run -d ^
+        //         //   --name myapp-dev ^
+        //         //   -p 8081:8080 ^
+        //         //   -e SPRING_PROFILES_ACTIVE=wsl ^
+        //         //   --add-host redis:172.21.37.255 ^
+        //         //   ${IMAGE_NAME}:latest
+        //         docker stop myapp-dev || echo Not running
+        //         docker rm myapp-dev || echo Not found
+        //         docker run -d ^
+        //         --name myapp-dev ^
+        //         -p 8081:8080 ^
+        //         -e SPRING_PROFILES_ACTIVE=wsl ^
+        //          ${IMAGE_NAME}:latest
+        //         """
+        //     }
+        // }
+
+        // stage('Deploy QA') {
+        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         docker stop myapp-qa || echo Not running
+        //         docker rm myapp-qa || echo Not found
+        //         docker run -d ^
+        //         --name myapp-qa ^
+        //         -p 8082:8080 ^
+        //         -e SPRING_PROFILES_ACTIVE=wsl ^
+        //          ${IMAGE_NAME}:latest
+        //         """
+        //     }
+        // }
+
+
+         stage('Deploy DEV') {
+           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+         steps {
+          bat """
+          cd %WORKSPACE%
+          docker-compose down
+          docker-compose up -d --build
+         """
+      }
+        }
+
+        stage('Deploy QA') {
+            when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+            steps {
+                bat """
+                cd %WORKSPACE%
+                docker-compose down
+                docker-compose -f docker-compose.qa.yml up -d
+                """
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo "Deployment Successful!"
+        }
+        failure {
+            echo "Deployment Failed!"
+        }
+    }
+}
+
+
+
+
+////////////////////////multi-server-configuration////////////////
 
 
 pipeline {
