@@ -26,13 +26,16 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/testdb
       SPRING_DATASOURCE_USERNAME: springuser
       SPRING_DATASOURCE_PASSWORD: springpass
+      SERVER_ADDRESS: 0.0.0.0
     depends_on:
       db:
         condition: service_healthy
-    deploy:
-      replicas: 2       # Number of app instances
     ports:
-      - "8081"          # Keep for single access, Nginx will load balance
+      - "8081"  # Container internal port; host port not exposed directly
+    deploy:
+      replicas: 3  # **Only works in Swarm mode**
+    networks:
+      - app-net
 
   nginx:
     image: nginx:latest
@@ -42,9 +45,15 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
+    networks:
+      - app-net
 
 volumes:
   db_data:
+
+networks:
+  app-net:
+
 
 
 
