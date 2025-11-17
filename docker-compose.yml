@@ -6,16 +6,20 @@ services:
     image: myapp:latest
     ports:
       - "8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
     deploy:
-      replicas: 2  # initial replicas
+      replicas: 1
       resources:
         limits:
           cpus: "0.5"
           memory: 512M
       restart_policy:
         condition: on-failure
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 20s
+      retries: 3
 
   nginx:
     image: nginx:latest
