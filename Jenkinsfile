@@ -50,7 +50,7 @@ pipeline {
         bat """
         cd %WORKSPACE%
         docker-compose down
-        SPRING_PROFILES_ACTIVE=${SPRING_PROFILE} docker-compose up -d --build
+        docker-compose up -d --build
         """
     }
          }
