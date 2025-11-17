@@ -73,7 +73,7 @@ services:
       MYSQL_USER: springuser
       MYSQL_PASSWORD: springpass
     ports:
-      - "3306:3306"
+      - "3307:3306"
 
 
 
