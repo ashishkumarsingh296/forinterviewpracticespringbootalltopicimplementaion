@@ -68,6 +68,16 @@ pipeline {
         SCRIPT_PATH = "\"C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\monitor-and-scale.ps1\""
     }
 
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "java-single-env"
+        JAR_FILE = "target/*SNAPSHOT.jar"
+        DOCKER_COMPOSE_PATH = "\"C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion\\docker-compose.yml\""
+        SCRIPT_PATH = "\"C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion\\monitor-and-scale.ps1\""
+    }
+
     stages {
 
         stage('Checkout Code') {
@@ -84,9 +94,7 @@ pipeline {
 
         stage('Build & Deploy') {
             steps {
-                echo "Building Docker image..."
-
-                // IMPORTANT: use docker compose (space), not docker-compose
+                echo "Building Docker images..."
                 bat "docker compose -f %DOCKER_COMPOSE_PATH% build"
 
                 echo "Starting containers..."
