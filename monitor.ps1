@@ -1,31 +1,21 @@
-# monitor.ps1
-$serviceName = "app"
+# Number of replicas to maintain
+$replicas = 1
+$maxRequestsPerReplica = 20
+$minRequestsPerReplica = 5
 $maxReplicas = 4
-$minReplicas = 1
-$cpuThresholdUp = 50   # scale up if average CPU > 50%
-$cpuThresholdDown = 20 # scale down if average CPU < 20%
 
-# Get current replicas
-$currentReplicas = (docker ps --filter "name=$serviceName" --format "{{.Names}}" | Measure-Object).Count
+# Placeholder: Replace with actual logic to get requests per replica
+# For example, parse Nginx access logs or call app metrics endpoint
+$requestsPerReplica = 25  # Example value
 
-# Simulate getting average CPU usage (replace with your real monitoring logic)
-$averageCPU = (Get-Random -Minimum 0 -Maximum 100) # for demo, replace with actual CPU calculation
-
-Write-Host "Average CPU: $averageCPU% | Current replicas: $currentReplicas"
-
-# Scaling logic
-if ($averageCPU -gt $cpuThresholdUp -and $currentReplicas -lt $maxReplicas) {
-    $newReplicas = $currentReplicas + 1
-    if ($newReplicas -gt $maxReplicas) { $newReplicas = $maxReplicas }
-    Write-Host "Scaling UP to $newReplicas replicas..."
-    docker-compose up -d --scale $serviceName=$newReplicas
-}
-elseif ($averageCPU -lt $cpuThresholdDown -and $currentReplicas -gt $minReplicas) {
-    $newReplicas = $currentReplicas - 1
-    if ($newReplicas -lt $minReplicas) { $newReplicas = $minReplicas }
-    Write-Host "Scaling DOWN to $newReplicas replicas..."
-    docker-compose up -d --scale $serviceName=$newReplicas
-}
-else {
-    Write-Host "No scaling needed."
+if ($requestsPerReplica -gt $maxRequestsPerReplica -and $replicas -lt $maxReplicas) {
+    $replicas += 1
+    Write-Host "Scaling UP: New replicas = $replicas"
+    docker-compose up -d --scale app=$replicas
+} elseif ($requestsPerReplica -lt $minRequestsPerReplica -and $replicas -gt 1) {
+    $replicas -= 1
+    Write-Host "Scaling DOWN: New replicas = $replicas"
+    docker-compose up -d --scale app=$replicas
+} else {
+    Write-Host "No scaling needed. Current replicas = $replicas"
 }
