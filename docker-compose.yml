@@ -1,51 +1,47 @@
 version: "3.9"
 
 services:
-  db:
-    image: mysql:8
-    container_name: interviewallversion2-db
-    environment:
-      MYSQL_DATABASE: testdb
-      MYSQL_USER: springuser
-      MYSQL_PASSWORD: springpass
-      MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "3307:3306"
-    networks:
-      - app-net
-
   app:
-    image: java-single-env:latest
-    container_name: interviewallversion2-app
-    deploy:
-      replicas: 1
+    image: spring-app:latest
+    container_name: spring-app
+    ports:
+      - "8081:8080"
     networks:
       - app-net
-    volumes:
-      # Mount your WSL properties file inside the container
-      - /home/ashish/InterviewAllVersion/src/main/resources/application-wsl.properties:/app/config/application-wsl.properties
-    environment:
-      # Tell Spring Boot (or your app) which profile to use
-      - SPRING_PROFILES_ACTIVE=wsl
-      - SPRING_CONFIG_LOCATION=/app/config/application-wsl.properties
-    depends_on:
-      - db
+    profiles: ["wsl"]
 
   nginx:
-    image: nginx:latest
-    container_name: interviewallversion2-nginx
-    ports:
-      - "80:80"
+    image: nginx
+    container_name: nginx-lb
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
     depends_on:
       - app
     networks:
       - app-net
+    profiles: ["wsl"]
+
+  db:
+    image: mysql:8
+    container_name: mysql-wsl
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: springuser
+      MYSQL_PASSWORD: springpass
+    ports:
+      - "3306:3306"
+    networks:
+      - app-net
+    profiles: ["wsl"]
 
 networks:
   app-net:
     driver: bridge
+
+
 
 
 
