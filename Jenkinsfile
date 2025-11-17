@@ -70,19 +70,14 @@
 
 
 
-
-
-
-
 pipeline {
     agent any
 
     environment {
         WSL_PROJECT="/home/ashishdev/project"
-        DOCKER_IMAGE="myapp"
     }
 
-    stages {   // <-- THIS WAS MISSING
+    stages {
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
@@ -90,15 +85,14 @@ pipeline {
         }
 
         stage('Copy Files to WSL') {
-    steps {
-        bat """
-        wsl mkdir -p /home/ashishdev/project
-        wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/ /home/ashishdev/project/
-        wsl chmod +x /home/ashishdev/project/mvnw
-        """
-    }
-}
-
+            steps {
+                bat """
+                wsl mkdir -p $WSL_PROJECT
+                wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/ $WSL_PROJECT/
+                wsl chmod +x $WSL_PROJECT/mvnw
+                """
+            }
+        }
 
         stage('Build JAR & Docker Image') {
             steps {
@@ -121,11 +115,11 @@ pipeline {
         stage('Health Check') {
             steps {
                 bat """
-                wsl bash -c "curl -f http://localhost || echo 'App not reachable!'"
+                wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'App not reachable!'"
                 """
             }
         }
-    }   // <-- closes stages
+    }
 
     post {
         success {
@@ -136,3 +130,4 @@ pipeline {
         }
     }
 }
+
