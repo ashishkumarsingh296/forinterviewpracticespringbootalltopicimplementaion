@@ -62,20 +62,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "java-single-env"
-        JAR_FILE = "target/*SNAPSHOT.jar"
-        DOCKER_COMPOSE_PATH = "\"C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\docker-compose.yml\""
-        SCRIPT_PATH = "\"C:\\Users\\ASHISH SINGH\\workspace\\InterviewAllVersion\\monitor-and-scale.ps1\""
-    }
-
-pipeline {
-    agent any
-
-    environment {
-        IMAGE_NAME = "java-single-env"
-        JAR_FILE = "target/*SNAPSHOT.jar"
-        DOCKER_COMPOSE_PATH = "\"C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion\\docker-compose.yml\""
-        SCRIPT_PATH = "\"C:\\ProgramData\\Jenkins\\.jenkins\\workspace\\InterviewAllVersion\\monitor-and-scale.ps1\""
+        WSL_PROJECT_DIR = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion"
+        DOCKER_COMPOSE_FILE = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/docker-compose.yml"
+        SCALE_SCRIPT = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/monitor-and-scale.ps1"
     }
 
     stages {
@@ -86,36 +75,49 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build Jar') {
             steps {
-                bat 'mvn clean package -DskipTests'
+                bat "mvn clean package -DskipTests"
             }
         }
 
-        stage('Build & Deploy') {
+        stage('Build Docker Images in WSL') {
             steps {
-                echo "Building Docker images..."
-                bat "docker compose -f %DOCKER_COMPOSE_PATH% build"
+                echo "Running docker build inside WSL..."
 
-                echo "Starting containers..."
-                bat "docker compose -f %DOCKER_COMPOSE_PATH% up -d"
+                bat """
+                wsl bash -c "cd $WSL_PROJECT_DIR && docker compose -f $DOCKER_COMPOSE_FILE build"
+                """
             }
         }
 
-        stage('Monitor & Auto-Scale') {
+        stage('Run Containers in WSL') {
             steps {
-                echo "Running auto-scaling script..."
-                bat "powershell -ExecutionPolicy Bypass -File %SCRIPT_PATH%"
+                echo "Starting services via WSL docker compose..."
+
+                bat """
+                wsl bash -c "cd $WSL_PROJECT_DIR && docker compose -f $DOCKER_COMPOSE_FILE up -d"
+                """
+            }
+        }
+
+        stage('Auto-Scale App Replicas') {
+            steps {
+                echo "Executing auto-scaling script..."
+                
+                bat """
+                powershell -ExecutionPolicy Bypass -File "$SCALE_SCRIPT"
+                """
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment and scaling completed successfully!'
+            echo "Deployment & Auto Scaling Successful!"
         }
         failure {
-            echo 'Deployment failed. Check logs.'
+            echo "Deployment Failed — Check Jenkins Logs."
         }
     }
 }
