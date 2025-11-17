@@ -1,7 +1,6 @@
 
 pipeline {
-
-    agent { label 'your-windows-agent' }   // IMPORTANT FIX
+    agent any
 
     parameters {
         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
@@ -9,7 +8,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "java-single-env"
-        JAR_FILE   = "target/*SNAPSHOT.jar"
+        JAR_FILE = "target/*SNAPSHOT.jar"
     }
 
     stages {
@@ -28,30 +27,70 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat """ 
-                    docker build -t ${IMAGE_NAME}:latest .
+                bat """
+              docker build -t java-single-env:latest .
+
                 """
             }
         }
 
-        stage('Deploy DEV') {
-            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-            steps {
-                bat """
-                    cd "%WORKSPACE%"
-                    docker-compose down
-                    docker-compose up -d --build
-                """
-            }
+        // stage('Deploy DEV') {
+        //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         // docker stop myapp-dev || echo Not running
+        //         // docker rm myapp-dev || echo Not found
+
+        //         // docker run -d ^
+        //         //   --name myapp-dev ^
+        //         //   -p 8081:8080 ^
+        //         //   -e SPRING_PROFILES_ACTIVE=wsl ^
+        //         //   --add-host redis:172.21.37.255 ^
+        //         //   ${IMAGE_NAME}:latest
+        //         docker stop myapp-dev || echo Not running
+        //         docker rm myapp-dev || echo Not found
+        //         docker run -d ^
+        //         --name myapp-dev ^
+        //         -p 8081:8080 ^
+        //         -e SPRING_PROFILES_ACTIVE=wsl ^
+        //          ${IMAGE_NAME}:latest
+        //         """
+        //     }
+        // }
+
+        // stage('Deploy QA') {
+        //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
+        //     steps {
+        //         bat """
+        //         docker stop myapp-qa || echo Not running
+        //         docker rm myapp-qa || echo Not found
+        //         docker run -d ^
+        //         --name myapp-qa ^
+        //         -p 8082:8080 ^
+        //         -e SPRING_PROFILES_ACTIVE=wsl ^
+        //          ${IMAGE_NAME}:latest
+        //         """
+        //     }
+        // }
+
+
+         stage('Deploy DEV') {
+           when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
+         steps {
+          bat """
+          cd %WORKSPACE%
+          docker-compose down
+          docker-compose up -d --build
+         """
+      }
         }
 
         stage('Deploy QA') {
             when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
             steps {
                 bat """
-                    cd "%WORKSPACE%"
-                    docker-compose down
-                    docker-compose -f docker-compose.qa.yml up -d --build
+                cd %WORKSPACE%
+                docker-compose down
                 """
             }
         }
@@ -67,6 +106,7 @@ pipeline {
         }
     }
 }
+
 
 
 
