@@ -1,323 +1,133 @@
-// one WSL instance
+// pipeline {
+//     agent any
+
+//     environment {
+//         WSL_PROJECT="/home/ashishdev/project"
+//         DOCKER_IMAGE="myapp"
+//     }
+
+//     stages {
+
+//         stage('Checkout Code') {
+//             steps {
+//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
+//             }
+//         }
+
+//       stage('Copy to WSL Workspace') {
+//     steps {
+//         bat """
+//         wsl cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* $WSL_PROJECT/
+//         """
+//     }
+// }
+
+
+//         stage('Build JAR & Docker Image in WSL') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+//                 wsl bash -c "cd $WSL_PROJECT && docker-compose build --no-cache"
+//                 """
+//             }
+//         }
+
+//         stage('Deploy Application') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT && docker-compose up -d"
+//                 """
+//             }
+//         }
+
+//         stage('Auto-Scaling') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT/scripts && ./deploy.sh"
+//                 """
+//             }
+//         }
+
+//         stage('Health Check') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "curl -f http://localhost || echo 'App not reachable!'"
+//                 """
+//             }
+//         }
+//     }
+
+//     post {
+//         success {
+//             echo "Deployment completed successfully!"
+//         }
+//         failure {
+//             echo "Deployment failed. Check logs for details."
+//             // Optional: configure SMTP if you want mail notifications
+//         }
+//     }
+// }
+
+
 
 pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "java-single-env"
-        JAR_FILE = "target/*SNAPSHOT.jar"
+        WSL_PROJECT="/home/ashishdev/project"
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-        stage('Build') {
-            steps {
-                bat "mvn clean package -DskipTests"
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Copy Files to WSL') {
             steps {
                 bat """
-                docker build -t ${IMAGE_NAME}:latest .
+                wsl mkdir -p $WSL_PROJECT
+                wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/ $WSL_PROJECT/
+                wsl chmod +x $WSL_PROJECT/mvnw
                 """
             }
         }
 
-      stage('Deploy Stack') {
-    steps {
-        bat """
-        cd %WORKSPACE%
-        docker-compose down
-        docker-compose up -d --build
-        """
-    }
-}
+        stage('Build JAR & Docker Image') {
+            steps {
+                bat """
+                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+                wsl bash -c "cd $WSL_PROJECT && docker compose build --no-cache"
+                """
+            }
+        }
 
-stage('Auto-Scaling Check') {
-    steps {
-        bat "powershell -ExecutionPolicy Bypass -File %WORKSPACE%\\monitor.ps1"
-    }
-}
+        stage('Deploy Application') {
+            steps {
+                bat """
+                wsl bash -c "cd $WSL_PROJECT && docker compose down"
+                wsl bash -c "cd $WSL_PROJECT && docker compose up -d"
+                """
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                bat """
+                wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'App not reachable!'"
+                """
+            }
+        }
     }
 
     post {
         success {
-            echo "Deployment and Auto-Scaling Started Successfully!"
+            echo "Deployment completed successfully!"
         }
         failure {
-            echo "Deployment Failed!"
+            echo "Deployment failed. Check logs for details."
         }
     }
 }
-
-
-
-
-
-
-// pipeline {
-//     agent any
-
-//     parameters {
-//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-//     }
-
-//     environment {
-//         SPRING_PROFILE = "${params.ENV.toLowerCase()}" // dev, qa, etc.
-//         IMAGE_NAME = "java-single-env"
-//         JAR_FILE = "target/*SNAPSHOT.jar"
-//     }
-
-//     stages {
-
-//         stage('Checkout Code') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
-
-//         stage('Build') {
-//             steps {
-//                 bat "mvn clean package -DskipTests"
-//             }
-//         }
-
-//         stage('Build Docker Image') {
-//             steps {
-//                 bat "docker build -t ${IMAGE_NAME}:latest ."
-//             }
-//         }
-
-
-
-//         stage('Deploy DEV') {
-//         //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-//         //     steps {
-//         //         bat """
-//         //         cd %WORKSPACE%
-//         //         docker-compose down
-
-//         //         docker-compose up -d --build --scale app=2
-//         //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
-//         //         """
-//         //     }
-
-//         steps {
-//         bat """
-//         cd %WORKSPACE%
-//         docker-compose down
-//         docker-compose up -d --build
-//         """
-//     }
-//          }
-
-//         // stage('Deploy QA') {
-//         //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-//         //     steps {
-//         //         bat """
-//         //         cd %WORKSPACE%
-//         //         docker-compose down
-//         //         docker-compose up -d --build --scale app=2
-//         //         docker-compose exec nginx nginx -s reload || echo "Nginx reload failed"
-//         //         """
-//         //     }
-//         // }
-
-//     }
-
-//     post {
-//         success { echo "Deployment Successful!" }
-//         failure { echo "Deployment Failed!" }
-//     }
-// }
-
-
-
-
-// pipeline {
-//     agent any
-
-//     parameters {
-//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-//     }
-
-//     environment {
-//         IMAGE_NAME = "java-single-env"
-//         JAR_FILE = "target/*SNAPSHOT.jar"
-//     }
-
-//     stages {
-
-//         stage('Checkout Code') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
-
-//         stage('Build') {
-//             steps {
-//                 bat "mvn clean package -DskipTests"
-//             }
-//         }
-
-//         stage('Build Docker Image') {
-//             steps {
-//                 bat """
-//               docker build -t java-single-env:latest .
-
-//                 """
-//             }
-//         }
-
-//         // stage('Deploy DEV') {
-//         //     when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-//         //     steps {
-//         //         bat """
-//         //         // docker stop myapp-dev || echo Not running
-//         //         // docker rm myapp-dev || echo Not found
-
-//         //         // docker run -d ^
-//         //         //   --name myapp-dev ^
-//         //         //   -p 8081:8080 ^
-//         //         //   -e SPRING_PROFILES_ACTIVE=wsl ^
-//         //         //   --add-host redis:172.21.37.255 ^
-//         //         //   ${IMAGE_NAME}:latest
-//         //         docker stop myapp-dev || echo Not running
-//         //         docker rm myapp-dev || echo Not found
-//         //         docker run -d ^
-//         //         --name myapp-dev ^
-//         //         -p 8081:8080 ^
-//         //         -e SPRING_PROFILES_ACTIVE=wsl ^
-//         //          ${IMAGE_NAME}:latest
-//         //         """
-//         //     }
-//         // }
-
-//         // stage('Deploy QA') {
-//         //     when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-//         //     steps {
-//         //         bat """
-//         //         docker stop myapp-qa || echo Not running
-//         //         docker rm myapp-qa || echo Not found
-//         //         docker run -d ^
-//         //         --name myapp-qa ^
-//         //         -p 8082:8080 ^
-//         //         -e SPRING_PROFILES_ACTIVE=wsl ^
-//         //          ${IMAGE_NAME}:latest
-//         //         """
-//         //     }
-//         // }
-
-
-//          stage('Deploy DEV') {
-//            when { expression { params.ENV == 'DEV' || params.ENV == 'BOTH' } }
-//          steps {
-//           bat """
-//           cd %WORKSPACE%
-//           docker-compose down
-//           docker-compose up -d --build
-//          """
-//       }
-//         }
-
-//         stage('Deploy QA') {
-//             when { expression { params.ENV == 'QA' || params.ENV == 'BOTH' } }
-//             steps {
-//                 bat """
-//                 cd %WORKSPACE%
-//                 docker-compose down
-//                 """
-//             }
-//         }
-
-//     }
-
-//     post {
-//         success {
-//             echo "Deployment Successful!"
-//         }
-//         failure {
-//             echo "Deployment Failed!"
-//         }
-//     }
-// }
-
-
-
-
-
-////////////////////////multi-server-configuration////////////////
-
-
-// pipeline {
-//     agent any
-
-//     parameters {
-//         choice(name: 'ENV', choices: ['DEV', 'QA', 'BOTH'], description: 'Choose environment to deploy')
-//     }
-
-//     environment {
-//         IMAGE_NAME = "java-multi-env"
-//         VERSION = "1.0.${BUILD_NUMBER}"
-//     }
-
-//     stages {
-//         stage('Checkout Code') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
-
-
-//         stage('Build') {
-//             steps {
-//                 bat "mvn clean package -DskipTests"
-//             }
-//         }
-
-//         stage('Build Docker Image') {
-//             steps {
-//                 bat """
-//                     docker build -t ${IMAGE_NAME}:${VERSION} .
-//                 """
-//             }
-//         }
-//         stage('Debug Workspace') {
-//     steps {
-//         bat "dir"
-//         bat "type docker-compose.yml"
-//     }
-// }
-
-//         stage('Deploy') {
-//             steps {
-//                 script {
-//                     if (params.ENV == 'DEV') {
-//                         bat "docker-compose up -d --build app-dev db-dev load-balancer"
-//                     } else if (params.ENV == 'QA') {
-//                         bat "docker-compose up -d --build app-qa db-qa load-balancer"
-//                     } else {
-//                         bat "docker-compose up -d --build"
-//                     }
-//                 }
-//             }
-//         }
-//     }
-
-//     post {
-//         success {
-//             echo "Deployment Successful!"
-//         }
-//         failure {
-//             echo "Deployment Failed!"
-//         }
-//     }
-// }
 
