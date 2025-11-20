@@ -95,14 +95,14 @@ pipeline {
             }
         }
 
-//         stage('Build JAR & Docker Image') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+        stage('Build JAR & Docker Image') {
+            steps {
+                bat """
+                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
 //                 wsl bash -c "cd $WSL_PROJECT && docker compose build --no-cache"
-//                 """
-//             }
-//         }
+                """
+            }
+        }
 
 //         stage('Deploy Application') {
 //             steps {
