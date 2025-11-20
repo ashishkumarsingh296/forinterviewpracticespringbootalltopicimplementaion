@@ -74,17 +74,17 @@ pipeline {
     agent any
 
     environment {
-        WSL_PROJECT="/home/aashudev/spring-app"
-        WSL_PROJECT_RESTART="/home/aashudev/deploy"
+        WSL_PROJECT = "/home/aashudev/spring-app"
+        WSL_PROJECT_RESTART = "/home/aashudev/deploy"
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
-// cp "/mnt/e/javaallversion/forinterviewpracticespringbootalltopicimplementaion/target/myapp-3.5.7.jar" ./app.jar
 
         stage('Copy Files to WSL') {
             steps {
@@ -96,12 +96,11 @@ pipeline {
             }
         }
 
-
-        stage('Build JAR & Copy To WSL Path) {
+        stage('Build JAR & Copy To WSL Path') {
             steps {
                 bat """
-                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests/"
-                wsl bash -c "cp $WSL_PROJECT/target/*.jar /home/aashudev/deploy/"
+                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+                wsl bash -c "cp $WSL_PROJECT/target/*.jar $WSL_PROJECT_RESTART/"
                 """
             }
         }
@@ -109,7 +108,7 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 bat """
-                wsl bash -c "cd $WSL_PROJECT && ./restart.sh"
+                wsl bash -c "cd $WSL_PROJECT_RESTART && ./restart.sh"
                 """
             }
         }
@@ -132,4 +131,3 @@ pipeline {
         }
     }
 }
-
