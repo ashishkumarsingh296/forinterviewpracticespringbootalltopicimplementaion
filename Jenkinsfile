@@ -120,6 +120,14 @@ pipeline {
             }
         }
 
+        stage('Check Logs') {
+            steps {
+                bat """
+                wsl bash -c "ls -l $WSL_PROJECT_RESTART && tail -n 200 $WSL_PROJECT_RESTART/app.log"
+                """
+            }
+        }
+
         stage('Health Check') {
             steps {
                 bat """
