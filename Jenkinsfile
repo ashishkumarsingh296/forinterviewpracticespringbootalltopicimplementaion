@@ -74,7 +74,7 @@ pipeline {
     agent any
 
     environment {
-        WSL_PROJECT="/home/ashishdev/project"
+        WSL_PROJECT="/home/aashudev/spring-app"
     }
 
     stages {
@@ -83,6 +83,7 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
+// cp "/mnt/e/javaallversion/forinterviewpracticespringbootalltopicimplementaion/target/myapp-3.5.7.jar" ./app.jar
 
         stage('Copy Files to WSL') {
             steps {
@@ -94,23 +95,23 @@ pipeline {
             }
         }
 
-        stage('Build JAR & Docker Image') {
-            steps {
-                bat """
-                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
-                wsl bash -c "cd $WSL_PROJECT && docker compose build --no-cache"
-                """
-            }
-        }
+//         stage('Build JAR & Docker Image') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+//                 wsl bash -c "cd $WSL_PROJECT && docker compose build --no-cache"
+//                 """
+//             }
+//         }
 
-        stage('Deploy Application') {
-            steps {
-                bat """
-                wsl bash -c "cd $WSL_PROJECT && docker compose down"
-                wsl bash -c "cd $WSL_PROJECT && docker compose up -d"
-                """
-            }
-        }
+//         stage('Deploy Application') {
+//             steps {
+//                 bat """
+//                 wsl bash -c "cd $WSL_PROJECT && docker compose down"
+//                 wsl bash -c "cd $WSL_PROJECT && docker compose up -d"
+//                 """
+//             }
+//         }
 
         stage('Health Check') {
             steps {
