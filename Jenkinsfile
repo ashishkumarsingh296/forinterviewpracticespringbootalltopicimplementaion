@@ -99,7 +99,6 @@ pipeline {
             steps {
                 bat """
                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
-//                 wsl bash -c "cd $WSL_PROJECT && docker compose build --no-cache"
                 """
             }
         }
