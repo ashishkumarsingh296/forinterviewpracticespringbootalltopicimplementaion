@@ -75,6 +75,7 @@ pipeline {
 
     environment {
         WSL_PROJECT="/home/aashudev/spring-app"
+        WSL_PROJECT_RESTART="/home/aashudev/deploy"
     }
 
     stages {
@@ -95,22 +96,23 @@ pipeline {
             }
         }
 
-        stage('Build JAR & Docker Image') {
+
+        stage('Build JAR & Copy To WSL Path) {
             steps {
                 bat """
                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+                wsl bash -c "cp $WSL_PROJECT/target/*.jar /home/aashudev/deploy/"
                 """
             }
         }
 
-//         stage('Deploy Application') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cd $WSL_PROJECT && docker compose down"
-//                 wsl bash -c "cd $WSL_PROJECT && docker compose up -d"
-//                 """
-//             }
-//         }
+        stage('Deploy Application') {
+            steps {
+                bat """
+                wsl bash -c "cd $WSL_PROJECT && ./restart.sh"
+                """
+            }
+        }
 
         stage('Health Check') {
             steps {
