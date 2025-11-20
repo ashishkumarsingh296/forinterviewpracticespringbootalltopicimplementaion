@@ -74,19 +74,19 @@ pipeline {
     agent any
 
     environment {
-        WSL_PROJECT = "/home/aashudev/spring-app"
-        WSL_PROJECT_RESTART = "/home/aashudev/deploy"
+        // WSL paths
+        WSL_PROJECT="/home/aashudev/spring-app"
+        WSL_PROJECT_RESTART="/home/aashudev/deploy"
     }
 
     stages {
-
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
             }
         }
 
-        stage('Copy Files to WSL') {
+        stage('Copy Code to WSL') {
             steps {
                 bat """
                 wsl mkdir -p $WSL_PROJECT
@@ -96,19 +96,26 @@ pipeline {
             }
         }
 
-        stage('Build JAR & Copy To WSL Path') {
+        stage('Build JAR') {
             steps {
                 bat """
                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+                """
+            }
+        }
+
+        stage('Copy JAR to Deploy Folder') {
+            steps {
+                bat """
                 wsl bash -c "cp $WSL_PROJECT/target/*.jar $WSL_PROJECT_RESTART/"
                 """
             }
         }
 
-        stage('Deploy Application') {
+        stage('Deploy Application in WSL') {
             steps {
                 bat """
-                wsl bash -c "cd $WSL_PROJECT_RESTART && ./restart.sh"
+                wsl bash -c "cd $WSL_PROJECT_RESTART && ./restart.sh wsl"
                 """
             }
         }
@@ -116,7 +123,7 @@ pipeline {
         stage('Health Check') {
             steps {
                 bat """
-                wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'App not reachable!'"
+                wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'Application not reachable!'"
                 """
             }
         }
