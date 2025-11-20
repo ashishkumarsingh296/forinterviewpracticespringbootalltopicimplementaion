@@ -100,7 +100,7 @@ pipeline {
         stage('Build JAR & Copy To WSL Path) {
             steps {
                 bat """
-                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
+                wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests/"
                 wsl bash -c "cp $WSL_PROJECT/target/*.jar /home/aashudev/deploy/"
                 """
             }
