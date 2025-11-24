@@ -3,43 +3,46 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ENVIRONMENT', choices: ['LOCAL','WSL_PROD'], description: "Choose environment")
+        choice(name: 'ENVIRONMENT', choices: ['WSL_PROD','LOCAL'], description: "Choose environment")
         choice(name: 'RESTART_APP', choices: ['YES','NO'], description: "Restart application after deployment")
     }
 
     environment {
         // WSL native paths
         WSL_PROJECT="/home/aashudev/spring-app"        // WSL workspace for build
-        WSL_DEPLOY="/home/aashudev/deploy"            // Pretups-style deploy folder
-        JENKINS_SCRIPTS="${WSL_PROJECT}/jenkins_scripts"
+        WSL_DEPLOY="/home/aashudev/deploy"            // Deploy folder
+        JENKINS_SCRIPTS="/home/aashudev/jenkins_scripts"
         ARTIFACT_NAME="spring-app.jar"
         BUILD_SCRIPT="build_${params.ENVIRONMENT}.sh"
         DEPLOY_SCRIPT="deploy_${params.ENVIRONMENT}.sh"
+        GIT_URL="https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git"
+        GIT_BRANCH="main"
     }
 
     stages {
 
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-            }
-        }
-
         stage('Prepare WSL Workspace') {
             steps {
                 bat """
-                wsl mkdir -p ${WSL_PROJECT} ${JENKINS_SCRIPTS}
-                wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/ ${WSL_PROJECT}/
-                wsl dos2unix ${JENKINS_SCRIPTS}/*.sh
-                wsl chmod +x ${JENKINS_SCRIPTS}/*.sh
+                wsl mkdir -p ${WSL_PROJECT} ${JENKINS_SCRIPTS} ${WSL_DEPLOY}
+                wsl dos2unix ${JENKINS_SCRIPTS}/*.sh || true
+                wsl chmod +x ${JENKINS_SCRIPTS}/*.sh || true
                 """
             }
         }
 
-        stage('Run Build Script') {
+        stage('Checkout Code in WSL') {
             steps {
                 bat """
-                wsl bash -c "${JENKINS_SCRIPTS}/${BUILD_SCRIPT}"
+                wsl bash -c "if [ -d ${WSL_PROJECT}/.git ]; then git -C ${WSL_PROJECT} reset --hard && git -C ${WSL_PROJECT} pull; else git clone -b ${GIT_BRANCH} ${GIT_URL} ${WSL_PROJECT}; fi"
+                """
+            }
+        }
+
+        stage('Build JAR in WSL') {
+            steps {
+                bat """
+                wsl bash -c "cd ${WSL_PROJECT} && ./mvnw clean package -DskipTests"
                 """
             }
         }
@@ -47,7 +50,6 @@ pipeline {
         stage('Copy Artifact to Deploy Folder') {
             steps {
                 bat """
-                wsl bash -c "mkdir -p ${WSL_DEPLOY}"
                 wsl bash -c "cp ${WSL_PROJECT}/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}"
                 """
             }
@@ -67,7 +69,7 @@ pipeline {
         stage('Check Logs') {
             steps {
                 bat """
-                wsl bash -c "tail -n 200 ${WSL_DEPLOY}/app.log || echo 'No log found'"
+                wsl bash -c "tail -n 200 ${WSL_DEPLOY}/app.log || echo 'No logs found'"
                 """
             }
         }
@@ -75,7 +77,7 @@ pipeline {
         stage('Health Check') {
             steps {
                 bat """
-                wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'Health check failed'"
+                wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'Application not reachable!'"
                 """
             }
         }
@@ -90,6 +92,7 @@ pipeline {
         }
     }
 }
+
 
 
 
