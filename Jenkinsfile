@@ -1,53 +1,123 @@
-//Final One
+//Final One with jar working fine
+// pipeline {
+//     agent any
+
+//     environment {
+//         WSL_DEPLOY="/home/aashudev/deploy"
+//         ARTIFACT_NAME="spring-app.jar"
+//         DEPLOY_SCRIPT="/home/aashudev/deploy/jenkins_scripts/deploy_WSL_PROD.sh"
+//     }
+
+//     stages {
+//         stage('Build JAR on Jenkins') {
+//             steps {
+//                 bat 'mvnw clean package -DskipTests'
+//             }
+//         }
+
+//         stage('Copy JAR to WSL') {
+//             steps {
+//                 bat """
+//                 wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}
+//                 """
+//             }
+//         }
+
+//         stage('Deploy Application') {
+//             steps {
+//                 // bat "wsl bash ${DEPLOY_SCRIPT}"
+//                         bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/deploy_WSL_PROD.sh'
+
+//             }
+//         }
+
+//         stage('Check Logs') {
+//             steps {
+//                 bat "wsl tail -n 200 ${WSL_DEPLOY}/app.log || echo 'No logs found'"
+//             }
+//         }
+
+//      stage('Health Check') {
+//     steps {
+//         bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh'
+//     }
+// }
+
+//     }
+
+//     post {
+//         success {
+//             echo "WSL Deployment completed successfully!"
+//         }
+//         failure {
+//             echo "Deployment failed! Check logs."
+//         }
+//     }
+// }
+
+
+
+// Final one with war
 pipeline {
     agent any
 
     environment {
-        WSL_DEPLOY="/home/aashudev/deploy"
-        ARTIFACT_NAME="spring-app.jar"
-        DEPLOY_SCRIPT="/home/aashudev/deploy/jenkins_scripts/deploy_WSL_PROD.sh"
+        TOMCAT_HOME="/home/aashudev/tomcat/apache-tomcat-9.0.89"
+        WSL_DEPLOY="${TOMCAT_HOME}/webapps"
+        ARTIFACT_NAME="spring-app.war"
+        START_SCRIPT="${TOMCAT_HOME}/myappstart.sh"
+        STOP_SCRIPT="${TOMCAT_HOME}/myappstop.sh"
     }
 
     stages {
-        stage('Build JAR on Jenkins') {
+        stage('Build WAR on Jenkins') {
             steps {
-                bat 'mvnw clean package -DskipTests'
+                bat 'mvnw clean package -DskipTests' // Ensure pom.xml has <packaging>war</packaging>
             }
         }
 
-        stage('Copy JAR to WSL') {
+        stage('Copy WAR to WSL') {
             steps {
                 bat """
-                wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}
+                wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/target/*.war ${WSL_DEPLOY}/${ARTIFACT_NAME}
                 """
+            }
+        }
+
+        stage('Stop Tomcat') {
+            steps {
+                bat "wsl bash ${STOP_SCRIPT}"
             }
         }
 
         stage('Deploy Application') {
             steps {
-                // bat "wsl bash ${DEPLOY_SCRIPT}"
-                        bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/deploy_WSL_PROD.sh'
+                echo "WAR copied to ${WSL_DEPLOY}/${ARTIFACT_NAME}"
+            }
+        }
 
+        stage('Start Tomcat') {
+            steps {
+                bat "wsl bash ${START_SCRIPT}"
             }
         }
 
         stage('Check Logs') {
             steps {
-                bat "wsl tail -n 200 ${WSL_DEPLOY}/app.log || echo 'No logs found'"
+                bat "wsl tail -n 200 ${TOMCAT_HOME}/logs/myapp_logs.out || echo 'No logs found'"
             }
         }
 
-     stage('Health Check') {
-    steps {
-        bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh'
-    }
-}
-
+        stage('Health Check') {
+            steps {
+                bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh'
+            }
+        }
     }
 
     post {
         success {
-            echo "WSL Deployment completed successfully!"
+            echo "WAR Deployment completed successfully!"
         }
         failure {
             echo "Deployment failed! Check logs."
@@ -57,158 +127,3 @@ pipeline {
 
 
 
-
-
-
-
-
-
-
-// pipeline {
-//     agent any
-
-//     environment {
-//         WSL_PROJECT="/home/ashishdev/project"
-//         DOCKER_IMAGE="myapp"
-//     }
-
-//     stages {
-
-//         stage('Checkout Code') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
-
-//       stage('Copy to WSL Workspace') {
-//     steps {
-//         bat """
-//         wsl cp -r /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/* $WSL_PROJECT/
-//         """
-//     }
-// }
-
-
-//         stage('Build JAR & Docker Image in WSL') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
-//                 wsl bash -c "cd $WSL_PROJECT && docker-compose build --no-cache"
-//                 """
-//             }
-//         }
-
-//         stage('Deploy Application') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cd $WSL_PROJECT && docker-compose up -d"
-//                 """
-//             }
-//         }
-
-//         stage('Auto-Scaling') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cd $WSL_PROJECT/scripts && ./deploy.sh"
-//                 """
-//             }
-//         }
-
-//         stage('Health Check') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "curl -f http://localhost || echo 'App not reachable!'"
-//                 """
-//             }
-//         }
-//     }
-
-//     post {
-//         success {
-//             echo "Deployment completed successfully!"
-//         }
-//         failure {
-//             echo "Deployment failed. Check logs for details."
-//             // Optional: configure SMTP if you want mail notifications
-//         }
-//     }
-// }
-
-
-
-// pipeline {
-//     agent any
-//
-//     environment {
-//         // WSL paths
-//         WSL_PROJECT="/home/aashudev/spring-app"
-//         WSL_PROJECT_RESTART="/home/aashudev/deploy"
-//     }
-//
-//     stages {
-//         stage('Checkout Code') {
-//             steps {
-//                 git branch: 'main', url: 'https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git'
-//             }
-//         }
-//
-//         stage('Copy Code to WSL') {
-//             steps {
-//                 bat """
-//                 wsl mkdir -p $WSL_PROJECT
-//                 wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/ $WSL_PROJECT/
-//                 wsl chmod +x $WSL_PROJECT/mvnw
-//                 """
-//             }
-//         }
-//
-//         stage('Build JAR') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cd $WSL_PROJECT && ./mvnw clean package -DskipTests"
-//                 """
-//             }
-//         }
-//
-//         stage('Copy JAR to Deploy Folder') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cp $WSL_PROJECT/target/*.jar $WSL_PROJECT_RESTART/"
-//                 """
-//             }
-//         }
-//
-//         stage('Deploy Application in WSL') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "cd $WSL_PROJECT_RESTART && ./restart.sh wsl"
-//                 """
-//             }
-//         }
-//
-//         stage('Check Logs') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "ls -l $WSL_PROJECT_RESTART && tail -n 200 $WSL_PROJECT_RESTART/app.log"
-//                 """
-//             }
-//         }
-//
-//         stage('Health Check') {
-//             steps {
-//                 bat """
-//                 wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'Application not reachable!'"
-//                 """
-//             }
-//         }
-//     }
-//
-//     post {
-//         success {
-//             echo "Deployment completed successfully!"
-//         }
-//         failure {
-//             echo "Deployment failed. Check logs for details."
-//         }
-//     }
-// }
