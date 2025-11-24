@@ -167,6 +167,19 @@
 	<build>
 		<finalName>myapp-3.5.7</finalName>
 		<plugins>
+
+			<!-- Spring Boot Plugin for WAR deployment -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<mainClass>com.example.ForInterviewPracticeSpringBootAllTopicImplementaionApplication</mainClass>
+					<!-- ensures WAR is not repackaged as executable fat JAR -->
+					<layout>WAR</layout>
+				</configuration>
+			</plugin>
+
+
 			<!-- MapStruct + Lombok -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
