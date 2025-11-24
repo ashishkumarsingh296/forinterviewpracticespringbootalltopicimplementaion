@@ -25,7 +25,9 @@ pipeline {
 
         stage('Deploy Application') {
             steps {
-                bat "wsl bash ${DEPLOY_SCRIPT}"
+                // bat "wsl bash ${DEPLOY_SCRIPT}"
+                        bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/deploy_WSL_PROD.sh'
+
             }
         }
 
@@ -35,38 +37,9 @@ pipeline {
             }
         }
 
-        // stage('Health Check') {
-        //     steps {
-        //         bat "wsl curl -f http://localhost:8080/actuator/health || echo 'Application not reachable!'"
-        //     }
-        // }
-
-        stage('Health Check') {
+     stage('Health Check') {
     steps {
-        bat """
-        wsl bash -c "
-        MAX_RETRIES=6
-        SLEEP=5
-        SUCCESS=0
-
-        for i in \$(seq 1 \$MAX_RETRIES); do
-            echo 'Checking application health... Attempt' \$i
-            if curl -s -f http://localhost:8080/actuator/health > /dev/null; then
-                echo 'Application is healthy!'
-                SUCCESS=1
-                break
-            else
-                echo 'Application not ready yet, waiting \$SLEEP seconds...'
-                sleep \$SLEEP
-            fi
-        done
-
-        if [ \$SUCCESS -ne 1 ]; then
-            echo 'Application not reachable after retries!'
-            exit 1
-        fi
-        "
-        """
+        bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh'
     }
 }
 
