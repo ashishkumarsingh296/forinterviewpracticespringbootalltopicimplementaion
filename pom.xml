@@ -173,11 +173,11 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.example.ForInterviewPracticeSpringBootAllTopicImplementaionApplication</mainClass>
-					<!-- ensures WAR is not repackaged as executable fat JAR -->
+					<mainClass>com.example.forinterviewpracticespringbootalltopicimplementaion.ForinterviewpracticespringbootalltopicimplementaionApplication</mainClass>
 					<layout>WAR</layout>
 				</configuration>
 			</plugin>
+
 
 
 			<!-- MapStruct + Lombok -->
@@ -203,11 +203,6 @@
 				</configuration>
 			</plugin>
 
-			<!-- Spring Boot Plugin -->
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
 
 		</plugins>
 	</build>
