@@ -11,16 +11,17 @@ pipeline {
     }
 
     stages {
+        
+      stage('Build JAR on Jenkins') {
+    steps {
+        git branch: 'main', url: "${GIT_URL}"   // <-- explicitly main branch
+        bat """
+        :: Build JAR on Jenkins agent
+        mvnw clean package -DskipTests
+        """
+    }
+ }
 
-        stage('Build JAR on Jenkins') {
-            steps {
-                git url: "${GIT_URL}"
-                bat """
-                :: Build JAR on Jenkins agent
-                mvnw clean package -DskipTests
-                """
-            }
-        }
 
         stage('Prepare WSL Deploy Folder') {
             steps {
