@@ -104,7 +104,7 @@ pipeline {
 
         stage('Check Logs') {
             steps {
-                bat "wsl tail -n 200 ${TOMCAT_HOME}/logs/myapp_logs.out || echo 'No logs found'"
+                bat "wsl tail -n 200 ${TOMCAT_HOME}/logs/catalina.out || echo 'No logs found'"
             }
         }
 
