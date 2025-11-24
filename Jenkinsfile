@@ -55,7 +55,7 @@ pipeline {
         stage('Checkout Code in WSL') {
             steps {
                 bat """
-                wsl bash -c "if [ -d ${WSL_PROJECT}/.git ]; then git -C ${WSL_PROJECT} reset --hard && git -C ${WSL_PROJECT} pull; else git clone -b ${GIT_BRANCH} ${GIT_URL} ${WSL_PROJECT}; fi"
+                wsl bash -c "if [ -d ${WSL_PROJECT}/.git ]; then git -C ${WSL_PROJECT} reset --hard && git -C ${WSL_PROJECT} pull; else git clone -b ${GIT_URL} ${WSL_PROJECT}; fi"
                 """
             }
         }
