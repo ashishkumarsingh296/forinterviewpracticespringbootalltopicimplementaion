@@ -8,9 +8,9 @@ pipeline {
     }
 
     environment {
-        // WSL paths
-        WSL_PROJECT="/home/aashudev/spring-app"      // WSL workspace
-        WSL_DEPLOY="/home/aashudev/deploy"          // Deploy folder
+        // WSL native paths
+        WSL_PROJECT="/home/aashudev/spring-app"        // WSL workspace for build
+        WSL_DEPLOY="/home/aashudev/deploy"            // Pretups-style deploy folder
         JENKINS_SCRIPTS="${WSL_PROJECT}/jenkins_scripts"
         ARTIFACT_NAME="spring-app.jar"
         BUILD_SCRIPT="build_${params.ENVIRONMENT}.sh"
@@ -25,11 +25,13 @@ pipeline {
             }
         }
 
-        stage('Copy Scripts to WSL') {
+        stage('Prepare WSL Workspace') {
             steps {
                 bat """
-                wsl mkdir -p ${JENKINS_SCRIPTS}
-                wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/jenkins_scripts/ ${JENKINS_SCRIPTS}/
+                wsl mkdir -p ${WSL_PROJECT} ${JENKINS_SCRIPTS}
+                wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/ ${WSL_PROJECT}/
+                wsl dos2unix ${JENKINS_SCRIPTS}/*.sh
+                wsl chmod +x ${JENKINS_SCRIPTS}/*.sh
                 """
             }
         }
@@ -37,7 +39,6 @@ pipeline {
         stage('Run Build Script') {
             steps {
                 bat """
-                wsl bash -c "chmod +x ${JENKINS_SCRIPTS}/${BUILD_SCRIPT}"
                 wsl bash -c "${JENKINS_SCRIPTS}/${BUILD_SCRIPT}"
                 """
             }
@@ -58,7 +59,6 @@ pipeline {
             }
             steps {
                 bat """
-                wsl bash -c "chmod +x ${JENKINS_SCRIPTS}/${DEPLOY_SCRIPT}"
                 wsl bash -c "${JENKINS_SCRIPTS}/${DEPLOY_SCRIPT}"
                 """
             }
