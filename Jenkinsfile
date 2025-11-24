@@ -9,10 +9,12 @@ pipeline {
 
     environment {
         // WSL paths
-        WSL_DEPLOY="/home/aashudev/deploy"      // Pretups-style deploy folder
+        WSL_PROJECT="/home/aashudev/spring-app"      // WSL workspace
+        WSL_DEPLOY="/home/aashudev/deploy"          // Deploy folder
+        JENKINS_SCRIPTS="${WSL_PROJECT}/jenkins_scripts"
+        ARTIFACT_NAME="spring-app.jar"
         BUILD_SCRIPT="build_${params.ENVIRONMENT}.sh"
         DEPLOY_SCRIPT="deploy_${params.ENVIRONMENT}.sh"
-        ARTIFACT="spring-app.jar"
     }
 
     stages {
@@ -23,20 +25,29 @@ pipeline {
             }
         }
 
-        stage('Run Build Script') {
+        stage('Copy Scripts to WSL') {
             steps {
                 bat """
-                wsl bash -c "chmod +x ./jenkins_scripts/${BUILD_SCRIPT}"
-                wsl bash -c "./jenkins_scripts/${BUILD_SCRIPT}"
+                wsl mkdir -p ${JENKINS_SCRIPTS}
+                wsl rsync -av /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/jenkins_scripts/ ${JENKINS_SCRIPTS}/
                 """
             }
         }
 
-        stage('Copy Artifact to WSL Deploy Folder') {
+        stage('Run Build Script') {
+            steps {
+                bat """
+                wsl bash -c "chmod +x ${JENKINS_SCRIPTS}/${BUILD_SCRIPT}"
+                wsl bash -c "${JENKINS_SCRIPTS}/${BUILD_SCRIPT}"
+                """
+            }
+        }
+
+        stage('Copy Artifact to Deploy Folder') {
             steps {
                 bat """
                 wsl bash -c "mkdir -p ${WSL_DEPLOY}"
-                wsl bash -c "cp target/*.jar ${WSL_DEPLOY}/${ARTIFACT}"
+                wsl bash -c "cp ${WSL_PROJECT}/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}"
                 """
             }
         }
@@ -47,8 +58,8 @@ pipeline {
             }
             steps {
                 bat """
-                wsl bash -c "chmod +x ${WSL_DEPLOY}/${DEPLOY_SCRIPT} || true"
-                wsl bash -c "cd ${WSL_DEPLOY} && ./jenkins_scripts/${DEPLOY_SCRIPT}"
+                wsl bash -c "chmod +x ${JENKINS_SCRIPTS}/${DEPLOY_SCRIPT}"
+                wsl bash -c "${JENKINS_SCRIPTS}/${DEPLOY_SCRIPT}"
                 """
             }
         }
@@ -79,6 +90,7 @@ pipeline {
         }
     }
 }
+
 
 
 
