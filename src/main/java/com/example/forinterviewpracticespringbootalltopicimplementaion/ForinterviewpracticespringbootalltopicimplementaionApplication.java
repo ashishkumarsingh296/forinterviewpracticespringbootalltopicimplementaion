@@ -10,18 +10,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 @EnableCaching
 @SpringBootApplication
-public class ForinterviewpracticespringbootalltopicimplementaionApplication {
+public class ForinterviewpracticespringbootalltopicimplementaionApplication extends SpringBootServletInitializer{
 
-
-//	@Override
-//	protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
-//		return builder.sources(ForinterviewpracticespringbootalltopicimplementaionApplication.class);
-//	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(ForinterviewpracticespringbootalltopicimplementaionApplication.class, args);
 	}
-//This tells Spring Boot how to run inside an external Tomcat server.
 
 
 }
