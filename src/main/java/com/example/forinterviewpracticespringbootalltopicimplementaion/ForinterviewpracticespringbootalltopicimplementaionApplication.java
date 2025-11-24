@@ -15,7 +15,7 @@ public class ForinterviewpracticespringbootalltopicimplementaionApplication exte
 
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
-        return builder.sources(MyApplication.class);
+        return builder.sources(ForinterviewpracticespringbootalltopicimplementaionApplication.class);
     }
 
 	
