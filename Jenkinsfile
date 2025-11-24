@@ -21,15 +21,36 @@ pipeline {
 
     stages {
 
+        // stage('Prepare WSL Workspace') {
+        //     steps {
+        //         bat """
+        //         wsl mkdir -p ${WSL_PROJECT} ${JENKINS_SCRIPTS} ${WSL_DEPLOY}
+        //         wsl dos2unix ${JENKINS_SCRIPTS}/*.sh || true
+        //         wsl chmod +x ${JENKINS_SCRIPTS}/*.sh || true
+        //         """
+        //     }
+        // }
+
         stage('Prepare WSL Workspace') {
-            steps {
-                bat """
-                wsl mkdir -p ${WSL_PROJECT} ${JENKINS_SCRIPTS} ${WSL_DEPLOY}
-                wsl dos2unix ${JENKINS_SCRIPTS}/*.sh || true
-                wsl chmod +x ${JENKINS_SCRIPTS}/*.sh || true
-                """
-            }
-        }
+    steps {
+        bat """
+        :: Create WSL directories if not exist
+        wsl mkdir -p /home/aashudev/spring-app /home/aashudev/jenkins_scripts /home/aashudev/deploy
+
+        :: Check if jenkins_scripts is empty in WSL
+        wsl bash -c "if [ \$(ls -A /home/aashudev/jenkins_scripts | wc -l) -eq 0 ]; then \
+            echo 'Copying Jenkins scripts from Windows workspace to WSL...'; \
+            cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/jenkins_scripts/*.sh /home/aashudev/jenkins_scripts/; \
+        else \
+            echo 'jenkins_scripts already exist in WSL'; \
+        fi"
+
+        :: Convert line endings & make scripts executable
+        wsl bash -c "dos2unix /home/aashudev/jenkins_scripts/*.sh || true"
+        wsl bash -c "chmod +x /home/aashudev/jenkins_scripts/*.sh"
+        """
+    }
+}
 
         stage('Checkout Code in WSL') {
             steps {
