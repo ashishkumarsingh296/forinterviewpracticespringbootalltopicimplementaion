@@ -4,7 +4,7 @@ pipeline {
 
     environment {
         WSL_DEPLOY="/home/aashudev/deploy"            // WSL deploy folder
-        JENKINS_SCRIPTS="/home/aashudev/jenkins_scripts"
+        JENKINS_SCRIPTS="/home/aashudev/deploy/jenkins_scripts"
         ARTIFACT_NAME="spring-app.jar"
         DEPLOY_SCRIPT="deploy_WSL_PROD.sh"
         GIT_URL="https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git"
