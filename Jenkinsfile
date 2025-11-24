@@ -2,84 +2,55 @@
 pipeline {
     agent any
 
-    parameters {
-        choice(name: 'ENVIRONMENT', choices: ['WSL_PROD','LOCAL'], description: "Choose environment")
-        choice(name: 'RESTART_APP', choices: ['YES','NO'], description: "Restart application after deployment")
-    }
-
     environment {
-        // WSL native paths
-        WSL_PROJECT="/home/aashudev/spring-app"        // WSL workspace for build
-        WSL_DEPLOY="/home/aashudev/deploy"            // Deploy folder
+        WSL_DEPLOY="/home/aashudev/deploy"            // WSL deploy folder
         JENKINS_SCRIPTS="/home/aashudev/jenkins_scripts"
         ARTIFACT_NAME="spring-app.jar"
-        BUILD_SCRIPT="build_${params.ENVIRONMENT}.sh"
-        DEPLOY_SCRIPT="deploy_${params.ENVIRONMENT}.sh"
+        DEPLOY_SCRIPT="deploy_WSL_PROD.sh"
         GIT_URL="https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git"
-        GIT_BRANCH="main"
     }
 
     stages {
 
-        // stage('Prepare WSL Workspace') {
-        //     steps {
-        //         bat """
-        //         wsl mkdir -p ${WSL_PROJECT} ${JENKINS_SCRIPTS} ${WSL_DEPLOY}
-        //         wsl dos2unix ${JENKINS_SCRIPTS}/*.sh || true
-        //         wsl chmod +x ${JENKINS_SCRIPTS}/*.sh || true
-        //         """
-        //     }
-        // }
-
-        stage('Prepare WSL Workspace') {
-    steps {
-        bat """
-        :: Create WSL directories if not exist
-        wsl mkdir -p /home/aashudev/spring-app /home/aashudev/jenkins_scripts /home/aashudev/deploy
-
-        :: Check if jenkins_scripts is empty in WSL
-        wsl bash -c "if [ \$(ls -A /home/aashudev/jenkins_scripts | wc -l) -eq 0 ]; then \
-            echo 'Copying Jenkins scripts from Windows workspace to WSL...'; \
-            cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/jenkins_scripts/*.sh /home/aashudev/jenkins_scripts/; \
-        else \
-            echo 'jenkins_scripts already exist in WSL'; \
-        fi"
-
-        :: Convert line endings & make scripts executable
-        wsl bash -c "dos2unix /home/aashudev/jenkins_scripts/*.sh || true"
-        wsl bash -c "chmod +x /home/aashudev/jenkins_scripts/*.sh"
-        """
-    }
-}
-
-        stage('Checkout Code in WSL') {
+        stage('Build JAR on Jenkins') {
             steps {
+                git url: "${GIT_URL}"
                 bat """
-                wsl bash -c "if [ -d ${WSL_PROJECT}/.git ]; then git -C ${WSL_PROJECT} reset --hard && git -C ${WSL_PROJECT} pull; else git clone -b ${GIT_URL} ${WSL_PROJECT}; fi"
+                :: Build JAR on Jenkins agent
+                mvnw clean package -DskipTests
                 """
             }
         }
 
-        stage('Build JAR in WSL') {
+        stage('Prepare WSL Deploy Folder') {
             steps {
                 bat """
-                wsl bash -c "cd ${WSL_PROJECT} && ./mvnw clean package -DskipTests"
+                wsl bash -c "
+                mkdir -p ${WSL_DEPLOY} ${JENKINS_SCRIPTS}
+
+                # Copy jenkins_scripts if missing
+                if [ \$(ls -A ${JENKINS_SCRIPTS} | wc -l) -eq 0 ]; then
+                    cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/jenkins_scripts/*.sh ${JENKINS_SCRIPTS}/
+                fi
+
+                dos2unix ${JENKINS_SCRIPTS}/*.sh || true
+                chmod +x ${JENKINS_SCRIPTS}/*.sh
+                "
                 """
             }
         }
 
-        stage('Copy Artifact to Deploy Folder') {
+        stage('Copy JAR to WSL') {
             steps {
                 bat """
-                wsl bash -c "cp ${WSL_PROJECT}/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}"
+                wsl bash -c "
+                cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}
+                "
                 """
             }
         }
 
         stage('Deploy Application') {
-            when {
-                expression { params.RESTART_APP == 'YES' }
-            }
             steps {
                 bat """
                 wsl bash -c "${JENKINS_SCRIPTS}/${DEPLOY_SCRIPT}"
@@ -113,6 +84,7 @@ pipeline {
         }
     }
 }
+
 
 
 
