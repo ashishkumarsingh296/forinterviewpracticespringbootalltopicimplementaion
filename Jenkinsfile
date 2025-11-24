@@ -62,9 +62,10 @@ pipeline {
     agent any
 
     environment {
-        TOMCAT_HOME="/home/aashudev/tomcat"
+        HOME_DIR="/home/aashudev/deploy"
+        TOMCAT_HOME="/home/aashudev/tomcat/apache-tomcat-9.0.89"
         // WSL_DEPLOY="${TOMCAT_HOME}/webapps"
-        WSL_DEPLOY="${TOMCAT_HOME}"
+        WSL_DEPLOY="${HOME_DIR}"
         ARTIFACT_NAME="spring-app.war"
         START_SCRIPT="${TOMCAT_HOME}/myappstart.sh"
         STOP_SCRIPT="${TOMCAT_HOME}/myappstop.sh"
