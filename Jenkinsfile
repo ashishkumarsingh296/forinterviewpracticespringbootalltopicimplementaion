@@ -3,75 +3,41 @@ pipeline {
     agent any
 
     environment {
-        WSL_DEPLOY="/home/aashudev/deploy"            // WSL deploy folder
-        JENKINS_SCRIPTS="/home/aashudev/deploy/jenkins_scripts"
+        WSL_DEPLOY="/home/aashudev/deploy"
         ARTIFACT_NAME="spring-app.jar"
-        DEPLOY_SCRIPT="deploy_WSL_PROD.sh"
-        GIT_URL="https://github.com/ashishkumarsingh296/forinterviewpracticespringbootalltopicimplementaion.git"
+        DEPLOY_SCRIPT="/home/aashudev/deploy/jenkins_scripts/deploy_WSL_PROD.sh"
     }
 
     stages {
-        
-      stage('Build JAR on Jenkins') {
-    steps {
-        git branch: 'main', url: "${GIT_URL}"   // <-- explicitly main branch
-        bat """
-        :: Build JAR on Jenkins agent
-        mvnw clean package -DskipTests
-        """
-    }
- }
-
-
-        stage('Prepare WSL Deploy Folder') {
+        stage('Build JAR on Jenkins') {
             steps {
-                bat """
-                wsl bash -c "
-                mkdir -p ${WSL_DEPLOY} ${JENKINS_SCRIPTS}
-
-                # Copy jenkins_scripts if missing
-                if [ \$(ls -A ${JENKINS_SCRIPTS} | wc -l) -eq 0 ]; then
-                    cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/jenkins_scripts/*.sh ${JENKINS_SCRIPTS}/
-                fi
-
-                dos2unix ${JENKINS_SCRIPTS}/*.sh || true
-                chmod +x ${JENKINS_SCRIPTS}/*.sh
-                "
-                """
+                bat 'mvnw clean package -DskipTests'
             }
         }
 
         stage('Copy JAR to WSL') {
             steps {
                 bat """
-                wsl bash -c "
-                cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}
-                "
+                wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/InterviewAllVersion/target/*.jar ${WSL_DEPLOY}/${ARTIFACT_NAME}
                 """
             }
         }
 
         stage('Deploy Application') {
             steps {
-                bat """
-                wsl bash -c "${JENKINS_SCRIPTS}/${DEPLOY_SCRIPT}"
-                """
+                bat "wsl bash ${DEPLOY_SCRIPT}"
             }
         }
 
         stage('Check Logs') {
             steps {
-                bat """
-                wsl bash -c "tail -n 200 ${WSL_DEPLOY}/app.log || echo 'No logs found'"
-                """
+                bat "wsl tail -n 200 ${WSL_DEPLOY}/app.log || echo 'No logs found'"
             }
         }
 
         stage('Health Check') {
             steps {
-                bat """
-                wsl bash -c "curl -f http://localhost:8080/actuator/health || echo 'Application not reachable!'"
-                """
+                bat "wsl curl -f http://localhost:8080/actuator/health || echo 'Application not reachable!'"
             }
         }
     }
@@ -85,6 +51,7 @@ pipeline {
         }
     }
 }
+
 
 
 
