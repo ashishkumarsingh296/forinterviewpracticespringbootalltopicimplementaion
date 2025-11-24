@@ -13,6 +13,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class ForinterviewpracticespringbootalltopicimplementaionApplication extends SpringBootServletInitializer{
 
 
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
+        return builder.sources(MyApplication.class);
+    }
+
+	
 	public static void main(String[] args) {
 		SpringApplication.run(ForinterviewpracticespringbootalltopicimplementaionApplication.class, args);
 	}
