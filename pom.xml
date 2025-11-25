@@ -6,6 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.5.7</version>
+
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
@@ -31,7 +32,6 @@
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 
 	</properties>
-	<packaging>war</packaging>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -56,11 +56,11 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.springframework.boot</groupId>-->
+<!--			<artifactId>spring-boot-starter-tomcat</artifactId>-->
+<!--			<scope>provided</scope>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
@@ -172,10 +172,10 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<mainClass>com.example.forinterviewpracticespringbootalltopicimplementaion.ForinterviewpracticespringbootalltopicimplementaionApplication</mainClass>
-					<layout>WAR</layout>
-				</configuration>
+<!--				<configuration>-->
+<!--					<mainClass>com.example.forinterviewpracticespringbootalltopicimplementaion.ForinterviewpracticespringbootalltopicimplementaionApplication</mainClass>-->
+<!--					<layout>WAR</layout>-->
+<!--				</configuration>-->
 			</plugin>
 
 
