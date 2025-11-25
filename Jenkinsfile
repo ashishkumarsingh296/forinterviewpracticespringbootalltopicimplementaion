@@ -172,13 +172,13 @@ pipeline {
 
         stage('Check Logs') {
             steps {
-                bat "wsl tail -n 50 ${TOMCAT_HOME}/logs/catalina.out || echo 'No logs found'"
+                bat "wsl tail -n 200 ${TOMCAT_HOME}/logs/catalina.out || echo 'No logs found'"
             }
         }
 
         stage('Health Check') {
             steps {
-                bat "curl http://localhost:8080/spring-app/api/hello"
+                 bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh'
             }
         }
     }
