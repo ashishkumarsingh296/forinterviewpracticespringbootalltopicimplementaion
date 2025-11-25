@@ -1,0 +1,29 @@
+<!--<?xml version="1.0" encoding="UTF-8"?>-->
+<!--<Configuration status="WARN">-->
+<!--    <Appenders>-->
+<!--        <File name="AppLogFile" fileName="logs/myapp-demo.log" append="true">-->
+<!--            <PatternLayout>-->
+<!--                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n</Pattern>-->
+<!--            </PatternLayout>-->
+<!--        </File>-->
+<!--    </Appenders>-->
+
+<!--    <Loggers>-->
+
+<!--        &lt;!&ndash; Log only your project &ndash;&gt;-->
+<!--        <Logger name="com.pretups" level="DEBUG" additivity="false">-->
+<!--            <AppenderRef ref="AppLogFile"/>-->
+<!--        </Logger>-->
+
+<!--        &lt;!&ndash; Reduce noise &ndash;&gt;-->
+<!--        <Logger name="org.springframework" level="ERROR"/>-->
+<!--        <Logger name="org.hibernate" level="ERROR"/>-->
+<!--        <Logger name="org.apache" level="ERROR"/>-->
+
+<!--        &lt;!&ndash; All logs in one file &ndash;&gt;-->
+<!--        <Root level="INFO">-->
+<!--            <AppenderRef ref="AppLogFile"/>-->
+<!--        </Root>-->
+
+<!--    </Loggers>-->
+<!--</Configuration>-->
