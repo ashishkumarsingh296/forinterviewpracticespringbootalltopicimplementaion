@@ -139,10 +139,10 @@ pipeline {
         ARTIFACT_NAME="spring-app.war"
         START_SCRIPT="${TOMCAT_HOME}/myappstartup.sh"
         STOP_SCRIPT="${TOMCAT_HOME}/myappstop.sh"
-        LOG_FILE="${TOMCAT_HOME}/logs/catalina.out"
     }
 
     stages {
+
         stage('Build WAR') {
             steps {
                 bat 'mvnw clean package -DskipTests'
@@ -171,13 +171,13 @@ pipeline {
 
         stage('Tail Logs') {
             steps {
-                bat "wsl tail -n 50 ${LOG_FILE} || echo 'No logs found'"
+                bat "wsl tail -n 50 ${TOMCAT_HOME}/logs/catalina.out || echo 'No logs found'"
             }
         }
 
         stage('Health Check') {
             steps {
-                bat 'wsl curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/spring-app/actuator/health || echo "Health check failed"'
+                bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh || echo "Health check failed"'
             }
         }
     }
@@ -187,7 +187,7 @@ pipeline {
             echo "Deployment Successful ✔️"
         }
         failure {
-            echo "❌ Deployment Failed"
+            echo "❌ Deployment Failed - check logs above"
         }
     }
 }
