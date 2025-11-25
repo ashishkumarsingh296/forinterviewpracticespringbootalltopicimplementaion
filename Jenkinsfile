@@ -160,7 +160,7 @@ pipeline {
 
         stage('Stop Tomcat') {
             steps {
-                bat "wsl bash ${STOP_SCRIPT}"
+                bat "wsl bash ${STOP_SCRIPT} || true"
             }
         }
 
