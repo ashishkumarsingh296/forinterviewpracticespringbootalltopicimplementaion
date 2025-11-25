@@ -44,7 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/info").permitAll()
                         .requestMatchers(
                                 "/auth/**",
-                                "/swagger-ui/**",
+                                "/spring-app/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/api-docs/**"
