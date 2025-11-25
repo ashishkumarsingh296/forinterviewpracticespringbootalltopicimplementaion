@@ -134,16 +134,15 @@ pipeline {
     agent any
 
     environment {
-        HOME_DIR="/home/aashudev/deploy"
         TOMCAT_HOME="/home/aashudev/tomcat/apache-tomcat-10.1.49"
         WSL_DEPLOY="${TOMCAT_HOME}/webapps"
         ARTIFACT_NAME="spring-app.war"
         START_SCRIPT="${TOMCAT_HOME}/myappstartup.sh"
         STOP_SCRIPT="${TOMCAT_HOME}/myappstop.sh"
+        LOG_FILE="${TOMCAT_HOME}/logs/catalina.out"
     }
 
     stages {
-
         stage('Build WAR') {
             steps {
                 bat 'mvnw clean package -DskipTests'
@@ -159,34 +158,26 @@ pipeline {
         }
 
         stage('Stop Tomcat') {
-    steps {
-        // Windows CMD me || true ko samajhne ke liye double quotes ke andar bash -c
-        bat 'wsl bash -c "/home/aashudev/tomcat/apache-tomcat-10.1.49/myappstop.sh || true"'
-    }
-}
-
-stage('Start Tomcat') {
-    steps {
-        bat 'wsl bash -c "/home/aashudev/tomcat/apache-tomcat-10.1.49/myappstartup.sh"'
-    }
-}
-
-
-        // stage('Start Tomcat') {
-        //     steps {
-        //         bat "wsl bash ${START_SCRIPT}"
-        //     }
-        // }
-
-        stage('Check Logs') {
             steps {
-                bat "wsl tail -n 200 ${TOMCAT_HOME}/logs/catalina.out || echo 'No logs found'"
+                bat "wsl bash -c '${STOP_SCRIPT}'"
+            }
+        }
+
+        stage('Start Tomcat') {
+            steps {
+                bat "wsl bash -c '${START_SCRIPT}'"
+            }
+        }
+
+        stage('Tail Logs') {
+            steps {
+                bat "wsl tail -n 50 ${LOG_FILE} || echo 'No logs found'"
             }
         }
 
         stage('Health Check') {
             steps {
-                 bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh'
+                bat 'wsl curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/spring-app/actuator/health || echo "Health check failed"'
             }
         }
     }
