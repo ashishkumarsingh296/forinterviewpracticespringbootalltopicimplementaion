@@ -176,9 +176,13 @@ pipeline {
         }
 
         stage('Health Check') {
-            steps {
-                bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh || echo "Health check failed"'
-            }
+
+             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh'
+        }
+            // steps {
+            //     bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh || echo "Health check failed"'
+            // }
         }
     }
 
