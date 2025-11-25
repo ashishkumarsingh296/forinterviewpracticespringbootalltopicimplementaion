@@ -10,10 +10,14 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 @EnableCaching
 @SpringBootApplication
-public class ForinterviewpracticespringbootalltopicimplementaionApplication {
+public class ForinterviewpracticespringbootalltopicimplementaionApplication extends SpringBootServletInitializer {
 
 
-
+	
+		@Override
+		protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+			return application.sources(DemoApplication.class);
+		}
 
 	
 	public static void main(String[] args) {
