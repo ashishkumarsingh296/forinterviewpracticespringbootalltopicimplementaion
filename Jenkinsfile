@@ -100,7 +100,7 @@ pipeline {
 
         stage('Tail Logs') {
             steps {
-                bat "wsl tail -n 50 ${TOMCAT_HOME}/logs/catalina.out || echo 'No logs found'"
+                bat "wsl tail -n 50 ${TOMCAT_HOME}/logs/myapp-demo.out || echo 'No logs found'"
             }
         }
 
