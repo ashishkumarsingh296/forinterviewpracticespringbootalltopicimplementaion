@@ -158,18 +158,25 @@ pipeline {
             }
         }
 
-       stage('Stop Tomcat') {
+        stage('Stop Tomcat') {
     steps {
-        bat "wsl bash -c '${STOP_SCRIPT} || true'"
+        // Windows CMD me || true ko samajhne ke liye double quotes ke andar bash -c
+        bat 'wsl bash -c "/home/aashudev/tomcat/apache-tomcat-10.1.49/myappstop.sh || true"'
+    }
+}
+
+stage('Start Tomcat') {
+    steps {
+        bat 'wsl bash -c "/home/aashudev/tomcat/apache-tomcat-10.1.49/myappstartup.sh"'
     }
 }
 
 
-        stage('Start Tomcat') {
-            steps {
-                bat "wsl bash ${START_SCRIPT}"
-            }
-        }
+        // stage('Start Tomcat') {
+        //     steps {
+        //         bat "wsl bash ${START_SCRIPT}"
+        //     }
+        // }
 
         stage('Check Logs') {
             steps {
