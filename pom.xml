@@ -12,6 +12,7 @@
 	<groupId>com.example</groupId>
 	<artifactId>forinterviewpracticespringbootalltopicimplementaion</artifactId>
 	<name>forinterviewpracticespringbootalltopicimplementaion</name>
+	 <packaging>war</packaging>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
@@ -56,11 +57,11 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>org.springframework.boot</groupId>-->
-<!--			<artifactId>spring-boot-starter-tomcat</artifactId>-->
-<!--			<scope>provided</scope>-->
-<!--		</dependency>-->
+	< <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
+		</dependency> 
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
@@ -165,17 +166,21 @@
 	</dependencyManagement>
 
 	<build>
-		<finalName>myapp-3.5.7</finalName>
+		<finalName>myapp-demo</finalName>
 		<plugins>
 
 			<!-- Spring Boot Plugin for WAR deployment -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-<!--				<configuration>-->
-<!--					<mainClass>com.example.forinterviewpracticespringbootalltopicimplementaion.ForinterviewpracticespringbootalltopicimplementaionApplication</mainClass>-->
-<!--					<layout>WAR</layout>-->
-<!--				</configuration>-->
+				<version>3.5.7</version>
+           <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal> <!-- required -->
+                        </goals>
+                    </execution>
+                </executions>
 			</plugin>
 
 
