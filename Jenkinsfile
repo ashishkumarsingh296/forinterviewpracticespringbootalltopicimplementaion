@@ -158,11 +158,12 @@ pipeline {
             }
         }
 
-        stage('Stop Tomcat') {
-            steps {
-                bat "wsl bash ${STOP_SCRIPT} || true"
-            }
-        }
+       stage('Stop Tomcat') {
+    steps {
+        bat "wsl bash -c '${STOP_SCRIPT} || true'"
+    }
+}
+
 
         stage('Start Tomcat') {
             steps {
