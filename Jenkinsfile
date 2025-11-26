@@ -159,14 +159,28 @@ stages {
         }
     }
 
-    stage('Copy WAR to WSL') {
-        steps {
-            script {
-                def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
-                bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${ARTIFACT_NAME}"""
-            }
+    // stage('Copy WAR to WSL') {
+    //     steps {
+    //         script {
+    //             def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
+    //             bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${ARTIFACT_NAME}"""
+    //         }
+    //     }
+    // }
+
+stage('Copy WAR to WSL') {
+    steps {
+        script {
+            // Determine target Tomcat directory and WAR name
+            def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
+            def warFileName = (params.TARGET == 'dev') ? "${ARTIFACT_NAME}-dev.war" : "${ARTIFACT_NAME}-qa.war"
+
+            // Copy WAR to WSL with dev/qa suffix
+            bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${warFileName}"""
         }
     }
+}
+
 
 
      stage('Stop Tomcat') {
