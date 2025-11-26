@@ -374,7 +374,7 @@ pipeline {
             steps {
                 bat """
                 "%WSL_BASH%" bash -c "chmod +x ${START_SCRIPT}"
-                "%WSL_BASH%" bash -c "${START_SCRIPT} ${ENV}"
+                "%WSL_BASH%" bash -c "${START_SCRIPT} ${param.ENV}"
                 """
             }
         }
