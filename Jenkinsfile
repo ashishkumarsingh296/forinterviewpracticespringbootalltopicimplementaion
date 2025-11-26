@@ -261,169 +261,119 @@ pipeline {
       }
     }
 
-    /* =========================
-       STOP APPLICATION (FIXED)
-       ========================= */
     stage('Stop Application') {
       steps {
         script {
           if (params.BUILD == 'dev') {
-            bat """
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh dev || true"
-            """
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh dev || true"'
           } 
           else if (params.BUILD == 'qa') {
-            bat """
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh qa || true"
-            """
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh qa || true"'
           } 
           else {
-            bat """
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh prod1 || true"
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh prod2 || true"
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh prod3 || true"
-            """
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod1 || true"'
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod2 || true"'
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod3 || true"'
           }
         }
       }
     }
 
-    /* =========================
-       COPY WAR
-       ========================= */
     stage('Copy WAR') {
       steps {
         script {
           if (params.BUILD == 'dev') {
             bat """
-            wsl -d Ubuntu -- bash -c "
-              cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
-              ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}
-            "
+            wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
+            ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}"
             """
           } 
           else if (params.BUILD == 'qa') {
             bat """
-            wsl -d Ubuntu -- bash -c "
-              cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
-              ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}
-            "
+            wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
+            ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}"
             """
           } 
           else {
             bat """
-            wsl -d Ubuntu -- bash -c "
-              cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME}
-              cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME}
-              cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_3}/webapps/${ARTIFACT_NAME}
-            "
+            wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
+            ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME}"
+            """
+            bat """
+            wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
+            ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME}"
+            """
+            bat """
+            wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
+            ${TOMCAT_PROD_3}/webapps/${ARTIFACT_NAME}"
             """
           }
         }
       }
     }
 
-    /* =========================
-       START APPLICATION (FIXED)
-       ========================= */
     stage('Start Application') {
       steps {
         script {
           if (params.BUILD == 'dev') {
-            bat """
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh dev"
-            """
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh dev"'
           } 
           else if (params.BUILD == 'qa') {
-            bat """
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh qa"
-            """
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh qa"'
           } 
           else {
-            bat """
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh prod1"
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh prod2"
-            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh prod3"
-            """
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod1"'
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod2"'
+            bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod3"'
           }
         }
       }
     }
 
-    /* =========================
-       TAIL LOGS (DEV / QA)
-       ========================= */
     stage('Tail Logs (DEV/QA)') {
       when { expression { params.BUILD != 'prod' } }
       steps {
         script {
           def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV : TOMCAT_QA
           bat """
-          wsl -d Ubuntu -- bash -c "
-            echo ===== LAST 200 LOG LINES =====
-            tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs
-          "
+          wsl -d Ubuntu -- bash -lc "echo ===== LAST 200 LOG LINES ===== && \
+          tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs"
           """
         }
       }
     }
-
-    /* =========================
-       HEALTH CHECK (PROD ONLY)
-       ========================= */
-    stage('Health Check (PROD only)') {
-      when { expression { params.BUILD == 'prod' } }
-      steps {
-        script {
-          try {
-            bat "wsl -d Ubuntu -- bash -c \"${WSL_BASE}/health_check_all.sh 9080 9081 9082\""
-          } catch (err) {
-            echo "Health check failed — rolling back..."
-            bat "wsl -d Ubuntu -- bash -c \"${WSL_BASE}/rollback_unhealthy_nodes.sh ${TOMCAT_PROD_1} ${TOMCAT_PROD_2} ${TOMCAT_PROD_3} ${BACKUP_DIR} ${ARTIFACT_NAME} ${WSL_BASE}\""
-            error "PROD health-check failed"
-          }
-        }
-      }
-    }
   }
 
-  /* =========================
-     POST ACTIONS
-     ========================= */
   post {
-  success {
-    echo "✅ Deployment successful for ${params.BUILD}"
-  }
-
-  failure {
-    script {
-
-      bat '''
-      wsl bash -lc '
-        mkdir -p /home/aashudev/deploy/jenkins_logs
-
-        TS=$(date +%Y%m%d_%H%M%S)
-
-        if [ "'"${params.BUILD}"'" = "dev" ]; then
-          cp /home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev/logs/myapplog.out \
-          /home/aashudev/deploy/jenkins_logs/dev_$TS.log
-
-        elif [ "'"${params.BUILD}"'" = "qa" ]; then
-          cp /home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa/logs/myapplog.out \
-          /home/aashudev/deploy/jenkins_logs/qa_$TS.log
-        fi
-      '
-      '''
-
-      bat 'wsl cp -r /home/aashudev/deploy/jenkins_logs /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/ || true'
-      archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
+    success {
+      echo "✅ Deployment successful for ${params.BUILD}"
     }
 
-    echo "❌ Deployment failed — logs archived"
+    failure {
+      script {
+
+        bat """
+        wsl -d Ubuntu -- bash -lc "
+          mkdir -p /home/aashudev/deploy/jenkins_logs
+          TS=\\$(date +%Y%m%d_%H%M%S)
+
+          if [ '${params.BUILD}' = 'dev' ]; then
+            cp ${TOMCAT_DEV}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/dev_\\$TS.log
+          elif [ '${params.BUILD}' = 'qa' ]; then
+            cp ${TOMCAT_QA}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/qa_\\$TS.log
+          fi
+        "
+        """
+
+        bat """
+        wsl -d Ubuntu -- bash -lc "cp -r /home/aashudev/deploy/jenkins_logs \
+        /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
+        """
+
+        archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
+      }
+
+      echo "❌ Deployment failed — logs archived"
+    }
   }
 }
-
-
-}
-
-
