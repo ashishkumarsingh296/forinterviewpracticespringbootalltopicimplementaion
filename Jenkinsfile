@@ -127,45 +127,41 @@
 // }
 
 
-// for mutiple server like dev and qa
+// For Mutiple server like dev and qa
+
 pipeline {
     agent any
 
-   parameters {
+    parameters {
         choice(
             name: 'TARGET',
-            choices: ['dev', 'qa'],
+            choices: ['dev','qa'],
             description: 'Deploy target environment'
         )
     }
 
     environment {
-        // script base
         WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
-        // base per env (used inside WSL)
         TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
         TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
         ARTIFACT_NAME="my-new-app.war"
     }
 
     stages {
-
-       stage('Build WAR') {
-           steps {
-               script {
-               def profile = (params.TARGET == 'dev') ? 'wsl-dev' : 'wsl-qa'
-               bat "mvnw clean package -P${profile} -DskipTests"
-           }
-          }
+        stage('Build WAR') {
+            steps {
+                script {
+                    def profile = (params.TARGET == 'dev') ? 'wsl-dev' : 'wsl-qa'
+                    bat "mvnw clean package -P${profile} -DskipTests"
+                }
+            }
         }
 
         stage('Copy WAR to WSL') {
             steps {
                 script {
                     def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
-                    bat """\
-                      wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${ARTIFACT_NAME}
-                    """
+                    bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${ARTIFACT_NAME}"""
                 }
             }
         }
@@ -190,15 +186,6 @@ pipeline {
                 }
             }
         }
-
-        // stage('Health Check') {
-        //     steps {
-        //         script {
-        //             def url = (params.TARGET == 'dev') ? 'http://localhost:8080/spring-app/actuator/health' : 'http://localhost:8081/spring-app/actuator/health'
-        //             bat "wsl bash -lc '/home/aashudev/deploy/jenkins_scripts/health_check.sh ${url} 6 5' || exit 1"
-        //         }
-        //     }
-        // }
     }
 
     post {
@@ -206,17 +193,17 @@ pipeline {
             script {
                 def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
 
-                bat """
-    wsl bash -lc '
-    mkdir -p /home/aashudev/deploy/jenkins_logs || true
-    cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_$(date +%Y%m%d_%H%M%S) || true
-    ls -l /home/aashudev/deploy/jenkins_logs || true
-    '
-    """
-                bat "wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
+                // Multi-line bash safe with triple single quotes
+                bat '''wsl bash -lc '
+mkdir -p /home/aashudev/deploy/jenkins_logs || true
+cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_$(date +%Y%m%d_%H%M%S) || true
+ls -l /home/aashudev/deploy/jenkins_logs || true
+' '''
+
+                // Copy back to Windows workspace
+                bat """wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"""
                 archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
             }
-
             echo "❌ Deployment failed — logs archived"
         }
 
@@ -224,6 +211,4 @@ pipeline {
             echo "✅ Deployment successful (${params.TARGET})"
         }
     }
-
 }
-
