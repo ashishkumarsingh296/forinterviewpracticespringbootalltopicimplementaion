@@ -204,25 +204,26 @@ pipeline {
     post {
         failure {
             script {
-                // collect last 2 logs into workspace for debugging
                 def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
-                bat """\
-                  wsl bash -lc "mkdir -p /home/aashudev/deploy/jenkins_logs || true"
 
-                    wsl bash -lc "cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_\\$(date +%Y%m%d_%H%M%S) || true"
-
-                  wsl bash -lc "ls -l /home/aashudev/deploy/jenkins_logs || true"
-                """
-                // bring the logs back to Windows Jenkins workspace
+                bat """
+    wsl bash -lc '
+    mkdir -p /home/aashudev/deploy/jenkins_logs || true
+    cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_$(date +%Y%m%d_%H%M%S) || true
+    ls -l /home/aashudev/deploy/jenkins_logs || true
+    '
+    """
                 bat "wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
                 archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
-       
             }
+
             echo "❌ Deployment failed — logs archived"
         }
+
         success {
             echo "✅ Deployment successful (${params.TARGET})"
         }
     }
+
 }
 
