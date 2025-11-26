@@ -242,9 +242,9 @@ pipeline {
     TOMCAT_PROD_2 = "/home/aashudev/tomcat/multiple-server-config/prod2-server/apache-tomcat-10.1.49-prod-2"
     TOMCAT_PROD_3 = "/home/aashudev/tomcat/multiple-server-config/prod3-server/apache-tomcat-10.1.49-prod-3"
 
-    TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
-    TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-
+    TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+    TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+                
     NGINX_CONF = "/etc/nginx/conf.d/nginx.conf"
 
     BACKUP_DIR = "/home/aashudev/deploy/war_backups"
@@ -311,6 +311,15 @@ pipeline {
       }
     }
   }
+}
+              stage('Tail Logs') {
+        steps {
+            script {
+                def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV : TOMCAT_QA
+                bat """wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs" """
+            }
+        }
+    }
 }
 
 
