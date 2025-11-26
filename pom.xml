@@ -198,21 +198,6 @@
     </resource>
   </resources>
 
-
-		<profiles>
-  <profile>
-    <id>wsl-dev</id>
-    <properties>
-      <active.profile>wsl-dev</active.profile>
-    </properties>
-  </profile>
-  <profile>
-    <id>wsl-qa</id>
-    <properties>
-      <active.profile>wsl-qa</active.profile>
-    </properties>
-  </profile>
-</profiles>
 <!-- End-->
 		
 		<plugins>
@@ -259,5 +244,20 @@
 
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>wsl-dev</id>
+			<properties>
+				<active.profile>dev</active.profile>
+			</properties>
+		</profile>
+		<profile>
+			<id>wsl-qa</id>
+			<properties>
+				<active.profile>qa</active.profile>
+			</properties>
+		</profile>
+	</profiles>
 
 </project>
