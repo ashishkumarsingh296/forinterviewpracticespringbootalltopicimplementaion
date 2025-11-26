@@ -370,14 +370,21 @@ pipeline {
             }
         }
 
-        stage('Start Tomcat') {
+            stage('Start Tomcat') {
             steps {
-                bat """
-                "%WSL_BASH%" bash -c "chmod +x ${START_SCRIPT}"
-                "%WSL_BASH%" bash -c "${START_SCRIPT} ${param.ENV}"
-                """
+                echo "Starting Tomcat for ${params.ENV}"
+                bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh ${params.ENV}"
             }
-        }
+        }         
+
+        // stage('Start Tomcat') {
+        //     steps {
+        //         bat """
+        //         "%WSL_BASH%" bash -c "chmod +x ${START_SCRIPT}"
+        //         "%WSL_BASH%" bash -c "${START_SCRIPT} ${param.ENV}"
+        //         """
+        //     }
+        // }
 
         stage('Verify Running') {
             steps {
