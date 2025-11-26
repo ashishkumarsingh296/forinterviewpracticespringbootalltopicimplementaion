@@ -127,121 +127,242 @@
 // }
 
 
-// For Mutiple server like dev and qa
+// For Mutiple server like dev and qa working fine
 
+// pipeline {
+//     agent any
+
+//     parameters {
+//         choice(
+//             name: 'TARGET',
+//             choices: ['dev','qa'],
+//             description: 'Deploy target environment'
+//         )
+//     }
+
+// environment {
+//     WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
+//     TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+//     TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+//     ARTIFACT_NAME="my-new-app"
+//     START_SCRIPT="${WSL_BASE}/myappstartup.sh"
+//     STOP_SCRIPT="${WSL_BASE}/myappstop.sh"
+// }
+
+// stages {
+//     stage('Build WAR') {
+//         steps {
+//             script {
+//                 def profile = (params.TARGET == 'dev') ? 'wsl-dev' : 'wsl-qa'
+//                 bat "mvnw clean package -P${profile} -DskipTests"
+//             }
+//         }
+//     }
+
+
+// stage('Copy WAR to WSL') {
+//     steps {
+//         script {
+//             // Determine target Tomcat directory and WAR name
+//             def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
+//             def warFileName = (params.TARGET == 'dev') ? "${ARTIFACT_NAME}-dev.war" : "${ARTIFACT_NAME}-qa.war"
+
+//             // Copy WAR to WSL with dev/qa suffix
+//             bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${warFileName}"""
+//         }
+//     }
+// }
+
+
+
+//      stage('Stop Tomcat') {
+//             steps {
+//                 echo "Stopping Tomcat for ${params.TARGET}"
+//                 bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.TARGET} || true"
+//             }
+//         }
+
+//         stage('Start Tomcat') {
+//             steps {
+//                 echo "Starting Tomcat for ${params.TARGET}"
+//                 bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh ${params.TARGET}"
+//             }
+//         }       
+
+
+
+//     stage('Tail Logs') {
+//         steps {
+//             script {
+//                 def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
+//                 bat """wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs" """
+//             }
+//         }
+//     }
+// }
+
+// post {
+//     failure {
+//         script {
+//             def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
+//             bat """wsl bash -c "
+//                 mkdir -p /home/aashudev/deploy/jenkins_logs &&
+//                 cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_\$(date +%Y%m%d_%H%M%S) &&
+//                 ls -l /home/aashudev/deploy/jenkins_logs
+//             " """
+//             bat """wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"""
+//             archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
+//         }
+//         echo "❌ Deployment failed — logs archived"
+//     }
+
+//     success {
+//         echo "✅ Deployment successful (${params.TARGET})"
+//     }
+//    }
+// }
+
+//For Mulitiple Server with prod architecher
 pipeline {
-    agent any
+  agent any
 
-    parameters {
-        choice(
-            name: 'TARGET',
-            choices: ['dev','qa'],
-            description: 'Deploy target environment'
-        )
-    }
+  parameters {
+    choice(name: 'TARGET', choices: ['dev','qa','prod'], description: 'Deploy target environment')
+    choice(name: 'PROD_COLOR', choices: ['blue','green'], description: 'Deploy color (prod only) — pipeline will deploy to this color')
+    choice(name: 'DEPLOY_STRATEGY', choices: ['blue-green','rolling'], description: 'Deployment strategy')
+  }
 
-environment {
-    WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
-    TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
-    TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-    ARTIFACT_NAME="my-new-app"
-    START_SCRIPT="${WSL_BASE}/myappstartup.sh"
-    STOP_SCRIPT="${WSL_BASE}/myappstop.sh"
-}
+  environment {
+    WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
+    TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+    TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+    TOMCAT_PROD_BLUE = "/home/aashudev/tomcat/multiple-server-config/prod-blue/apache-tomcat-10.1.49-prod-blue"
+    TOMCAT_PROD_GREEN = "/home/aashudev/tomcat/multiple-server-config/prod-green/apache-tomcat-10.1.49-prod-green"
+    ARTIFACT_NAME = "my-new-app.war"
+    # path to nginx active upstream symlink
+    NGINX_ACTIVE="/etc/nginx/upstreams/active_upstream.conf"
+    NGINX_UPSTREAM_DIR="/etc/nginx/upstreams"
+  }
 
-stages {
+  stages {
+
     stage('Build WAR') {
-        steps {
-            script {
-                def profile = (params.TARGET == 'dev') ? 'wsl-dev' : 'wsl-qa'
-                bat "mvnw clean package -P${profile} -DskipTests"
-            }
-        }
-    }
-
-    // stage('Copy WAR to WSL') {
-    //     steps {
-    //         script {
-    //             def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
-    //             bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${ARTIFACT_NAME}"""
-    //         }
-    //     }
-    // }
-
-stage('Copy WAR to WSL') {
-    steps {
+      steps {
         script {
-            // Determine target Tomcat directory and WAR name
-            def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
-            def warFileName = (params.TARGET == 'dev') ? "${ARTIFACT_NAME}-dev.war" : "${ARTIFACT_NAME}-qa.war"
-
-            // Copy WAR to WSL with dev/qa suffix
-            bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${warFileName}"""
+          def profile = (params.TARGET == 'prod') ? 'wsl-prod' : (params.TARGET == 'qa' ? 'wsl-qa' : 'wsl-dev')
+          bat "mvnw clean package -P${profile} -DskipTests"
         }
+      }
     }
-}
 
-
-
-     stage('Stop Tomcat') {
-            steps {
-                echo "Stopping Tomcat for ${params.TARGET}"
-                bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.TARGET} || true"
-            }
+    stage('Copy WAR to target') {
+      steps {
+        script {
+          if (params.TARGET == 'dev') {
+            bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}"""
+          } else if (params.TARGET == 'qa') {
+            bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}"""
+          } else {
+            // prod: copy to the selected color (we deploy to the "inactive" color)
+            def color = params.PROD_COLOR
+            def tomcatHome = (color == 'blue') ? TOMCAT_PROD_BLUE : TOMCAT_PROD_GREEN
+            // name war consistently inside webapps folder
+            bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${tomcatHome}/webapps/${ARTIFACT_NAME}"""
+          }
         }
-
-        stage('Start Tomcat') {
-            steps {
-                echo "Starting Tomcat for ${params.TARGET}"
-                bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh ${params.TARGET}"
-            }
-        }       
-
-    // stage('Stop Tomcat') {
-    //     steps {
-    //         script {
-    //             def target = params.TARGET
-    //             bat """wsl bash -c "${STOP_SCRIPT} ${target} || true" """
-    //         }
-    //     }
-    // }
-
-    // stage('Start Tomcat') {
-    //     steps {
-    //         script {
-    //             def target = params.TARGET
-    //             bat """wsl bash -c "${START_SCRIPT} ${target}" """
-    //         }
-    //     }
-    // }
-
-    stage('Tail Logs') {
-        steps {
-            script {
-                def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
-                bat """wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs" """
-            }
-        }
+      }
     }
-}
 
-post {
+    stage('Stop target Tomcat (if running)') {
+      steps {
+        script {
+          if (params.TARGET == 'dev') {
+            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh dev || true'"
+          } else if (params.TARGET == 'qa') {
+            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh qa || true'"
+          } else {
+            def color = params.PROD_COLOR
+            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh prod-${color} || true'"
+          }
+        }
+      }
+    }
+
+    stage('Start target Tomcat') {
+      steps {
+        script {
+          if (params.TARGET == 'dev') {
+            bat "wsl bash -lc '${WSL_BASE}/myappstartup.sh dev'"
+          } else if (params.TARGET == 'qa') {
+            bat "wsl bash -lc '${WSL_BASE}/myappstartup.sh qa'"
+          } else {
+            def color = params.PROD_COLOR
+            bat "wsl bash -lc '${WSL_BASE}/myappstartup.sh prod-${color}'"
+          }
+        }
+      }
+    }
+
+    stage('Health check new instances') {
+      steps {
+        script {
+          if (params.TARGET == 'prod') {
+            // check health of upstream for the deployed color
+            def color = params.PROD_COLOR
+            // list of instance URLs for the color - update these IPs/ports accordingly
+            def instances = (color == 'blue') ? ['http://10.0.0.11:8080/actuator/health','http://10.0.0.12:8080/actuator/health'] : ['http://10.0.0.21:8080/actuator/health','http://10.0.0.22:8080/actuator/health']
+            // simple loop: curl each
+            for (i=0; i<instances.size(); i++) {
+              def url = instances[i]
+              bat "wsl bash -lc 'for try in {1..10}; do curl -fsS ${url} && exit 0 || sleep 2; done; echo \"Health check failed for ${url}\"; exit 1'"
+            }
+          } else {
+            echo "health checks skipped (non-prod)"
+          }
+        }
+      }
+    }
+
+    stage('Switch Nginx to new color (blue-green)') {
+      when { expression { params.TARGET == 'prod' } }
+      steps {
+        script {
+          def color = params.PROD_COLOR
+          def upstreamFile = (color == 'blue') ? "${NGINX_UPSTREAM_DIR}/prod_blue.conf" : "${NGINX_UPSTREAM_DIR}/prod_green.conf"
+          // create symlink active_upstream.conf -> prod_blue.conf or prod_green.conf
+          bat "wsl bash -lc 'sudo ln -sf ${upstreamFile} ${NGINX_ACTIVE} && nginx -t && sudo nginx -s reload'"
+          echo "Nginx switched to ${color}"
+        }
+      }
+    }
+
+    stage('Post-deploy cleanup (optional)') {
+      steps {
+        script {
+          if (params.TARGET == 'prod') {
+            // Optionally stop old color instances here to free resources
+            def oldColor = (params.PROD_COLOR == 'blue') ? 'green' : 'blue'
+            echo "Stopping old color: ${oldColor} (optional; uncomment if you want auto-stop)"
+            // bat "wsl bash -lc '${WSL_BASE}/myappstop.sh prod-${oldColor} || true'"
+          }
+        }
+      }
+    }
+
+  } // stages
+
+  post {
+    success { echo "✅ Deployment successful: ${params.TARGET} ${params.TARGET=='prod'?params.PROD_COLOR:''}" }
     failure {
-        script {
-            def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
-            bat """wsl bash -c "
-                mkdir -p /home/aashudev/deploy/jenkins_logs &&
-                cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_\$(date +%Y%m%d_%H%M%S) &&
-                ls -l /home/aashudev/deploy/jenkins_logs
-            " """
-            bat """wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"""
-            archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
-        }
-        echo "❌ Deployment failed — logs archived"
+      script {
+        // copy logs out for debugging - simple approach
+        bat "wsl bash -lc 'mkdir -p /home/aashudev/deploy/jenkins_logs || true'"
+        bat "wsl bash -lc 'cp /home/aashudev/tomcat/*/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/ || true'"
+        bat "wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
+        archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
+      }
+      echo "❌ Deployment failed; logs archived"
     }
-
-    success {
-        echo "✅ Deployment successful (${params.TARGET})"
-    }
-   }
+  }
 }
+
