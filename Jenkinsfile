@@ -132,6 +132,7 @@ pipeline {
     agent any
 
     parameters {
+                
         choice(name: 'TARGET', choices: ['dev','qa'], description: 'Deploy target environment')
     }
 
@@ -141,15 +142,18 @@ pipeline {
         # TOMCAT base per env (used inside WSL)
         TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
         TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-        ARTIFACT_NAME="spring-app.war"
+        ARTIFACT_NAME="my-new-app.war"
     }
 
     stages {
 
-        stage('Build WAR') {
-            steps {
-                bat 'mvnw clean package -DskipTests'
-            }
+       stage('Build WAR') {
+           steps {
+               script {
+               def profile = (params.TARGET == 'dev') ? 'wsl-dev' : 'wsl-qa'
+               bat "mvnw clean package -P${profile} -DskipTests"
+           }
+          }
         }
 
         stage('Copy WAR to WSL') {
@@ -206,7 +210,8 @@ pipeline {
                 """
                 // bring the logs back to Windows Jenkins workspace
                 bat "wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
-                archiveArtifacts artifacts: '**/catalina.out_*', allowEmptyArchive: true
+                archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
+       
             }
             echo "❌ Deployment failed — logs archived"
         }
