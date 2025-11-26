@@ -131,9 +131,12 @@
 pipeline {
     agent any
 
-    parameters {
-                
-        choice(name: 'TARGET', choices: ['dev','qa'], description: 'Deploy target environment')
+   parameters {
+        choice(
+            name: 'TARGET',
+            choices: ['dev', 'qa'],
+            description: 'Deploy target environment'
+        )
     }
 
     environment {
