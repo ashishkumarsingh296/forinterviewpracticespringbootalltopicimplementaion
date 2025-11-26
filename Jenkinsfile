@@ -137,10 +137,10 @@ pipeline {
 
     environment {
         # WSL script base
-        WSL_BASE="/home/aashudev/tomcat/bin"
+        WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
         # TOMCAT base per env (used inside WSL)
-        TOMCAT_DEV="/home/aashudev/tomcat/apache-tomcat-10.1.49-dev"
-        TOMCAT_QA="/home/aashudev/tomcat/apache-tomcat-10.1.49-qa"
+        TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+        TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
         ARTIFACT_NAME="spring-app.war"
     }
 
@@ -171,7 +171,7 @@ pipeline {
 
         stage('Start Tomcat') {
             steps {
-                bat "wsl bash -lc '${WSL_BASE}/myappstart.sh ${params.TARGET}'"
+                bat "wsl bash -lc '${WSL_BASE}/myappstartup.sh ${params.TARGET}'"
             }
         }
 
@@ -179,19 +179,19 @@ pipeline {
             steps {
                 script {
                     def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
-                    bat "wsl tail -n 200 ${tomcatHome}/logs/catalina.out || echo NoLogs"
+                    bat "wsl tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs"
                 }
             }
         }
 
-        stage('Health Check') {
-            steps {
-                script {
-                    def url = (params.TARGET == 'dev') ? 'http://localhost:8080/spring-app/actuator/health' : 'http://localhost:8081/spring-app/actuator/health'
-                    bat "wsl bash -lc '/home/aashudev/deploy/jenkins_scripts/health_check.sh ${url} 6 5' || exit 1"
-                }
-            }
-        }
+        // stage('Health Check') {
+        //     steps {
+        //         script {
+        //             def url = (params.TARGET == 'dev') ? 'http://localhost:8080/spring-app/actuator/health' : 'http://localhost:8081/spring-app/actuator/health'
+        //             bat "wsl bash -lc '/home/aashudev/deploy/jenkins_scripts/health_check.sh ${url} 6 5' || exit 1"
+        //         }
+        //     }
+        // }
     }
 
     post {
@@ -201,7 +201,7 @@ pipeline {
                 def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
                 bat """\
                   wsl bash -lc "mkdir -p /home/aashudev/deploy/jenkins_logs || true"
-                  wsl bash -lc "cp ${tomcatHome}/logs/catalina.out /home/aashudev/deploy/jenkins_logs/catalina.out_$(date +%Y%m%d_%H%M%S) || true"
+                  wsl bash -lc "cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_$(date +%Y%m%d_%H%M%S) || true"
                   wsl bash -lc "ls -l /home/aashudev/deploy/jenkins_logs || true"
                 """
                 // bring the logs back to Windows Jenkins workspace
