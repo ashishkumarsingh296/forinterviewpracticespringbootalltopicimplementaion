@@ -289,20 +289,30 @@ pipeline {
       }
     }
 
-    stage('Restart Application(s)') {
-      steps {
-        script {
-          if (params.BUILD == 'dev') {
-            bat "wsl ${WSL_BASE}/myappstop.sh dev || true && wsl ${WSL_BASE}/myappstartup.sh dev"
-          } else if (params.BUILD == 'qa') {
-            bat "wsl ${WSL_BASE}/myappstop.sh qa || true && wsl ${WSL_BASE}/myappstartup.sh qa"
-          } else {
-            // restart all prod nodes (helper handles node names)
-            bat "wsl ${WSL_BASE}/restart_all_prod.sh \"${WSL_BASE}\""
-          }
-        }
+ stage('Restart Application(s)') {
+  steps {
+    script {
+      if (params.BUILD == 'dev') {
+        bat "wsl ${WSL_BASE}/myappstop.sh dev"
+        bat "wsl ${WSL_BASE}/myappstartup.sh dev"
+      } 
+      else if (params.BUILD == 'qa') {
+        bat "wsl ${WSL_BASE}/myappstop.sh qa"
+        bat "wsl ${WSL_BASE}/myappstartup.sh qa"
+      } 
+      else {
+        bat "wsl ${WSL_BASE}/myappstop.sh prod-1"
+        bat "wsl ${WSL_BASE}/myappstop.sh prod-2"
+        bat "wsl ${WSL_BASE}/myappstop.sh prod-3"
+
+        bat "wsl ${WSL_BASE}/myappstartup.sh prod-1"
+        bat "wsl ${WSL_BASE}/myappstartup.sh prod-2"
+        bat "wsl ${WSL_BASE}/myappstartup.sh prod-3"
       }
     }
+  }
+}
+
 
     stage('Health Check') {
       steps {
