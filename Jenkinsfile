@@ -129,6 +129,17 @@
 
 // For Mutiple server like dev and qa
 
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'TARGET',
+            choices: ['dev','qa'],
+            description: 'Deploy target environment'
+        )
+    }
+
 environment {
     WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
     TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
@@ -203,4 +214,5 @@ post {
     success {
         echo "✅ Deployment successful (${params.TARGET})"
     }
+   }
 }
