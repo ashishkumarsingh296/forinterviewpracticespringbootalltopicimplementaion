@@ -223,28 +223,37 @@
 // }
 
 //For Mulitiple Server with prod architecher
+
 pipeline {
   agent any
 
   parameters {
     choice(name: 'BUILD', choices: ['dev','qa','prod'], description: 'Deploy target environment')
-    choice(name: 'PROD_COLOR', choices: ['blue','green'], description: 'Deploy color (only for PROD)')
-    choice(name: 'DEPLOY_STRATEGY', choices: ['blue-green','rolling'], description: 'Deployment strategy')
+    choice(name: 'PROD_COLOR', choices: ['blue','green'], description: 'NOT USED - kept for backward compatibility')
+    choice(name: 'DEPLOY_STRATEGY', choices: ['round-robin','rolling'], description: 'Deployment strategy (round-robin uses all nodes)')
   }
 
- environment {
-  WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
-  TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
-  TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-  TOMCAT_PROD_BLUE = "/home/aashudev/tomcat/multiple-server-config/prod-blue/apache-tomcat-10.1.49-prod-blue"
-  TOMCAT_PROD_GREEN = "/home/aashudev/tomcat/multiple-server-config/prod-green/apache-tomcat-10.1.49-prod-green"
-  ARTIFACT_NAME = "my-new-app.war"
+  environment {
+    // WSL paths (adjust if needed)
+    WSL_BASE = "/home/aashudev/tomcat/bin"
+    ARTIFACT_NAME = "my-new-app.war"
 
-  // path to nginx active upstream symlink ✅ FIXED
-  NGINX_ACTIVE="/etc/nginx/upstreams/active_upstream.conf"
-  NGINX_UPSTREAM_DIR="/etc/nginx/upstreams"
-}
+    // Prod nodes
+    TOMCAT_PROD_1 = "/home/aashudev/tomcat/prod-1/apache-tomcat-10.1.49-1"
+    TOMCAT_PROD_2 = "/home/aashudev/tomcat/prod-2/apache-tomcat-10.1.49-2"
+    TOMCAT_PROD_3 = "/home/aashudev/tomcat/prod-3/apache-tomcat-10.1.49-3"
 
+    // Dev/QA (example)
+    TOMCAT_DEV = "/home/aashudev/tomcat/dev/apache-tomcat-10.1.49-dev"
+    TOMCAT_QA  = "/home/aashudev/tomcat/qa/apache-tomcat-10.1.49-qa"
+
+    // nginx listen port (example)
+    NGINX_CONF = "/etc/nginx/conf.d/myapp.conf"
+
+    // backup directory (inside WSL)
+    BACKUP_DIR = "/home/aashudev/deploy/war_backups"
+    LOGS_DIR = "/home/aashudev/deploy/jenkins_logs"
+  }
 
   stages {
 
@@ -253,124 +262,175 @@ pipeline {
         script {
           def profile = (params.BUILD == 'prod') ? 'prod' :
                         (params.BUILD == 'qa')   ? 'wsl-qa' : 'wsl-dev'
-
+          echo "Building with Maven profile: ${profile}"
           bat "mvn clean package -P${profile} -DskipTests"
         }
       }
     }
 
-    stage('Copy WAR to target') {
-      steps {
-        script {
-          if (params.BUILD == 'dev') {
-            bat """wsl cp target/*.war ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}"""
-
-          } else if (params.BUILD == 'qa') {
-            bat """wsl cp target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}"""
-
-          } else {
-            def tomcatHome = (params.PROD_COLOR == 'blue') ?
-                              TOMCAT_PROD_BLUE : TOMCAT_PROD_GREEN
-
-            bat """wsl cp target/*.war ${tomcatHome}/webapps/${ARTIFACT_NAME}"""
-          }
-        }
-      }
-    }
-
-    stage('Stop target Tomcat') {
-      steps {
-        script {
-          if (params.BUILD == 'dev') {
-            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh dev || true'"
-
-          } else if (params.BUILD == 'qa') {
-            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh qa || true'"
-
-          } else {
-            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh prod-${params.PROD_COLOR} || true'"
-          }
-        }
-      }
-    }
-
-    stage('Start target Tomcat') {
-      steps {
-        script {
-          if (params.BUILD == 'dev') {
-            bat "wsl bash -lc '${WSL_BASE}/myappstartup.sh dev'"
-
-          } else if (params.BUILD == 'qa') {
-            bat "wsl bash -lc '${WSL_BASE}/myappstartup.sh qa'"
-
-          } else {
-            bat "wsl bash -lc '${WSL_BASE}/myappstartup.sh prod-${params.PROD_COLOR}'"
-          }
-        }
-      }
-    }
-
-    stage('Health check (PROD only)') {
+    stage('Prepare Backups (PROD only)') {
       when { expression { params.BUILD == 'prod' } }
       steps {
         script {
-          def instances = (params.PROD_COLOR == 'blue') ?
-            ['http://127.0.0.1:9080/actuator/health'] :
-            ['http://127.0.0.1:9081/actuator/health']
-
-          for (url in instances) {
-            bat "wsl bash -lc 'for i in {1..10}; do curl -fs ${url} && exit 0 || sleep 3; done; exit 1'"
-          }
-        }
-      }
-    }
-
-    stage('Switch Nginx (Blue-Green)') {
-      when { expression { params.BUILD == 'prod' } }
-      steps {
-        script {
-          def upstreamFile = (params.PROD_COLOR == 'blue') ?
-            "${NGINX_UPSTREAM_DIR}/prod_blue.conf" :
-            "${NGINX_UPSTREAM_DIR}/prod_green.conf"
-
           bat """
           wsl bash -lc '
-            sudo ln -sf ${upstreamFile} ${NGINX_ACTIVE} &&
-            sudo nginx -t &&
-            sudo nginx -s reload
+            mkdir -p ${BACKUP_DIR} || true
+            # backup current WARs (if exist)
+            for d in ${TOMCAT_PROD_1} ${TOMCAT_PROD_2} ${TOMCAT_PROD_3}; do
+              if [ -f "$d/webapps/${ARTIFACT_NAME}" ]; then
+                cp "$d/webapps/${ARTIFACT_NAME}" "${BACKUP_DIR}/$(basename $d)-${ARTIFACT_NAME}-$(date +%s)" || true
+              fi
+            done
           '
           """
         }
       }
     }
 
-    stage('Stop OLD prod color (optional)') {
-      when { expression { params.BUILD == 'prod' } }
+    stage('Copy WARs') {
       steps {
         script {
-          def oldColor = (params.PROD_COLOR == 'blue') ? 'green' : 'blue'
-          echo "Old color = ${oldColor} (manual stop optional)"
-          // bat "wsl bash -lc '${WSL_BASE}/myappstop.sh prod-${oldColor} || true'"
+          if (params.BUILD == 'dev') {
+            bat "wsl cp target/*.war ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}"
+          } else if (params.BUILD == 'qa') {
+            bat "wsl cp target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}"
+          } else {
+            // PROD -> copy to all 3 nodes
+            bat """
+            wsl bash -lc '
+              cp target/*.war ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME} &&
+              cp target/*.war ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME} &&
+              cp target/*.war ${TOMCAT_PROD_3}/webapps/${ARTIFACT_NAME}
+            '
+            """
+          }
         }
       }
     }
 
-  } 
+    stage('Restart Application(s)') {
+      steps {
+        script {
+          if (params.BUILD == 'dev') {
+            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh dev || true; ${WSL_BASE}/myappstartup.sh dev'"
+          } else if (params.BUILD == 'qa') {
+            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh qa || true; ${WSL_BASE}/myappstartup.sh qa'"
+          } else {
+            // PROD -> restart all 3
+            bat """
+            wsl bash -lc '
+              ${WSL_BASE}/myappstop.sh prod-1 || true
+              ${WSL_BASE}/myappstop.sh prod-2 || true
+              ${WSL_BASE}/myappstop.sh prod-3 || true
+
+              ${WSL_BASE}/myappstartup.sh prod-1
+              ${WSL_BASE}/myappstartup.sh prod-2
+              ${WSL_BASE}/myappstartup.sh prod-3
+            '
+            """
+          }
+        }
+      }
+    }
+
+    stage('Health Check') {
+      steps {
+        script {
+          if (params.BUILD == 'prod') {
+            def urls = [
+              "http://127.0.0.1:9080/actuator/health",
+              "http://127.0.0.1:9081/actuator/health",
+              "http://127.0.0.1:9082/actuator/health"
+            ]
+
+            // run health checks, collect failures
+            def failures = []
+            for (i = 0; i < urls.size(); i++) {
+              def u = urls[i]
+              echo "Checking ${u}"
+              def cmd = "wsl bash -lc 'for j in {1..10}; do curl -sf ${u} && exit 0 || sleep 3; done; exit 1'"
+              try {
+                bat cmd
+              } catch (err) {
+                echo "Health check failed for ${u}"
+                failures.add(i) // store index 0-based (9080 -> 0, 9081 -> 1, 9082 -> 2)
+              }
+            }
+
+            // If any failures -> attempt rollback for failed nodes
+            if (failures.size() > 0) {
+              echo "Detected unhealthy nodes: ${failures}"
+              // restore backups for each failed node
+              for (idx in failures) {
+                def nodePath = (idx == 0) ? TOMCAT_PROD_1 : (idx == 1) ? TOMCAT_PROD_2 : TOMCAT_PROD_3
+                echo "Attempting restore on ${nodePath}"
+                // find most recent backup for that node (simple approach: pick last matching file)
+                bat """
+                wsl bash -lc '
+                  set -e
+                  backup=$(ls -1t ${BACKUP_DIR}/$(basename ${nodePath})-${ARTIFACT_NAME}-* 2>/dev/null | head -n1 || true)
+                  if [ -n "$backup" ]; then
+                    echo "Restoring $backup -> ${nodePath}/webapps/${ARTIFACT_NAME}"
+                    cp "$backup" ${nodePath}/webapps/${ARTIFACT_NAME} || true
+                    ${WSL_BASE}/myappstop.sh $(basename ${nodePath}) || true
+                    ${WSL_BASE}/myappstartup.sh $(basename ${nodePath})
+                  else
+                    echo "No backup found for ${nodePath}, will try to remove faulty WAR and leave node stopped"
+                    rm -f ${nodePath}/webapps/${ARTIFACT_NAME} || true
+                    ${WSL_BASE}/myappstop.sh $(basename ${nodePath}) || true
+                  fi
+                '
+                """
+              }
+
+              // collect logs and fail pipeline
+              error "One or more PROD nodes failed health checks — rollback attempted. See archived logs."
+            } else {
+              echo "All PROD nodes passed health check."
+            }
+
+          } else {
+            // For dev/qa, simple optional health check (non-blocking)
+            if (params.BUILD == 'dev') {
+              echo "Skipping health check for DEV (optional)"
+            } else {
+              echo "Skipping health check for QA (optional)"
+            }
+          }
+        }
+      }
+    }
+
+    stage('Post-deploy: Nginx Verification (optional)') {
+      when { expression { params.BUILD == 'prod' } }
+      steps {
+        script {
+          // optional: test nginx proxies
+          bat "wsl bash -lc 'curl -I http://127.0.0.1:90 || true'"
+        }
+      }
+    }
+
+  } // stages
 
   post {
     success {
-      echo "✅ Deployment successful: ${params.BUILD} ${params.BUILD == 'prod' ? params.PROD_COLOR : ''}"
+      echo "✅ Deployment successful for ${params.BUILD}"
     }
-
     failure {
       script {
-        bat "wsl bash -lc 'mkdir -p /home/aashudev/deploy/jenkins_logs || true'"
-        bat "wsl bash -lc 'cp /home/aashudev/tomcat/*/logs/*.log /home/aashudev/deploy/jenkins_logs/ || true'"
-        bat "wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
+        // collect tomcat logs to Jenkins workspace for debugging
+        bat "wsl bash -lc 'mkdir -p ${LOGS_DIR} || true'"
+        bat "wsl bash -lc 'cp -v ${TOMCAT_PROD_1}/logs/* ${LOGS_DIR}/ 2>/dev/null || true'"
+        bat "wsl bash -lc 'cp -v ${TOMCAT_PROD_2}/logs/* ${LOGS_DIR}/ 2>/dev/null || true'"
+        bat "wsl bash -lc 'cp -v ${TOMCAT_PROD_3}/logs/* ${LOGS_DIR}/ 2>/dev/null || true'"
+        // copy to Windows Jenkins workspace so Jenkins can archive
+        bat "wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
 
-        archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true
+        archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
       }
       echo "❌ Deployment failed — logs archived"
     }
   }
 }
+
