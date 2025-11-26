@@ -365,7 +365,7 @@ pipeline {
     }
   }
 
-  post {
+ post {
     success {
       echo "✅ Deployment successful for ${params.BUILD}"
     }
@@ -376,9 +376,9 @@ pipeline {
         wsl bash -lc "
           mkdir -p ${LOGS_DIR}
           if [ '${params.BUILD}' = 'dev' ]; then
-            cp ${TOMCAT_DEV}/logs/myapplog.out ${LOGS_DIR}/dev_$(date +%Y%m%d_%H%M%S).log
+            cp ${TOMCAT_DEV}/logs/myapplog.out ${LOGS_DIR}/dev_\\$(date +%Y%m%d_%H%M%S).log
           elif [ '${params.BUILD}' = 'qa' ]; then
-            cp ${TOMCAT_QA}/logs/myapplog.out ${LOGS_DIR}/qa_$(date +%Y%m%d_%H%M%S).log
+            cp ${TOMCAT_QA}/logs/myapplog.out ${LOGS_DIR}/qa_\\$(date +%Y%m%d_%H%M%S).log
           fi
         "
         """
