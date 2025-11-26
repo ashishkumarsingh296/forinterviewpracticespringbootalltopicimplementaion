@@ -235,20 +235,20 @@ pipeline {
 
   environment {
     // WSL paths (adjust if needed)
-    WSL_BASE = "/home/aashudev/tomcat/bin"
+    WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
     ARTIFACT_NAME = "my-new-app.war"
 
     // Prod nodes
-    TOMCAT_PROD_1 = "/home/aashudev/tomcat/prod-1/apache-tomcat-10.1.49-1"
-    TOMCAT_PROD_2 = "/home/aashudev/tomcat/prod-2/apache-tomcat-10.1.49-2"
-    TOMCAT_PROD_3 = "/home/aashudev/tomcat/prod-3/apache-tomcat-10.1.49-3"
+    TOMCAT_PROD_1 = "/home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1"
+    TOMCAT_PROD_2 = "/home/aashudev/tomcat/multiple-server-config/prod2-server/apache-tomcat-10.1.49-prod-2"
+    TOMCAT_PROD_3 = "/home/aashudev/tomcat/multiple-server-config/prod3-server/apache-tomcat-10.1.49-prod-3"
 
     // Dev/QA (example)
-    TOMCAT_DEV = "/home/aashudev/tomcat/dev/apache-tomcat-10.1.49-dev"
-    TOMCAT_QA  = "/home/aashudev/tomcat/qa/apache-tomcat-10.1.49-qa"
+    TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+    TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
 
     // nginx listen port (example)
-    NGINX_CONF = "/etc/nginx/conf.d/myapp.conf"
+    NGINX_CONF = "/etc/nginx/conf.d/nginx.conf"
 
     // backup directory (inside WSL)
     BACKUP_DIR = "/home/aashudev/deploy/war_backups"
