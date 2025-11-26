@@ -224,6 +224,7 @@
 
 //For Mulitiple Server with prod architecher
 
+
 pipeline {
   agent any
 
@@ -233,28 +234,23 @@ pipeline {
     choice(name: 'DEPLOY_STRATEGY', choices: ['round-robin','rolling'], description: 'Deployment strategy (round-robin uses all nodes)')
   }
 
-  environment {
-    // WSL paths (adjust if needed)
+    environment {
     WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
     ARTIFACT_NAME = "my-new-app.war"
 
-    // Prod nodes
     TOMCAT_PROD_1 = "/home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1"
     TOMCAT_PROD_2 = "/home/aashudev/tomcat/multiple-server-config/prod2-server/apache-tomcat-10.1.49-prod-2"
     TOMCAT_PROD_3 = "/home/aashudev/tomcat/multiple-server-config/prod3-server/apache-tomcat-10.1.49-prod-3"
 
-    // Dev/QA (example)
     TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
     TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
 
-    // nginx listen port (example)
     NGINX_CONF = "/etc/nginx/conf.d/nginx.conf"
 
-    // backup directory (inside WSL)
     BACKUP_DIR = "/home/aashudev/deploy/war_backups"
     LOGS_DIR = "/home/aashudev/deploy/jenkins_logs"
   }
-
+        
   stages {
 
     stage('Build WAR') {
@@ -272,21 +268,8 @@ pipeline {
       when { expression { params.BUILD == 'prod' } }
       steps {
         script {
-          // Use triple-single quotes so Groovy doesn't interpolate $ inside the shell script
-          bat '''
-wsl bash -lc '
-  set -e || true
-  mkdir -p "$BACKUP_DIR" || true
-
-  for d in "$TOMCAT_PROD_1" "$TOMCAT_PROD_2" "$TOMCAT_PROD_3"; do
-    if [ -f "$d/webapps/'"${ARTIFACT_NAME}"'" ]; then
-      name=$(basename "$d")
-      ts=$(date +%s)
-      cp "$d/webapps/'"${ARTIFACT_NAME}"'" "$BACKUP_DIR/${name}-'"${ARTIFACT_NAME}"'-${ts}" || true
-    fi
-  done
-'
-'''
+          // Call helper script inside WSL, pass args (safe - no complicated quoting)
+          bat "wsl ${WSL_BASE}/prepare_backups.sh \"${TOMCAT_PROD_1}\" \"${TOMCAT_PROD_2}\" \"${TOMCAT_PROD_3}\" \"${BACKUP_DIR}\" \"${ARTIFACT_NAME}\""
         }
       }
     }
@@ -295,20 +278,12 @@ wsl bash -lc '
       steps {
         script {
           if (params.BUILD == 'dev') {
-            // single-line double-quoted bat uses Groovy interpolation for $TOMCAT_DEV / ARTIFACT_NAME
             bat "wsl cp target/*.war ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}"
           } else if (params.BUILD == 'qa') {
             bat "wsl cp target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}"
           } else {
-            // PROD -> copy to all 3 nodes using shell expansion inside WSL
-            bat '''
-wsl bash -lc '
-  set -e
-  cp target/*.war "$TOMCAT_PROD_1/webapps/'"${ARTIFACT_NAME}"'" || true
-  cp target/*.war "$TOMCAT_PROD_2/webapps/'"${ARTIFACT_NAME}"'" || true
-  cp target/*.war "$TOMCAT_PROD_3/webapps/'"${ARTIFACT_NAME}"'" || true
-'
-'''
+            // call a helper to copy to all prod nodes
+            bat "wsl ${WSL_BASE}/copy_to_all_prod.sh \"${TOMCAT_PROD_1}\" \"${TOMCAT_PROD_2}\" \"${TOMCAT_PROD_3}\" \"${ARTIFACT_NAME}\""
           }
         }
       }
@@ -318,24 +293,12 @@ wsl bash -lc '
       steps {
         script {
           if (params.BUILD == 'dev') {
-            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh dev || true; ${WSL_BASE}/myappstartup.sh dev'"
+            bat "wsl ${WSL_BASE}/myappstop.sh dev || true && wsl ${WSL_BASE}/myappstartup.sh dev"
           } else if (params.BUILD == 'qa') {
-            bat "wsl bash -lc '${WSL_BASE}/myappstop.sh qa || true; ${WSL_BASE}/myappstartup.sh qa'"
+            bat "wsl ${WSL_BASE}/myappstop.sh qa || true && wsl ${WSL_BASE}/myappstartup.sh qa"
           } else {
-            // PROD -> restart all 3 using a multiline shell block
-            bat '''
-wsl bash -lc '
-  set -e || true
-
-  '"$WSL_BASE"'/myappstop.sh prod-1 || true
-  '"$WSL_BASE"'/myappstop.sh prod-2 || true
-  '"$WSL_BASE"'/myappstop.sh prod-3 || true
-
-  '"$WSL_BASE"'/myappstartup.sh prod-1
-  '"$WSL_BASE"'/myappstartup.sh prod-2
-  '"$WSL_BASE"'/myappstartup.sh prod-3
-'
-'''
+            // restart all prod nodes (helper handles node names)
+            bat "wsl ${WSL_BASE}/restart_all_prod.sh \"${WSL_BASE}\""
           }
         }
       }
@@ -345,73 +308,20 @@ wsl bash -lc '
       steps {
         script {
           if (params.BUILD == 'prod') {
-            def urls = [
-              "http://127.0.0.1:9080/actuator/health",
-              "http://127.0.0.1:9081/actuator/health",
-              "http://127.0.0.1:9082/actuator/health"
-            ]
+            // health-check helper returns non-zero and lists failed indices if failure
+            try {
+              bat "wsl ${WSL_BASE}/health_check_all.sh \"9080\" \"9081\" \"9082\""
+            } catch (err) {
+              echo "Health check reported failure(s). Attempting per-node rollback(s)."
 
-            // run health checks, collect failures
-            def failures = []
-            for (i = 0; i < urls.size(); i++) {
-              def u = urls[i]
-              echo "Checking ${u}"
-              // Use a short Groovy string to run a one-liner wsl command that references ${u}
-              def cmd = "wsl bash -lc 'for j in {1..10}; do curl -sf ${u} && exit 0 || sleep 3; done; exit 1'"
-              try {
-                bat cmd
-              } catch (err) {
-                echo "Health check failed for ${u}"
-                failures.add(i) // store index 0-based (9080 -> 0, 9081 -> 1, 9082 -> 2)
-              }
-            }
+              // call rollback helper which scans backups and restores failing nodes.
+              // rollback helper accepts: nodePath backupDir artifactName wslBase
+              bat "wsl ${WSL_BASE}/rollback_unhealthy_nodes.sh \"${TOMCAT_PROD_1}\" \"${TOMCAT_PROD_2}\" \"${TOMCAT_PROD_3}\" \"${BACKUP_DIR}\" \"${ARTIFACT_NAME}\" \"${WSL_BASE}\""
 
-            // If any failures -> attempt rollback for failed nodes
-            if (failures.size() > 0) {
-              echo "Detected unhealthy nodes: ${failures}"
-              // restore backups for each failed node
-              for (idx in failures) {
-                def nodePath = (idx == 0) ? env.TOMCAT_PROD_1 : (idx == 1) ? env.TOMCAT_PROD_2 : env.TOMCAT_PROD_3
-                echo "Attempting restore on ${nodePath}"
-
-                // Use triple-single quoted block to run shell logic safely (no Groovy $ interpolation)
-                bat '''
-wsl bash -lc '
-  set -e || true
-
-  NODE_PATH="''' + nodePath + '''"
-  NAME=$(basename "$NODE_PATH")
-
-  # find most recent backup for this node
-  backup=$(ls -1t "$BACKUP_DIR/${NAME}-'"${ARTIFACT_NAME}"'-*" 2>/dev/null | head -n1 || true)
-
-  if [ -n "$backup" ]; then
-    echo "Restoring $backup -> $NODE_PATH/webapps/'"${ARTIFACT_NAME}"'"
-    cp "$backup" "$NODE_PATH/webapps/'"${ARTIFACT_NAME}"'" || true
-    '"$WSL_BASE"'/myappstop.sh "$NAME" || true
-    '"$WSL_BASE"'/myappstartup.sh "$NAME" || true
-  else
-    echo "No backup found for $NODE_PATH, removing faulty WAR and leaving node stopped"
-    rm -f "$NODE_PATH/webapps/'"${ARTIFACT_NAME}"'" || true
-    '"$WSL_BASE"'/myappstop.sh "$NAME" || true
-  fi
-'
-'''
-              }
-
-              // collect logs and fail pipeline
               error "One or more PROD nodes failed health checks — rollback attempted. See archived logs."
-            } else {
-              echo "All PROD nodes passed health check."
             }
-
           } else {
-            // For dev/qa, simple optional health check (non-blocking)
-            if (params.BUILD == 'dev') {
-              echo "Skipping health check for DEV (optional)"
-            } else {
-              echo "Skipping health check for QA (optional)"
-            }
+            echo "Skipping PROD health-check for non-PROD deployment"
           }
         }
       }
@@ -421,17 +331,11 @@ wsl bash -lc '
       when { expression { params.BUILD == 'prod' } }
       steps {
         script {
-          // optional: test nginx proxies
-          bat '''
-wsl bash -lc '
-  curl -I http://127.0.0.1:90 || true
-'
-'''
+          bat "wsl curl -I http://127.0.0.1:90 || true"
         }
       }
     }
-
-  } // stages
+  }
 
   post {
     success {
@@ -439,21 +343,14 @@ wsl bash -lc '
     }
     failure {
       script {
-        // collect tomcat logs to Jenkins workspace for debugging (use multiline safe blocks)
-        bat '''
-wsl bash -lc '
-  mkdir -p "$LOGS_DIR" || true
-  cp -v "$TOMCAT_PROD_1/logs/"* "$LOGS_DIR/" 2>/dev/null || true
-  cp -v "$TOMCAT_PROD_2/logs/"* "$LOGS_DIR/" 2>/dev/null || true
-  cp -v "$TOMCAT_PROD_3/logs/"* "$LOGS_DIR/" 2>/dev/null || true
-'
-'''
-        // copy to Windows Jenkins workspace so Jenkins can archive
+        // collect logs via helper then copy to Windows workspace for archiving
+        bat "wsl ${WSL_BASE}/collect_logs.sh \"${LOGS_DIR}\" \"${TOMCAT_PROD_1}\" \"${TOMCAT_PROD_2}\" \"${TOMCAT_PROD_3}\" || true"
+        // copy logs to Windows Jenkins workspace for artifact archiving
         bat "wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
-
         archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
       }
       echo "❌ Deployment failed — logs archived"
     }
   }
 }
+
