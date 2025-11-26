@@ -236,16 +236,19 @@ pipeline {
     }
 
     environment {
-        WSL_BASE   = "/home/aashudev/tomcat/multiple-server-config/bin"
+        WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
+        TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+        TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+        TOMCAT_PROD_1="/home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1"
+        TOMCAT_PROD_2="/home/aashudev/tomcat/multiple-server-config/prod2-server/apache-tomcat-10.1.49-prod-2"
+        TOMCAT_PROD_3="/home/aashudev/tomcat/multiple-server-config/prod3-server/apache-tomcat-10.1.49-prod-3"
 
-        TOMCAT_DEV  = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
-        TOMCAT_QA   = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-        TOMCAT_PROD = "/home/aashudev/tomcat/multiple-server-config/prod-server/apache-tomcat-10.1.49-prod"
+        ARTIFACT_NAME="my-new-app"
+        START_SCRIPT="${WSL_BASE}/myappstartup.sh"
+        STOP_SCRIPT="${WSL_BASE}/myappstop.sh"
 
-        ARTIFACT_NAME = "my-new-app"
-
-        START_SCRIPT = "${WSL_BASE}/myappstartup.sh"
-        STOP_SCRIPT  = "${WSL_BASE}/myappstop.sh"
+        BACKUP_DIR="/home/aashudev/deploy/war_backups"
+        LOGS_DIR="/home/aashudev/deploy/jenkins_logs"
     }
 
     stages {
@@ -253,58 +256,73 @@ pipeline {
         stage('Build WAR') {
             steps {
                 script {
-                    def profile = (params.BUILD == 'dev')  ? 'wsl-dev'  :
-                                  (params.BUILD == 'qa')   ? 'wsl-qa'   :
-                                                             'wsl-prod'
-
+                    def profile = (params.BUILD == 'prod') ? 'prod' :
+                                  (params.BUILD == 'qa')   ? 'wsl-qa' : 'wsl-dev'
+                    echo "Building with profile: ${profile}"
                     bat "mvnw clean package -P${profile} -DskipTests"
-                }
-            }
-        }
-
-        stage('Copy WAR to WSL') {
-            steps {
-                script {
-                    def targetWebapps = (params.BUILD == 'dev')  ? "${TOMCAT_DEV}/webapps"  :
-                                         (params.BUILD == 'qa')   ? "${TOMCAT_QA}/webapps"   :
-                                                                  "${TOMCAT_PROD}/webapps"
-
-                    def warFileName = (params.BUILD == 'dev')  ? "${ARTIFACT_NAME}-dev.war"  :
-                                      (params.BUILD == 'qa')   ? "${ARTIFACT_NAME}-qa.war"   :
-                                                               "${ARTIFACT_NAME}-prod.war"
-
-                    bat """
-                        wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
-                        ${targetWebapps}/${warFileName}
-                    """
                 }
             }
         }
 
         stage('Stop Tomcat') {
             steps {
-                echo "Stopping Tomcat for ${params.BUILD}"
-                bat "wsl ${STOP_SCRIPT} ${params.BUILD} || true"
+                script {
+                    if (params.BUILD == 'dev' || params.BUILD == 'qa') {
+                        bat "wsl bash -c '${STOP_SCRIPT} ${params.BUILD} || true'"
+                    } else {
+                        // Stop all prod servers
+                        bat """
+                        wsl bash -c '${STOP_SCRIPT} prod1 || true'
+                        wsl bash -c '${STOP_SCRIPT} prod2 || true'
+                        wsl bash -c '${STOP_SCRIPT} prod3 || true'
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Copy WAR') {
+            steps {
+                script {
+                    if (params.BUILD == 'dev') {
+                        bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}.war"""
+                    } else if (params.BUILD == 'qa') {
+                        bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}.war"""
+                    } else {
+                        // Prod WAR copy to all nodes
+                        bat """
+                        wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME}.war
+                        wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME}.war
+                        wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_3}/webapps/${ARTIFACT_NAME}.war
+                        """
+                    }
+                }
             }
         }
 
         stage('Start Tomcat') {
             steps {
-                echo "Starting Tomcat for ${params.BUILD}"
-                bat "wsl ${START_SCRIPT} ${params.BUILD}"
+                script {
+                    if (params.BUILD == 'dev' || params.BUILD == 'qa') {
+                        bat "wsl bash -c '${START_SCRIPT} ${params.BUILD}'"
+                    } else {
+                        bat """
+                        wsl bash -c '${START_SCRIPT} prod1'
+                        wsl bash -c '${START_SCRIPT} prod2'
+                        wsl bash -c '${START_SCRIPT} prod3'
+                        """
+                    }
+                }
             }
         }
 
         stage('Tail Logs') {
             steps {
                 script {
-                    def tomcatHome = (params.BUILD == 'dev')  ? TOMCAT_DEV  :
-                                     (params.BUILD == 'qa')   ? TOMCAT_QA   :
-                                                              TOMCAT_PROD
-
-                    bat """
-                        wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs"
-                    """
+                    def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV :
+                                     (params.BUILD == 'qa')  ? TOMCAT_QA :
+                                                               TOMCAT_PROD_1
+                    bat """wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs" """
                 }
             }
         }
@@ -313,28 +331,22 @@ pipeline {
     post {
         failure {
             script {
-                def tomcatHome = (params.BUILD == 'dev')  ? TOMCAT_DEV  :
-                                 (params.BUILD == 'qa')   ? TOMCAT_QA   :
-                                                          TOMCAT_PROD
+                def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV :
+                                 (params.BUILD == 'qa')  ? TOMCAT_QA :
+                                                           TOMCAT_PROD_1
 
                 bat """
-                    wsl bash -c "
-                        mkdir -p /home/aashudev/deploy/jenkins_logs &&
-                        cp ${tomcatHome}/logs/myapplog.out \
-                        /home/aashudev/deploy/jenkins_logs/myapplog.out_\\$(date +%Y%m%d_%H%M%S) &&
-                        ls -l /home/aashudev/deploy/jenkins_logs
-                    "
+                wsl bash -c \"
+                    mkdir -p ${LOGS_DIR} &&
+                    cp ${tomcatHome}/logs/myapplog.out ${LOGS_DIR}/myapplog.out_\\\\\$(date +%Y%m%d_%H%M%S) &&
+                    ls -l ${LOGS_DIR}
+                \"
                 """
 
-                bat """
-                    wsl cp /home/aashudev/deploy/jenkins_logs/* \
-                    /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true
-                """
-
+                bat """wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"""
                 archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
             }
-
-            echo "❌ Deployment failed for ${params.BUILD} — logs archived"
+            echo "❌ Deployment failed — logs archived"
         }
 
         success {
