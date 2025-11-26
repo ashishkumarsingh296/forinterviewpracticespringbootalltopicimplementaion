@@ -137,9 +137,9 @@ pipeline {
     }
 
     environment {
-        # wsl.s script base
+        // script base
         WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
-        # TOMCAT base per env (used inside WSL)
+        // base per env (used inside WSL)
         TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
         TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
         ARTIFACT_NAME="my-new-app.war"
