@@ -239,7 +239,7 @@ pipeline {
     TOMCAT_PROD_BLUE = "/home/aashudev/tomcat/multiple-server-config/prod-blue/apache-tomcat-10.1.49-prod-blue"
     TOMCAT_PROD_GREEN = "/home/aashudev/tomcat/multiple-server-config/prod-green/apache-tomcat-10.1.49-prod-green"
     ARTIFACT_NAME = "my-new-app.war"
-    # path to nginx active upstream symlink
+    // path to nginx active upstream symlink
     NGINX_ACTIVE="/etc/nginx/upstreams/active_upstream.conf"
     NGINX_UPSTREAM_DIR="/etc/nginx/upstreams"
   }
