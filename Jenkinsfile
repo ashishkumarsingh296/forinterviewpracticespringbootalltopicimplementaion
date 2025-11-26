@@ -269,43 +269,46 @@ pipeline {
     }
 
     stage('Prepare Backups (PROD only)') {
-  when { expression { params.BUILD == 'prod' } }
-  steps {
-    script {
-      bat """
-      wsl bash -lc '
-        mkdir -p ${BACKUP_DIR} || true
+      when { expression { params.BUILD == 'prod' } }
+      steps {
+        script {
+          // Use triple-single quotes so Groovy doesn't interpolate $ inside the shell script
+          bat '''
+wsl bash -lc '
+  set -e || true
+  mkdir -p "$BACKUP_DIR" || true
 
-        for d in ${TOMCAT_PROD_1} ${TOMCAT_PROD_2} ${TOMCAT_PROD_3}; do
-          if [ -f "$d/webapps/${ARTIFACT_NAME}" ]; then
-            name=\$(basename "\$d")
-            ts=\$(date +%s)
-            cp "$d/webapps/${ARTIFACT_NAME}" "${BACKUP_DIR}/\${name}-${ARTIFACT_NAME}-\${ts}" || true
-          fi
-        done
-      '
-      """
+  for d in "$TOMCAT_PROD_1" "$TOMCAT_PROD_2" "$TOMCAT_PROD_3"; do
+    if [ -f "$d/webapps/'"${ARTIFACT_NAME}"'" ]; then
+      name=$(basename "$d")
+      ts=$(date +%s)
+      cp "$d/webapps/'"${ARTIFACT_NAME}"'" "$BACKUP_DIR/${name}-'"${ARTIFACT_NAME}"'-${ts}" || true
+    fi
+  done
+'
+'''
+        }
+      }
     }
-  }
-}
-
 
     stage('Copy WARs') {
       steps {
         script {
           if (params.BUILD == 'dev') {
+            // single-line double-quoted bat uses Groovy interpolation for $TOMCAT_DEV / ARTIFACT_NAME
             bat "wsl cp target/*.war ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}"
           } else if (params.BUILD == 'qa') {
             bat "wsl cp target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}"
           } else {
-            // PROD -> copy to all 3 nodes
-            bat """
-            wsl bash -lc '
-              cp target/*.war ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME} &&
-              cp target/*.war ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME} &&
-              cp target/*.war ${TOMCAT_PROD_3}/webapps/${ARTIFACT_NAME}
-            '
-            """
+            // PROD -> copy to all 3 nodes using shell expansion inside WSL
+            bat '''
+wsl bash -lc '
+  set -e
+  cp target/*.war "$TOMCAT_PROD_1/webapps/'"${ARTIFACT_NAME}"'" || true
+  cp target/*.war "$TOMCAT_PROD_2/webapps/'"${ARTIFACT_NAME}"'" || true
+  cp target/*.war "$TOMCAT_PROD_3/webapps/'"${ARTIFACT_NAME}"'" || true
+'
+'''
           }
         }
       }
@@ -319,18 +322,20 @@ pipeline {
           } else if (params.BUILD == 'qa') {
             bat "wsl bash -lc '${WSL_BASE}/myappstop.sh qa || true; ${WSL_BASE}/myappstartup.sh qa'"
           } else {
-            // PROD -> restart all 3
-            bat """
-            wsl bash -lc '
-              ${WSL_BASE}/myappstop.sh prod-1 || true
-              ${WSL_BASE}/myappstop.sh prod-2 || true
-              ${WSL_BASE}/myappstop.sh prod-3 || true
+            // PROD -> restart all 3 using a multiline shell block
+            bat '''
+wsl bash -lc '
+  set -e || true
 
-              ${WSL_BASE}/myappstartup.sh prod-1
-              ${WSL_BASE}/myappstartup.sh prod-2
-              ${WSL_BASE}/myappstartup.sh prod-3
-            '
-            """
+  '"$WSL_BASE"'/myappstop.sh prod-1 || true
+  '"$WSL_BASE"'/myappstop.sh prod-2 || true
+  '"$WSL_BASE"'/myappstop.sh prod-3 || true
+
+  '"$WSL_BASE"'/myappstartup.sh prod-1
+  '"$WSL_BASE"'/myappstartup.sh prod-2
+  '"$WSL_BASE"'/myappstartup.sh prod-3
+'
+'''
           }
         }
       }
@@ -351,6 +356,7 @@ pipeline {
             for (i = 0; i < urls.size(); i++) {
               def u = urls[i]
               echo "Checking ${u}"
+              // Use a short Groovy string to run a one-liner wsl command that references ${u}
               def cmd = "wsl bash -lc 'for j in {1..10}; do curl -sf ${u} && exit 0 || sleep 3; done; exit 1'"
               try {
                 bat cmd
@@ -365,25 +371,32 @@ pipeline {
               echo "Detected unhealthy nodes: ${failures}"
               // restore backups for each failed node
               for (idx in failures) {
-                def nodePath = (idx == 0) ? TOMCAT_PROD_1 : (idx == 1) ? TOMCAT_PROD_2 : TOMCAT_PROD_3
+                def nodePath = (idx == 0) ? env.TOMCAT_PROD_1 : (idx == 1) ? env.TOMCAT_PROD_2 : env.TOMCAT_PROD_3
                 echo "Attempting restore on ${nodePath}"
-                // find most recent backup for that node (simple approach: pick last matching file)
-                bat """
-                wsl bash -lc '
-                  set -e
-                  backup=$(ls -1t ${BACKUP_DIR}/$(basename ${nodePath})-${ARTIFACT_NAME}-* 2>/dev/null | head -n1 || true)
-                  if [ -n "$backup" ]; then
-                    echo "Restoring $backup -> ${nodePath}/webapps/${ARTIFACT_NAME}"
-                    cp "$backup" ${nodePath}/webapps/${ARTIFACT_NAME} || true
-                    ${WSL_BASE}/myappstop.sh $(basename ${nodePath}) || true
-                    ${WSL_BASE}/myappstartup.sh $(basename ${nodePath})
-                  else
-                    echo "No backup found for ${nodePath}, will try to remove faulty WAR and leave node stopped"
-                    rm -f ${nodePath}/webapps/${ARTIFACT_NAME} || true
-                    ${WSL_BASE}/myappstop.sh $(basename ${nodePath}) || true
-                  fi
-                '
-                """
+
+                // Use triple-single quoted block to run shell logic safely (no Groovy $ interpolation)
+                bat '''
+wsl bash -lc '
+  set -e || true
+
+  NODE_PATH="''' + nodePath + '''"
+  NAME=$(basename "$NODE_PATH")
+
+  # find most recent backup for this node
+  backup=$(ls -1t "$BACKUP_DIR/${NAME}-'"${ARTIFACT_NAME}"'-*" 2>/dev/null | head -n1 || true)
+
+  if [ -n "$backup" ]; then
+    echo "Restoring $backup -> $NODE_PATH/webapps/'"${ARTIFACT_NAME}"'"
+    cp "$backup" "$NODE_PATH/webapps/'"${ARTIFACT_NAME}"'" || true
+    '"$WSL_BASE"'/myappstop.sh "$NAME" || true
+    '"$WSL_BASE"'/myappstartup.sh "$NAME" || true
+  else
+    echo "No backup found for $NODE_PATH, removing faulty WAR and leaving node stopped"
+    rm -f "$NODE_PATH/webapps/'"${ARTIFACT_NAME}"'" || true
+    '"$WSL_BASE"'/myappstop.sh "$NAME" || true
+  fi
+'
+'''
               }
 
               // collect logs and fail pipeline
@@ -409,7 +422,11 @@ pipeline {
       steps {
         script {
           // optional: test nginx proxies
-          bat "wsl bash -lc 'curl -I http://127.0.0.1:90 || true'"
+          bat '''
+wsl bash -lc '
+  curl -I http://127.0.0.1:90 || true
+'
+'''
         }
       }
     }
@@ -422,11 +439,15 @@ pipeline {
     }
     failure {
       script {
-        // collect tomcat logs to Jenkins workspace for debugging
-        bat "wsl bash -lc 'mkdir -p ${LOGS_DIR} || true'"
-        bat "wsl bash -lc 'cp -v ${TOMCAT_PROD_1}/logs/* ${LOGS_DIR}/ 2>/dev/null || true'"
-        bat "wsl bash -lc 'cp -v ${TOMCAT_PROD_2}/logs/* ${LOGS_DIR}/ 2>/dev/null || true'"
-        bat "wsl bash -lc 'cp -v ${TOMCAT_PROD_3}/logs/* ${LOGS_DIR}/ 2>/dev/null || true'"
+        // collect tomcat logs to Jenkins workspace for debugging (use multiline safe blocks)
+        bat '''
+wsl bash -lc '
+  mkdir -p "$LOGS_DIR" || true
+  cp -v "$TOMCAT_PROD_1/logs/"* "$LOGS_DIR/" 2>/dev/null || true
+  cp -v "$TOMCAT_PROD_2/logs/"* "$LOGS_DIR/" 2>/dev/null || true
+  cp -v "$TOMCAT_PROD_3/logs/"* "$LOGS_DIR/" 2>/dev/null || true
+'
+'''
         // copy to Windows Jenkins workspace so Jenkins can archive
         bat "wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
 
@@ -436,4 +457,3 @@ pipeline {
     }
   }
 }
-
