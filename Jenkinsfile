@@ -129,219 +129,216 @@
 
 // For Mutiple server like dev and qa working fine
 
+// pipeline {
+//     agent any
+
+//     parameters {
+//         choice(
+//             name: 'TARGET',
+//             choices: ['dev','qa'],
+//             description: 'Deploy target environment'
+//         )
+//     }
+
+// environment {
+//     WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
+//     TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+//     TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+//     ARTIFACT_NAME="my-new-app"
+//     START_SCRIPT="${WSL_BASE}/myappstartup.sh"
+//     STOP_SCRIPT="${WSL_BASE}/myappstop.sh"
+// }
+
+// stages {
+//     stage('Build WAR') {
+//         steps {
+//             script {
+//                 def profile = (params.TARGET == 'dev') ? 'wsl-dev' : 'wsl-qa'
+//                 bat "mvnw clean package -P${profile} -DskipTests"
+//             }
+//         }
+//     }
+
+
+// stage('Copy WAR to WSL') {
+//     steps {
+//         script {
+//             // Determine target Tomcat directory and WAR name
+//             def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
+//             def warFileName = (params.TARGET == 'dev') ? "${ARTIFACT_NAME}-dev.war" : "${ARTIFACT_NAME}-qa.war"
+
+//             // Copy WAR to WSL with dev/qa suffix
+//             bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${warFileName}"""
+//         }
+//     }
+// }
+
+
+
+//      stage('Stop Tomcat') {
+//             steps {
+//                 echo "Stopping Tomcat for ${params.TARGET}"
+//                 bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.TARGET} || true"
+//             }
+//         }
+
+//         stage('Start Tomcat') {
+//             steps {
+//                 echo "Starting Tomcat for ${params.TARGET}"
+//                 bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh ${params.TARGET}"
+//             }
+//         }       
+
+
+
+//     stage('Tail Logs') {
+//         steps {
+//             script {
+//                 def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
+//                 bat """wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs" """
+//             }
+//         }
+//     }
+// }
+
+// post {
+//     failure {
+//         script {
+//             def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
+//             bat """wsl bash -c "
+//                 mkdir -p /home/aashudev/deploy/jenkins_logs &&
+//                 cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_\$(date +%Y%m%d_%H%M%S) &&
+//                 ls -l /home/aashudev/deploy/jenkins_logs
+//             " """
+//             bat """wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"""
+//             archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
+//         }
+//         echo "❌ Deployment failed — logs archived"
+//     }
+
+//     success {
+//         echo "✅ Deployment successful (${params.TARGET})"
+//     }
+//    }
+// }
+
+//For Mulitiple Server with prod architecher
+
 pipeline {
     agent any
 
     parameters {
         choice(
-            name: 'TARGET',
-            choices: ['dev','qa'],
+            name: 'BUILD',
+            choices: ['dev','qa','prod'],
             description: 'Deploy target environment'
         )
     }
 
-environment {
-    WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
-    TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
-    TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-    ARTIFACT_NAME="my-new-app"
-    START_SCRIPT="${WSL_BASE}/myappstartup.sh"
-    STOP_SCRIPT="${WSL_BASE}/myappstop.sh"
-}
+    environment {
+        WSL_BASE   = "/home/aashudev/tomcat/multiple-server-config/bin"
 
-stages {
-    stage('Build WAR') {
-        steps {
-            script {
-                def profile = (params.TARGET == 'dev') ? 'wsl-dev' : 'wsl-qa'
-                bat "mvnw clean package -P${profile} -DskipTests"
+        TOMCAT_DEV  = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+        TOMCAT_QA   = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+        TOMCAT_PROD = "/home/aashudev/tomcat/multiple-server-config/prod-server/apache-tomcat-10.1.49-prod"
+
+        ARTIFACT_NAME = "my-new-app"
+
+        START_SCRIPT = "${WSL_BASE}/myappstartup.sh"
+        STOP_SCRIPT  = "${WSL_BASE}/myappstop.sh"
+    }
+
+    stages {
+
+        stage('Build WAR') {
+            steps {
+                script {
+                    def profile = (params.BUILD == 'dev')  ? 'wsl-dev'  :
+                                  (params.BUILD == 'qa')   ? 'wsl-qa'   :
+                                                             'wsl-prod'
+
+                    bat "mvnw clean package -P${profile} -DskipTests"
+                }
             }
         }
-    }
 
-
-stage('Copy WAR to WSL') {
-    steps {
-        script {
-            // Determine target Tomcat directory and WAR name
-            def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
-            def warFileName = (params.TARGET == 'dev') ? "${ARTIFACT_NAME}-dev.war" : "${ARTIFACT_NAME}-qa.war"
-
-            // Copy WAR to WSL with dev/qa suffix
-            bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${warFileName}"""
-        }
-    }
-}
-
-
-
-     stage('Stop Tomcat') {
+        stage('Copy WAR to WSL') {
             steps {
-                echo "Stopping Tomcat for ${params.TARGET}"
-                bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.TARGET} || true"
+                script {
+                    def targetWebapps = (params.BUILD == 'dev')  ? "${TOMCAT_DEV}/webapps"  :
+                                         (params.BUILD == 'qa')   ? "${TOMCAT_QA}/webapps"   :
+                                                                  "${TOMCAT_PROD}/webapps"
+
+                    def warFileName = (params.BUILD == 'dev')  ? "${ARTIFACT_NAME}-dev.war"  :
+                                      (params.BUILD == 'qa')   ? "${ARTIFACT_NAME}-qa.war"   :
+                                                               "${ARTIFACT_NAME}-prod.war"
+
+                    bat """
+                        wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
+                        ${targetWebapps}/${warFileName}
+                    """
+                }
+            }
+        }
+
+        stage('Stop Tomcat') {
+            steps {
+                echo "Stopping Tomcat for ${params.BUILD}"
+                bat "wsl ${STOP_SCRIPT} ${params.BUILD} || true"
             }
         }
 
         stage('Start Tomcat') {
             steps {
-                echo "Starting Tomcat for ${params.TARGET}"
-                bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh ${params.TARGET}"
+                echo "Starting Tomcat for ${params.BUILD}"
+                bat "wsl ${START_SCRIPT} ${params.BUILD}"
             }
-        }       
+        }
 
+        stage('Tail Logs') {
+            steps {
+                script {
+                    def tomcatHome = (params.BUILD == 'dev')  ? TOMCAT_DEV  :
+                                     (params.BUILD == 'qa')   ? TOMCAT_QA   :
+                                                              TOMCAT_PROD
 
+                    bat """
+                        wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs"
+                    """
+                }
+            }
+        }
+    }
 
-    stage('Tail Logs') {
-        steps {
+    post {
+        failure {
             script {
-                def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
-                bat """wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs" """
+                def tomcatHome = (params.BUILD == 'dev')  ? TOMCAT_DEV  :
+                                 (params.BUILD == 'qa')   ? TOMCAT_QA   :
+                                                          TOMCAT_PROD
+
+                bat """
+                    wsl bash -c "
+                        mkdir -p /home/aashudev/deploy/jenkins_logs &&
+                        cp ${tomcatHome}/logs/myapplog.out \
+                        /home/aashudev/deploy/jenkins_logs/myapplog.out_\\$(date +%Y%m%d_%H%M%S) &&
+                        ls -l /home/aashudev/deploy/jenkins_logs
+                    "
+                """
+
+                bat """
+                    wsl cp /home/aashudev/deploy/jenkins_logs/* \
+                    /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true
+                """
+
+                archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
             }
+
+            echo "❌ Deployment failed for ${params.BUILD} — logs archived"
+        }
+
+        success {
+            echo "✅ Deployment successful for ${params.BUILD}"
         }
     }
 }
-
-post {
-    failure {
-        script {
-            def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
-            bat """wsl bash -c "
-                mkdir -p /home/aashudev/deploy/jenkins_logs &&
-                cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_\$(date +%Y%m%d_%H%M%S) &&
-                ls -l /home/aashudev/deploy/jenkins_logs
-            " """
-            bat """wsl cp /home/aashudev/deploy/jenkins_logs/* /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"""
-            archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
-        }
-        echo "❌ Deployment failed — logs archived"
-    }
-
-    success {
-        echo "✅ Deployment successful (${params.TARGET})"
-    }
-   }
-}
-
-//For Mulitiple Server with prod architecher
-
-// pipeline {
-//   agent any
-
-//   parameters {
-//     choice(name: 'BUILD', choices: ['dev','qa','prod'], description: 'Deploy target environment')
-//   }
-
-//   environment {
-//     WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
-//     ARTIFACT_NAME = "my-new-app.war"
-
-//     TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
-//     TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-
-//     TOMCAT_PROD_1 = "/home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1"
-//     TOMCAT_PROD_2 = "/home/aashudev/tomcat/multiple-server-config/prod2-server/apache-tomcat-10.1.49-prod-2"
-//     TOMCAT_PROD_3 = "/home/aashudev/tomcat/multiple-server-config/prod3-server/apache-tomcat-10.1.49-prod-3"
-
-//     LOGS_DIR = "/home/aashudev/deploy/jenkins_logs"
-//   }
-
-//   stages {
-
-//     stage('Build WAR') {
-//       steps {
-//         script {
-//           def profile = (params.BUILD == 'qa') ? 'wsl-qa' :
-//                         (params.BUILD == 'prod') ? 'prod' : 'wsl-dev'
-//           bat "mvn clean package -P${profile} -DskipTests"
-//         }
-//       }
-//     }
-
-//     stage('Stop Application') {
-//       steps {
-//         script {
-//           if (params.BUILD == 'dev') {
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh dev || true"'
-//           } 
-//           else if (params.BUILD == 'qa') {
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh qa || true"'
-//           } 
-//           else {
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod1 || true"'
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod2 || true"'
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod3 || true"'
-//           }
-//         }
-//       }
-//     }
-
-//     stage('Copy WAR') {
-//       steps {
-//         script {
-//           if (params.BUILD == 'dev') {
-//             bat 'wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/target/*.war /home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev/webapps/my-new-app.war"'
-//           } 
-//           else if (params.BUILD == 'qa') {
-//             bat 'wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/target/*.war /home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa/webapps/my-new-app.war"'
-//           } 
-//           else {
-//             bat 'wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/target/*.war /home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1/webapps/my-new-app.war"'
-//             bat 'wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/target/*.war /home/aashudev/tomcat/multiple-server-config/prod2-server/apache-tomcat-10.1.49-prod-2/webapps/my-new-app.war"'
-//             bat 'wsl -d Ubuntu -- bash -lc "cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/target/*.war /home/aashudev/tomcat/multiple-server-config/prod3-server/apache-tomcat-10.1.49-prod-3/webapps/my-new-app.war"'
-//           }
-//         }
-//       }
-//     }
-
-//     stage('Start Application') {
-//       steps {
-//         script {
-//           if (params.BUILD == 'dev') {
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh dev"'
-//           } 
-//           else if (params.BUILD == 'qa') {
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh qa"'
-//           } 
-//           else {
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod1"'
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod2"'
-//             bat 'wsl -d Ubuntu -- bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod3"'
-//           }
-//         }
-//       }
-//     }
-
-//     stage('Tail Logs') {
-//       when { expression { params.BUILD != 'prod' } }
-//       steps {
-//         script {
-//           if (params.BUILD == 'dev') {
-//             bat 'wsl -d Ubuntu -- bash -lc "tail -n 200 /home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev/logs/myapplog.out || echo NoLogs"'
-//           } else {
-//             bat 'wsl -d Ubuntu -- bash -lc "tail -n 200 /home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa/logs/myapplog.out || echo NoLogs"'
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   post {
-//     success {
-//       echo "✅ Deployment successful"
-//     }
-
-//     failure {
-//       bat 'wsl -d Ubuntu -- bash -lc "mkdir -p /home/aashudev/deploy/jenkins_logs"'
-
-//       bat 'wsl -d Ubuntu -- bash -lc "cp /home/aashudev/tomcat/multiple-server-config/*/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/ || true"'
-
-//       bat 'wsl -d Ubuntu -- bash -lc "cp -r /home/aashudev/deploy/jenkins_logs /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/ || true"'
-
-//       archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
-
-//       echo "❌ Deployment failed — logs archived"
-//     }
-//   }
-// }   
-
-
