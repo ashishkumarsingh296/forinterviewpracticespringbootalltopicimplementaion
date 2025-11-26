@@ -106,7 +106,7 @@
 
 //         stage('Health Check') {
 
-            
+
 //              steps {
 //             //     bat 'wsl bash /home/aashudev/deploy/jenkins_scripts/health_check.sh || echo "Health check failed"'
 //                   catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -144,7 +144,7 @@ environment {
     WSL_BASE="/home/aashudev/tomcat/multiple-server-config/bin"
     TOMCAT_DEV="/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
     TOMCAT_QA="/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
-    ARTIFACT_NAME="my-new-app.war"
+    ARTIFACT_NAME="my-new-app"
     START_SCRIPT="${WSL_BASE}/myappstartup.sh"
     STOP_SCRIPT="${WSL_BASE}/myappstop.sh"
 }
@@ -159,14 +159,28 @@ stages {
         }
     }
 
-    stage('Copy WAR to WSL') {
-        steps {
-            script {
-                def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
-                bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${ARTIFACT_NAME}"""
-            }
+    // stage('Copy WAR to WSL') {
+    //     steps {
+    //         script {
+    //             def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
+    //             bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${ARTIFACT_NAME}"""
+    //         }
+    //     }
+    // }
+
+stage('Copy WAR to WSL') {
+    steps {
+        script {
+            // Determine target Tomcat directory and WAR name
+            def targetWebapps = (params.TARGET == 'dev') ? "${TOMCAT_DEV}/webapps" : "${TOMCAT_QA}/webapps"
+            def warFileName = (params.TARGET == 'dev') ? "${ARTIFACT_NAME}-dev.war" : "${ARTIFACT_NAME}-qa.war"
+
+            // Copy WAR to WSL with dev/qa suffix
+            bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${targetWebapps}/${warFileName}"""
         }
     }
+}
+
 
 
      stage('Stop Tomcat') {
@@ -181,7 +195,7 @@ stages {
                 echo "Starting Tomcat for ${params.TARGET}"
                 bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh ${params.TARGET}"
             }
-        }       
+        }
 
     // stage('Stop Tomcat') {
     //     steps {
