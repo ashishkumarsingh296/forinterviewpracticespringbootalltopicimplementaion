@@ -168,23 +168,38 @@ stages {
         }
     }
 
-    stage('Stop Tomcat') {
-        steps {
-            script {
-                def target = params.TARGET
-                bat """wsl bash -c "${STOP_SCRIPT} ${target} || true" """
-            }
-        }
-    }
 
-    stage('Start Tomcat') {
-        steps {
-            script {
-                def target = params.TARGET
-                bat """wsl bash -c "${START_SCRIPT} ${target}" """
+     stage('Stop Tomcat') {
+            steps {
+                echo "Stopping Tomcat for ${params.TARGET}"
+                bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.TARGET} || true"
             }
         }
-    }
+
+        stage('Start Tomcat') {
+            steps {
+                echo "Starting Tomcat for ${params.TARGET}"
+                bat "wsl /home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh ${params.TARGET}"
+            }
+        }       
+
+    // stage('Stop Tomcat') {
+    //     steps {
+    //         script {
+    //             def target = params.TARGET
+    //             bat """wsl bash -c "${STOP_SCRIPT} ${target} || true" """
+    //         }
+    //     }
+    // }
+
+    // stage('Start Tomcat') {
+    //     steps {
+    //         script {
+    //             def target = params.TARGET
+    //             bat """wsl bash -c "${START_SCRIPT} ${target}" """
+    //         }
+    //     }
+    // }
 
     stage('Tail Logs') {
         steps {
