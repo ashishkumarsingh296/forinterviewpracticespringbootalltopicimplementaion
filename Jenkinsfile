@@ -573,20 +573,19 @@ pipeline {
     choice(name: 'DEPLOY_STRATEGY', choices: ['blue-green','rolling'], description: 'Deployment strategy')
   }
 
-  environment {
-    WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
+ environment {
+  WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
+  TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
+  TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+  TOMCAT_PROD_BLUE = "/home/aashudev/tomcat/multiple-server-config/prod-blue/apache-tomcat-10.1.49-prod-blue"
+  TOMCAT_PROD_GREEN = "/home/aashudev/tomcat/multiple-server-config/prod-green/apache-tomcat-10.1.49-prod-green"
+  ARTIFACT_NAME = "my-new-app.war"
 
-    TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
-    TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
+  // path to nginx active upstream symlink ✅ FIXED
+  NGINX_ACTIVE="/etc/nginx/upstreams/active_upstream.conf"
+  NGINX_UPSTREAM_DIR="/etc/nginx/upstreams"
+}
 
-    TOMCAT_PROD_BLUE  = "/home/aashudev/tomcat/multiple-server-config/prod-blue/apache-tomcat-10.1.49-prod-blue"
-    TOMCAT_PROD_GREEN = "/home/aashudev/tomcat/multiple-server-config/prod-green/apache-tomcat-10.1.49-prod-green"
-
-    ARTIFACT_NAME = "my-new-app.war"
-
-    NGINX_ACTIVE="/etc/nginx/upstreams/active_upstream.conf"
-    NGINX_UPSTREAM_DIR="/etc/nginx/upstreams"
-  }
 
   stages {
 
