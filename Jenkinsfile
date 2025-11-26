@@ -224,7 +224,6 @@
 
 //For Mulitiple Server with prod architecher
 
-
 pipeline {
   agent any
 
@@ -262,32 +261,42 @@ pipeline {
       }
     }
 
+    /* =========================
+       STOP APPLICATION (FIXED)
+       ========================= */
     stage('Stop Application') {
       steps {
         script {
           if (params.BUILD == 'dev') {
-            bat """wsl bash -lc "${WSL_BASE}/myappstop.sh dev || true" """
+            bat """
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh dev || true"
+            """
           } 
           else if (params.BUILD == 'qa') {
-            bat """wsl bash -lc "${WSL_BASE}/myappstop.sh qa || true" """
+            bat """
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh qa || true"
+            """
           } 
           else {
             bat """
-            wsl bash -lc "${WSL_BASE}/myappstop.sh prod1 || true"
-            wsl bash -lc "${WSL_BASE}/myappstop.sh prod2 || true"
-            wsl bash -lc "${WSL_BASE}/myappstop.sh prod3 || true"
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh prod1 || true"
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh prod2 || true"
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstop.sh prod3 || true"
             """
           }
         }
       }
     }
 
+    /* =========================
+       COPY WAR
+       ========================= */
     stage('Copy WAR') {
       steps {
         script {
           if (params.BUILD == 'dev') {
             bat """
-            wsl bash -lc "
+            wsl -d Ubuntu -- bash -c "
               cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
               ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}
             "
@@ -295,7 +304,7 @@ pipeline {
           } 
           else if (params.BUILD == 'qa') {
             bat """
-            wsl bash -lc "
+            wsl -d Ubuntu -- bash -c "
               cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war \
               ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}
             "
@@ -303,7 +312,7 @@ pipeline {
           } 
           else {
             bat """
-            wsl bash -lc "
+            wsl -d Ubuntu -- bash -c "
               cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME}
               cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME}
               cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_3}/webapps/${ARTIFACT_NAME}
@@ -314,33 +323,43 @@ pipeline {
       }
     }
 
+    /* =========================
+       START APPLICATION (FIXED)
+       ========================= */
     stage('Start Application') {
       steps {
         script {
           if (params.BUILD == 'dev') {
-            bat """wsl bash -lc "${WSL_BASE}/myappstartup.sh dev" """
+            bat """
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh dev"
+            """
           } 
           else if (params.BUILD == 'qa') {
-            bat """wsl bash -lc "${WSL_BASE}/myappstartup.sh qa" """
+            bat """
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh qa"
+            """
           } 
           else {
             bat """
-            wsl bash -lc "${WSL_BASE}/myappstartup.sh prod1"
-            wsl bash -lc "${WSL_BASE}/myappstartup.sh prod2"
-            wsl bash -lc "${WSL_BASE}/myappstartup.sh prod3"
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh prod1"
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh prod2"
+            wsl -d Ubuntu -- bash -c "${WSL_BASE}/myappstartup.sh prod3"
             """
           }
         }
       }
     }
 
+    /* =========================
+       TAIL LOGS (DEV / QA)
+       ========================= */
     stage('Tail Logs (DEV/QA)') {
       when { expression { params.BUILD != 'prod' } }
       steps {
         script {
           def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV : TOMCAT_QA
           bat """
-          wsl bash -lc "
+          wsl -d Ubuntu -- bash -c "
             echo ===== LAST 200 LOG LINES =====
             tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs
           "
@@ -349,15 +368,18 @@ pipeline {
       }
     }
 
+    /* =========================
+       HEALTH CHECK (PROD ONLY)
+       ========================= */
     stage('Health Check (PROD only)') {
       when { expression { params.BUILD == 'prod' } }
       steps {
         script {
           try {
-            bat "wsl bash -lc \"${WSL_BASE}/health_check_all.sh 9080 9081 9082\""
+            bat "wsl -d Ubuntu -- bash -c \"${WSL_BASE}/health_check_all.sh 9080 9081 9082\""
           } catch (err) {
             echo "Health check failed — rolling back..."
-            bat "wsl bash -lc \"${WSL_BASE}/rollback_unhealthy_nodes.sh ${TOMCAT_PROD_1} ${TOMCAT_PROD_2} ${TOMCAT_PROD_3} ${BACKUP_DIR} ${ARTIFACT_NAME} ${WSL_BASE}\""
+            bat "wsl -d Ubuntu -- bash -c \"${WSL_BASE}/rollback_unhealthy_nodes.sh ${TOMCAT_PROD_1} ${TOMCAT_PROD_2} ${TOMCAT_PROD_3} ${BACKUP_DIR} ${ARTIFACT_NAME} ${WSL_BASE}\""
             error "PROD health-check failed"
           }
         }
@@ -365,7 +387,10 @@ pipeline {
     }
   }
 
- post {
+  /* =========================
+     POST ACTIONS
+     ========================= */
+  post {
     success {
       echo "✅ Deployment successful for ${params.BUILD}"
     }
@@ -373,7 +398,7 @@ pipeline {
     failure {
       script {
         bat """
-        wsl bash -lc "
+        wsl -d Ubuntu -- bash -c "
           mkdir -p ${LOGS_DIR}
           if [ '${params.BUILD}' = 'dev' ]; then
             cp ${TOMCAT_DEV}/logs/myapplog.out ${LOGS_DIR}/dev_\\$(date +%Y%m%d_%H%M%S).log
@@ -391,3 +416,5 @@ pipeline {
     }
   }
 }
+
+
