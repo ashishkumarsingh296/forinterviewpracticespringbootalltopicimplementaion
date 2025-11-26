@@ -391,30 +391,34 @@ pipeline {
      POST ACTIONS
      ========================= */
   post {
-    success {
-      echo "✅ Deployment successful for ${params.BUILD}"
-    }
-
-    failure {
-      script {
-        bat """
-        wsl -d Ubuntu -- bash -c "
-          mkdir -p ${LOGS_DIR}
-          if [ '${params.BUILD}' = 'dev' ]; then
-            cp ${TOMCAT_DEV}/logs/myapplog.out ${LOGS_DIR}/dev_\\$(date +%Y%m%d_%H%M%S).log
-          elif [ '${params.BUILD}' = 'qa' ]; then
-            cp ${TOMCAT_QA}/logs/myapplog.out ${LOGS_DIR}/qa_\\$(date +%Y%m%d_%H%M%S).log
-          fi
-        "
-        """
-
-        bat "wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
-        archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
-      }
-
-      echo "❌ Deployment failed — logs archived"
-    }
+  success {
+    echo "✅ Deployment successful for ${params.BUILD}"
   }
+
+  failure {
+    script {
+      bat """
+      wsl bash -lc "
+        mkdir -p ${LOGS_DIR}
+
+        TS=\\$(date +%Y%m%d_%H%M%S)
+
+        if [ '${params.BUILD}' = 'dev' ]; then
+          cp ${TOMCAT_DEV}/logs/myapplog.out ${LOGS_DIR}/dev_\\$TS.log
+        elif [ '${params.BUILD}' = 'qa' ]; then
+          cp ${TOMCAT_QA}/logs/myapplog.out ${LOGS_DIR}/qa_\\$TS.log
+        fi
+      "
+      """
+
+      bat "wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
+      archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
+    }
+
+    echo "❌ Deployment failed — logs archived"
+  }
+}
+
 }
 
 
