@@ -293,21 +293,27 @@ pipeline {
   steps {
     script {
       if (params.BUILD == 'dev') {
-        bat "wsl ${WSL_BASE}/myappstop.sh dev"
-        bat "wsl ${WSL_BASE}/myappstartup.sh dev"
-      } 
+        bat """
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh dev"
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh dev"
+        """
+      }
       else if (params.BUILD == 'qa') {
-        bat "wsl ${WSL_BASE}/myappstop.sh qa"
-        bat "wsl ${WSL_BASE}/myappstartup.sh qa"
+        bat """
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh qa"
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh qa"
+        """
       } 
       else {
-        bat "wsl ${WSL_BASE}/myappstop.sh prod-1"
-        bat "wsl ${WSL_BASE}/myappstop.sh prod-2"
-        bat "wsl ${WSL_BASE}/myappstop.sh prod-3"
+        bat """  
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod1"
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod2"
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod3"
 
-        bat "wsl ${WSL_BASE}/myappstartup.sh prod-1"
-        bat "wsl ${WSL_BASE}/myappstartup.sh prod-2"
-        bat "wsl ${WSL_BASE}/myappstartup.sh prod-3"
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod1"
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod2"
+        wsl -e bash -lc "/home/aashudev/tomcat/multiple-server-config/bin/myappstartup.sh prod3"
+        """
       }
     }
   }
