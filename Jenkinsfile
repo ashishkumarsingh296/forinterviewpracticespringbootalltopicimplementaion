@@ -265,21 +265,22 @@ pipeline {
         }
 
         stage('Stop Tomcat') {
-            steps {
-                script {
-                    if (params.BUILD == 'dev' || params.BUILD == 'qa') {
-                        bat "wsl bash -c '${STOP_SCRIPT} ${params.BUILD} || true'"
-                    } else {
-                        // Stop all prod servers
-                        bat """
-                        wsl bash -c '${STOP_SCRIPT} prod1 || true'
-                        wsl bash -c '${STOP_SCRIPT} prod2 || true'
-                        wsl bash -c '${STOP_SCRIPT} prod3 || true'
-                        """
-                    }
-                }
+    steps {
+        script {
+            if (params.BUILD == 'dev' || params.BUILD == 'qa') {
+                bat """
+                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.BUILD}; true"
+                """
+            } else {
+                bat """
+                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod1; true"
+                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod2; true"
+                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod3; true"
+                """
             }
         }
+    }
+}
 
         stage('Copy WAR') {
             steps {
