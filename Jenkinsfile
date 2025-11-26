@@ -208,7 +208,9 @@ pipeline {
                 def tomcatHome = (params.TARGET == 'dev') ? TOMCAT_DEV : TOMCAT_QA
                 bat """\
                   wsl bash -lc "mkdir -p /home/aashudev/deploy/jenkins_logs || true"
-                  wsl bash -lc "cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_$(date +%Y%m%d_%H%M%S) || true"
+
+                    wsl bash -lc "cp ${tomcatHome}/logs/myapplog.out /home/aashudev/deploy/jenkins_logs/myapplog.out_\\$(date +%Y%m%d_%H%M%S) || true"
+
                   wsl bash -lc "ls -l /home/aashudev/deploy/jenkins_logs || true"
                 """
                 // bring the logs back to Windows Jenkins workspace
