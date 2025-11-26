@@ -397,27 +397,32 @@ pipeline {
 
   failure {
     script {
-      bat """
-      wsl bash -lc "
-        mkdir -p ${LOGS_DIR}
 
-        TS=\\$(date +%Y%m%d_%H%M%S)
+      bat '''
+      wsl bash -lc '
+        mkdir -p /home/aashudev/deploy/jenkins_logs
 
-        if [ '${params.BUILD}' = 'dev' ]; then
-          cp ${TOMCAT_DEV}/logs/myapplog.out ${LOGS_DIR}/dev_\\$TS.log
-        elif [ '${params.BUILD}' = 'qa' ]; then
-          cp ${TOMCAT_QA}/logs/myapplog.out ${LOGS_DIR}/qa_\\$TS.log
+        TS=$(date +%Y%m%d_%H%M%S)
+
+        if [ "'"${params.BUILD}"'" = "dev" ]; then
+          cp /home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev/logs/myapplog.out \
+          /home/aashudev/deploy/jenkins_logs/dev_$TS.log
+
+        elif [ "'"${params.BUILD}"'" = "qa" ]; then
+          cp /home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa/logs/myapplog.out \
+          /home/aashudev/deploy/jenkins_logs/qa_$TS.log
         fi
-      "
-      """
+      '
+      '''
 
-      bat "wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"
+      bat 'wsl cp -r /home/aashudev/deploy/jenkins_logs /mnt/c/ProgramData/Jenkins/.jenkins/workspace/%JOB_NAME%/ || true'
       archiveArtifacts artifacts: '**/jenkins_logs/**', allowEmptyArchive: true
     }
 
     echo "❌ Deployment failed — logs archived"
   }
 }
+
 
 }
 
