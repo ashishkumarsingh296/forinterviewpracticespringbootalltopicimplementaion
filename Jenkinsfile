@@ -269,23 +269,26 @@ pipeline {
     }
 
     stage('Prepare Backups (PROD only)') {
-      when { expression { params.BUILD == 'prod' } }
-      steps {
-        script {
-          bat """
-          wsl bash -lc '
-            mkdir -p ${BACKUP_DIR} || true
-            # backup current WARs (if exist)
-            for d in ${TOMCAT_PROD_1} ${TOMCAT_PROD_2} ${TOMCAT_PROD_3}; do
-              if [ -f "$d/webapps/${ARTIFACT_NAME}" ]; then
-                cp "$d/webapps/${ARTIFACT_NAME}" "${BACKUP_DIR}/$(basename $d)-${ARTIFACT_NAME}-$(date +%s)" || true
-              fi
-            done
-          '
-          """
-        }
-      }
+  when { expression { params.BUILD == 'prod' } }
+  steps {
+    script {
+      bat """
+      wsl bash -lc '
+        mkdir -p ${BACKUP_DIR} || true
+
+        for d in ${TOMCAT_PROD_1} ${TOMCAT_PROD_2} ${TOMCAT_PROD_3}; do
+          if [ -f "$d/webapps/${ARTIFACT_NAME}" ]; then
+            name=\$(basename "\$d")
+            ts=\$(date +%s)
+            cp "$d/webapps/${ARTIFACT_NAME}" "${BACKUP_DIR}/\${name}-${ARTIFACT_NAME}-\${ts}" || true
+          fi
+        done
+      '
+      """
     }
+  }
+}
+
 
     stage('Copy WARs') {
       steps {
