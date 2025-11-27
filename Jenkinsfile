@@ -272,10 +272,9 @@ pipeline {
                 wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.BUILD}; true"
                 """
             } else {
+               // ✅ PROD: Sirf PROD-1 stop (zero downtime)
                 bat """
                 wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod1; true"
-                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod2; true"
-                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod3; true"
                 """
             }
         }
@@ -290,7 +289,7 @@ pipeline {
                     } else if (params.BUILD == 'qa') {
                         bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}.war"""
                     } else {
-                        // Prod WAR copy to all nodes
+                        // ✅ PROD: WAR sab jagah copy hoti rahe (DO NOT restart all)
                         bat """
                         wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME}.war
                         wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME}.war
@@ -309,8 +308,6 @@ pipeline {
                     } else {
                         bat """
                         wsl bash -c '${START_SCRIPT} prod1'
-                        wsl bash -c '${START_SCRIPT} prod2'
-                        wsl bash -c '${START_SCRIPT} prod3'
                         """
                     }
                 }
