@@ -3,6 +3,7 @@
 
     <!-- Rolling File Appender -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <destination>localhost:5044</destination>
         <file>${LOG_PATH}</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/app-%d{yyyy-MM-dd}.log</fileNamePattern>
