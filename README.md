@@ -854,4 +854,4 @@ Spring Boot | Microservices | DevOps | Redis | Jenkins | Docker
 ------------------------------------------------------------------------
 
 ✅ *This project simulates real-world cloud-style auto-scaling
-deployment on WSL/Linux.*  elastic= hXaoeFjkAqo=LvH9jpRz
+deployment on WSL/Linux.*  elastic= LdTxVUqK5j4J_BizHDLg
