@@ -269,6 +269,12 @@
 				<active.profile>qa</active.profile>
 			</properties>
 		</profile>
+		<profile>
+			<id>wsl-prod</id>
+			<properties>
+				<active.profile>prod</active.profile>
+			</properties>
+		</profile>
 	</profiles>
 
 </project>
