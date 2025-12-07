@@ -14,7 +14,7 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
 
-    public void log(String username, String entityName, String actionType, String details, Long targetEntityId,Boolean isDeleted) {
+    public void log(String username, String entityName, String actionType, Boolean isDeleted,String details, Long targetEntityId) {
         AuditLog log = AuditLog.builder()
                 .username(username)
                 .entityName(entityName)
