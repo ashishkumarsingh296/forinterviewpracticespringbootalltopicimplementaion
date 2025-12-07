@@ -32,24 +32,29 @@ public class UserService {
         this.repo = repo;
     }
 
-    @Transactional
-    @Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER)
-    public ModifyUserDTO create(AddUserDto dto) {
-        if (dto.getEmail() != null && repo.existsByEmail(dto.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
-        }
+@Transactional
+@Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER)
+public ModifyUserDTO create(AddUserDto dto) {
 
-        var role = ("ADMIN".equalsIgnoreCase(dto.getRole())) ? Role.ROLE_ADMIN : Role.ROLE_USER;
-        User u = User.builder()
-                .email(dto.getEmail())
-                .name(dto.getName())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .roles(Set.of(role))
-                .build();
-
-        User saved = repo.save(UserMapper.toEntity(dto));
-        return UserMapper.toDto(saved);
+    if (dto.getEmail() != null && repo.existsByEmail(dto.getEmail())) {
+        throw new IllegalArgumentException("Email already in use");
     }
+
+    var role = ("ADMIN".equalsIgnoreCase(dto.getRole()))
+            ? Role.ROLE_ADMIN
+            : Role.ROLE_USER;
+
+    User u = User.builder()
+            .email(dto.getEmail())
+            .name(dto.getName())
+            .password(passwordEncoder.encode(dto.getPassword())) // ✅ SAFE
+            .roles(Set.of(role))
+            .build();
+
+    User saved = repo.save(u);   // ✅ यही SAVE होना चाहिए
+
+    return UserMapper.toDto(saved);
+}
 
     @Transactional(readOnly = true)
     public ModifyUserDTO getById(Long id) {
