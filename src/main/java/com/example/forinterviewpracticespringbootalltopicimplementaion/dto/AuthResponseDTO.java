@@ -9,7 +9,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthResponse {
+public class AuthResponseDTO {
     private String accessToken;
     private String refreshToken;
     private String message;

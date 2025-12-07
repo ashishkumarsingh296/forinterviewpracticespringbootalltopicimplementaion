@@ -22,5 +22,9 @@ public class AddUserDto {
     @Email(message = "Invalid email")
     private String email;
 
-    private Role role;
+    @NotBlank(message = "Password is mandatory")
+    private String password;
+
+    @NotBlank(message = "Role is mandatory")
+    private String role; // "ADMIN" or "USER" (optional)
 }

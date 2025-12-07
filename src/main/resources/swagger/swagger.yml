@@ -131,10 +131,10 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/UserRequest"
-            example:
-              name: "John Doe"
-              email: "john.doe@example.com"
-              phone: "+1234567890"
+              name: "John"
+              email: "john@gmail.com"
+              password: "password123"
+              roles: [ "ROLE_USER" ]
       responses:
         "201":
           description: User created successfully
@@ -202,26 +202,6 @@ paths:
                       $ref: "#/components/schemas/UserResponse"
 
   # Auth Controller
-  /auth/register:
-    post:
-      tags: [ auth-controller ]
-      summary: Register New User
-      description: Register user with roles
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RegisterRequest"
-            example:
-              name: "John"
-              email: "john@gmail.com"
-              password: "password123"
-              roles: ["ROLE_USER"]
-      responses:
-        "201":
-          description: User registered successfully
-
   /auth/login:
     post:
       tags: [ auth-controller ]

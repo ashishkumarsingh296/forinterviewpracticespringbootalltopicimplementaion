@@ -3,9 +3,7 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 import lombok.Data;
 
 @Data
-public class RegisterRequest {
+public class AuthRequestDTO {
     private String email;
     private String password;
-    private String name;
-    private String role; // "ADMIN" or "USER" (optional)
 }

@@ -13,18 +13,22 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.mapper.Us
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class UserService {
 
+    private final PasswordEncoder passwordEncoder;
     private final UserRepository repo;
-    public UserService(UserRepository repo) {
+    public UserService(PasswordEncoder passwordEncoder, UserRepository repo) {
+        this.passwordEncoder = passwordEncoder;
         this.repo = repo;
     }
 
@@ -34,8 +38,16 @@ public class UserService {
         if (dto.getEmail() != null && repo.existsByEmail(dto.getEmail())) {
             throw new IllegalArgumentException("Email already in use");
         }
-        User u = UserMapper.toEntity(dto);
-        User saved = repo.save(u);
+
+        var role = ("ADMIN".equalsIgnoreCase(dto.getRole())) ? Role.ROLE_ADMIN : Role.ROLE_USER;
+        User u = User.builder()
+                .email(dto.getEmail())
+                .name(dto.getName())
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .roles(Set.of(role))
+                .build();
+
+        User saved = repo.save(UserMapper.toEntity(dto));
         return UserMapper.toDto(saved);
     }
 

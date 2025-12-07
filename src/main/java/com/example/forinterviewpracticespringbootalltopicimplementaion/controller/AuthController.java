@@ -12,14 +12,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,7 +29,6 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Environment environment;
 
@@ -40,28 +37,8 @@ public class AuthController {
 
     @Autowired
     BackgroundTaskService backgroundTaskService;
-
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            return ResponseEntity.badRequest().body("Email already in use");
-        }
-
-        var role = ("ADMIN".equalsIgnoreCase(req.getRole())) ? Role.ROLE_ADMIN : Role.ROLE_USER;
-        User u = User.builder()
-                .email(req.getEmail())
-                .name(req.getName())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .roles(Set.of(role))
-                .build();
-
-        userRepository.save(u);
-        appLogger.info("User created successfully");
-        return ResponseEntity.ok("User registered");
-    }
-
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest req) {
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDTO req) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
         );
@@ -83,19 +60,19 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .headers(headers)
-                .body(new AuthResponse(accessToken, refreshToken, "Login successful", "Bearer", roles));
+                .body(new AuthResponseDTO(accessToken, refreshToken, "Login successful", "Bearer", roles));
     }
 
 
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<AuthResponseDTO> refresh(@RequestBody RefreshTokenRequestDTO request) {
 
         String refreshToken = request.getRefreshToken();
 
         if (!jwtService.validateToken(refreshToken)) {
             return ResponseEntity.status(401)
-                    .body(new AuthResponse(null, null, "Invalid refresh token", null, null));
+                    .body(new AuthResponseDTO(null, null, "Invalid refresh token", null, null));
         }
 
         String email = jwtService.extractUsername(refreshToken);
@@ -103,13 +80,13 @@ public class AuthController {
 
         if (jwtService.isTokenExpired(refreshToken)) {
             return ResponseEntity.status(401)
-                    .body(new AuthResponse(null, null, "Refresh token expired", null, null));
+                    .body(new AuthResponseDTO(null, null, "Refresh token expired", null, null));
         }
 
         String newAccessToken = jwtService.generateAccessToken(email, roles);
         String newRefreshToken = jwtService.generateRefreshToken(email);
 
-        return ResponseEntity.ok(new AuthResponse(newAccessToken, newRefreshToken, "Token refreshed", "Bearer", roles));
+        return ResponseEntity.ok(new AuthResponseDTO(newAccessToken, newRefreshToken, "Token refreshed", "Bearer", roles));
     }
 
     @GetMapping("/hello")
