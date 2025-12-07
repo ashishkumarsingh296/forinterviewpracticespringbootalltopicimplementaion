@@ -5,6 +5,7 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.common.Ap
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.AddUserDto;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.ModifyUserDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.response.ApiResponse;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.response.PageResponse;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.service.UserService;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.utils.RestAPIStringMessageParser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,22 +64,40 @@ public class UserController {
 
     @PreAuthorize(HAS_ANY_ROLE_USER_ADMIN)
     @GetMapping(GET_ALL_USERS)
-    public ResponseEntity<ApiResponse<Page<ModifyUserDTO>>> getAll(
+    public ResponseEntity<ApiResponse<PageResponse<ModifyUserDTO>>> getAll(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sort[0]).ascending());
-        Page<ModifyUserDTO> users = service.getAll(pageable);
+        PageResponse<ModifyUserDTO> users =
+                service.getAllUsers(page, size, sortBy, direction);
+
+
+//        PageResponse<ModifyUserDTO> result =
+//                service.getAllUsers(page, size, sortBy, direction);
+
+        ApiResponse<PageResponse<ModifyUserDTO>> response = new ApiResponse<>();
         String messageCode = users.isEmpty() ? AppErrorCodesI.NO_RECORDS_FOUND : AppErrorCodesI.USER_LIST_FETCH_SUCCESS;
         String message = restAPIStringParser.getMessage(messageCode);
-
-        ApiResponse<Page<ModifyUserDTO>> response = new ApiResponse<>();
         response.setStatus(HttpStatus.OK.value());
         response.setMessageCode(messageCode);
         response.setMessage(message);
         response.setData(users);
+
         return ResponseEntity.ok(response);
+
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(sort[0]).ascending());
+//        PageResponse<ModifyUserDTO> users = service.getAllUsers(pageable);
+//        String messageCode = users.isEmpty() ? AppErrorCodesI.NO_RECORDS_FOUND : AppErrorCodesI.USER_LIST_FETCH_SUCCESS;
+//        String message = restAPIStringParser.getMessage(messageCode);
+//
+//        ApiResponse<Page<ModifyUserDTO>> response = new ApiResponse<>();
+//        response.setStatus(HttpStatus.OK.value());
+//        response.setMessageCode(messageCode);
+//        response.setMessage(message);
+//        response.setData(users);
+//        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize(HAS_ANY_ROLE_USER_ADMIN)

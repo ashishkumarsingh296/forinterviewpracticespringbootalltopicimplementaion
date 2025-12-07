@@ -37,4 +37,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Set<Role> roles;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
 }

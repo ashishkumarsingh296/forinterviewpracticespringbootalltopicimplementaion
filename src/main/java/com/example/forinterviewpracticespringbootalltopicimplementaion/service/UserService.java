@@ -12,8 +12,11 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.exception
 import com.example.forinterviewpracticespringbootalltopicimplementaion.exception.ResourceNotFoundException;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.mapper.UserMapper;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.UserRepository;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.response.PageResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +36,8 @@ public class UserService {
         this.repo = repo;
     }
 
-@Transactional
+
+    @Transactional
 @Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER)
 public ModifyUserDTO create(AddUserDto dto) {
 
@@ -48,11 +52,13 @@ public ModifyUserDTO create(AddUserDto dto) {
     User u = User.builder()
             .email(dto.getEmail())
             .name(dto.getName())
-            .password(passwordEncoder.encode(dto.getPassword())) // ✅ SAFE
+            .isDeleted(false)
+            .password(passwordEncoder.encode(dto.getPassword()))
             .roles(Set.of(role))
             .build();
 
-    User saved = repo.save(u);   // ✅ यही SAVE होना चाहिए
+
+    User saved = repo.save(u);
 
     return UserMapper.toDto(saved);
 }
@@ -94,11 +100,37 @@ public ModifyUserDTO create(AddUserDto dto) {
         User user = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User" , id));
 
+        user.setIsDeleted(true);
         repo.delete(user);
 
         return UserMapper.toDto(user);
     }
-    public Page<ModifyUserDTO> getAll(Pageable pageable) {
-        return repo.findAll(pageable).map(UserMapper::toDto);
+//    public PageResponse<ModifyUserDTO> getAll(Pageable pageable) {
+//        return repo.findAll(pageable).map(UserMapper::toDto);
+//    }
+
+
+    public PageResponse<ModifyUserDTO> getAllUsers(int page, int size, String sortBy, String direction) {
+
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<User> userPage = repo.findByIsDeletedFalse(pageable);
+
+        List<ModifyUserDTO> users = userPage.getContent()
+                .stream()
+                .map(UserMapper::toDto)
+                .toList();
+
+        return new PageResponse<>(
+                users,
+                userPage.getTotalElements(),
+                userPage.getTotalPages(),
+                userPage.getNumber()
+        );
     }
+
 }
