@@ -256,7 +256,7 @@ pipeline {
         stage('Build WAR') {
             steps {
                 script {
-                    def profile = (params.BUILD == 'prod') ? 'prod' :
+                    def profile = (params.BUILD == 'prod') ? 'wsl-prod' :
                                   (params.BUILD == 'qa')   ? 'wsl-qa' : 'wsl-dev'
                     echo "Building with profile: ${profile}"
                     bat "mvnw clean package -P${profile} -DskipTests"
