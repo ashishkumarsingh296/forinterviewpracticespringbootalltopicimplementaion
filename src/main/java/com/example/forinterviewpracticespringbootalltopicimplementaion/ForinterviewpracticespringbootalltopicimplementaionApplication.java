@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableAsync
 @EnableCaching
 @SpringBootApplication
+@EnableAspectJAutoProxy
 public class ForinterviewpracticespringbootalltopicimplementaionApplication extends SpringBootServletInitializer {
 
 
