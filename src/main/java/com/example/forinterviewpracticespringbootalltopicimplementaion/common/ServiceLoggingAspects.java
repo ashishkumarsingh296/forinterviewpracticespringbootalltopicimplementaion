@@ -42,7 +42,7 @@ import java.util.Arrays;
 
         // ✅ Trace FAILURE with Exception
         @AfterThrowing(
-                pointcut = "execution(* com.example..service..*(..))",
+                pointcut = "execution(* com.example.forinterviewpracticespringbootalltopicimplementaion.service..*(..))",
                 throwing = "ex"
         )
         public void logFailure(JoinPoint joinPoint, Exception ex) {
