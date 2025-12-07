@@ -15,10 +15,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
+@Slf4j    
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public <T> ResponseEntity<ApiResponse<T>> handleResourceNotFound(ResourceNotFoundException ex) {
+
+        log.warn("BUSINESS ERROR | uri={} | message={}",
+                request.getRequestURI(), ex.getMessage());
         ApiResponse<T> response = new ApiResponse<>(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
@@ -53,6 +57,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public <T> ResponseEntity<ApiResponse<T>> handleGeneral(Exception ex) {
+
+        log.error("SYSTEM ERROR | uri={} | error={}",
+                request.getRequestURI(), ex.getMessage(), ex);
+        
         ApiResponse<T> response = new ApiResponse<>(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 ex.getMessage(),
@@ -83,4 +91,6 @@ public class GlobalExceptionHandler {
         b.setTimestamp(LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(b);
     }
+
+    
 }
