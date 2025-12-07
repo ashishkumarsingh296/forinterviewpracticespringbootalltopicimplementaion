@@ -21,7 +21,10 @@ public class UserMapper {
         User u = new User();
         u.setName(dto.getName());
         u.setEmail(dto.getEmail());
-        u.setRoles(Collections.singleton(Role.valueOf(dto.getRole())));
+        u.setRoles(Collections.singleton(
+        Role.valueOf(dto.getRole().replace("ROLE_", ""))
+));
+        // u.setRoles(Collections.singleton(Role.valueOf(dto.getRole())));
         return u;
     }
 
