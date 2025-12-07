@@ -17,6 +17,7 @@ import java.util.Arrays;
     @Aspect
     @Component
     @Slf4j
+    @RequiredArgsConstructor    
     public class ServiceLoggingAspects {
 
         private final ObjectMapper objectMapper = new ObjectMapper();
