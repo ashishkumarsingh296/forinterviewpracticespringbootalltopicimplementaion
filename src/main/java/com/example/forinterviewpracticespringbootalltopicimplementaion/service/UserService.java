@@ -74,7 +74,7 @@ public ModifyUserDTO create(AddUserDto dto) {
     }
 
     @Transactional
-    @Auditable(action = ActionConstants.UPDATE, entity = EntityConstants.USER, isDeleted ="")
+    @Auditable(action = ActionConstants.UPDATE, entity = EntityConstants.USER, isDeleted =ActionConstants.IS_DELETE)
     public ModifyUserDTO update(ModifyUserDTO dto) {
         User existing = repo.findById(dto.getId()).orElseThrow(() -> new ResourceNotFoundException("User", dto.getId()));
         existing.setName(dto.getName());
