@@ -12,7 +12,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @EnableAsync
 @EnableCaching
 @SpringBootApplication
-@EnableAspectJAutoProxy
+//@EnableAspectJAutoProxy
 public class ForinterviewpracticespringbootalltopicimplementaionApplication extends SpringBootServletInitializer {
 
 
