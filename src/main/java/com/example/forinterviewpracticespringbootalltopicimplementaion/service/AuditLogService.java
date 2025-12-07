@@ -19,7 +19,7 @@ public class AuditLogService {
                 .username(username)
                 .entityName(entityName)
                 .actionType(actionType)
-                .isDeleted(true)
+                .isDeleted(isDeleted)
                 .details(details)
                 .targetEntityId(targetEntityId)
                 .build();
