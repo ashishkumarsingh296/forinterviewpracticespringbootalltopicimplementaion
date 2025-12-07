@@ -1,0 +1,13 @@
+@Configuration
+public class MySqlCleanupConfig {
+
+    @PreDestroy
+    public void cleanup() {
+        try {
+            com.mysql.cj.jdbc.AbandonedConnectionCleanupThread.checkedShutdown();
+            System.out.println("✅ MySQL Cleanup Thread stopped successfully");
+        } catch (Exception e) {
+            System.err.println("❌ MySQL Cleanup failed: " + e.getMessage());
+        }
+    }
+}
