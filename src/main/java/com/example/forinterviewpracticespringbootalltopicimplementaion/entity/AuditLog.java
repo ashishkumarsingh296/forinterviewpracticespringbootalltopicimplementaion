@@ -25,6 +25,8 @@ public class AuditLog {
     private String entityName;
     private String actionType; // CREATE, UPDATE, DELETE
     private String details;
+    private Boolean isDeleted;
+
 
     @CreationTimestamp
     private LocalDateTime timestamp;
