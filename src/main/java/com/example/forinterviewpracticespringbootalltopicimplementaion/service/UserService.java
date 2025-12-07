@@ -37,7 +37,7 @@ public class UserService {
     }
 
     @Transactional
-@Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER,isDeleted = "false")
+@Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER,isDeleted = ActionConstants.IS_DELETE)
 public ModifyUserDTO create(AddUserDto dto) {
 
     if (dto.getEmail() != null && repo.existsByEmail(dto.getEmail())) {
