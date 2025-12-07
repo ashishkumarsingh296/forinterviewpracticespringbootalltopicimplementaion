@@ -7,5 +7,5 @@ import java.lang.annotation.*;
 public @interface Auditable {
     String action();
     String entity();
-    String isDeleted() ;  // ✅ DEFAULT ADDED
+    boolean isDeleted() default false;  // ✅ DEFAULT ADDED
 }
