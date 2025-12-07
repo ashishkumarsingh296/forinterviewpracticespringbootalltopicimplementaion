@@ -22,9 +22,12 @@ public class UserMapper {
         u.setName(dto.getName());
         u.setEmail(dto.getEmail());
         u.setRoles(Collections.singleton(
-        Role.valueOf(dto.getRole().replace("ROLE_", ""))
-));
-        // u.setRoles(Collections.singleton(Role.valueOf(dto.getRole())));
+
+        try {
+          u.setRoles(Collections.singleton(Role.valueOf(dto.getRole())));
+          } catch (IllegalArgumentException ex) {
+          throw new RuntimeException("Invalid role: " + dto.getRole());
+        }    
         return u;
     }
 
