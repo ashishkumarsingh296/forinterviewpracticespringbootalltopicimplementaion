@@ -134,8 +134,8 @@ paths:
             example:
               name: "John Doe"
               email: "john.doe@example.com"
-              passord: "password@123"
-              role:   "USER_ROLE"
+              password: "password@123"
+              role:   "ROLE_USER"
       responses:
         "201":
           description: User created successfully
