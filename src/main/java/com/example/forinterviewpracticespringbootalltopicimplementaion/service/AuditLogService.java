@@ -14,11 +14,12 @@ public class AuditLogService {
 
     private final AuditLogRepository auditLogRepository;
 
-    public void log(String username, String entityName, String actionType, String details, Long targetEntityId) {
+    public void log(String username, String entityName, String actionType, String details, Long targetEntityId,Boolean isDeleted) {
         AuditLog log = AuditLog.builder()
                 .username(username)
                 .entityName(entityName)
                 .actionType(actionType)
+                .isDeleted(isDeleted)
                 .details(details)
                 .targetEntityId(targetEntityId)
                 .build();

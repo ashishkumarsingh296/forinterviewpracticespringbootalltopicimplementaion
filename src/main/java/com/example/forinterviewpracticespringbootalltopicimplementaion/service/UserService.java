@@ -36,7 +36,6 @@ public class UserService {
         this.repo = repo;
     }
 
-
     @Transactional
 @Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER)
 public ModifyUserDTO create(AddUserDto dto) {
