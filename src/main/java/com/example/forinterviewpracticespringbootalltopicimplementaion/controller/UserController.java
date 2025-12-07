@@ -46,7 +46,7 @@ public class UserController {
         response.setStatus(HttpStatus.OK.value());
         response.setMessageCode(AppErrorCodesI.USER_CREATED_SUCCESS);
         response.setMessage(restAPIStringParser.getMessage( AppErrorCodesI.USER_CREATED_SUCCESS));
-        return ResponseEntity.ok(response);
+       return ResponseEntity.ok(response);
 
     }
 
@@ -78,7 +78,6 @@ public class UserController {
         response.setMessageCode(messageCode);
         response.setMessage(message);
         response.setData(users);
-
         return ResponseEntity.ok(response);
     }
 

@@ -8,6 +8,7 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.AddUs
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.ModifyUserDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Role;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.User;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.exception.DuplicateResourceException;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.exception.ResourceNotFoundException;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.mapper.UserMapper;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.UserRepository;
@@ -37,7 +38,7 @@ public class UserService {
 public ModifyUserDTO create(AddUserDto dto) {
 
     if (dto.getEmail() != null && repo.existsByEmail(dto.getEmail())) {
-        throw new IllegalArgumentException("Email already in use");
+        throw new DuplicateResourceException("Email already in use");
     }
 
     var role = ("ADMIN".equalsIgnoreCase(dto.getRole()))

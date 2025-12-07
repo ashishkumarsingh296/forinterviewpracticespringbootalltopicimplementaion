@@ -71,6 +71,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
         ApiResponse<Object> response = new ApiResponse<>();
@@ -93,5 +94,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(b);
     }
 
-    
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiResponse<?>> handleDuplicate(DuplicateResourceException ex) {
+        ApiResponse<Object> b = new ApiResponse<>();
+        b.setMessage(ex.getMessage());
+        b.setMessageCode("409");
+        b.setData(null);
+        b.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(b, HttpStatus.CONFLICT);
+
+    }
+
+
 }

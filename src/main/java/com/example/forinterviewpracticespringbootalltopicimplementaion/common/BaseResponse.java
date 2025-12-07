@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 public class BaseResponse {
 
 	    @JsonProperty("status")
-
 		private int status;
 	    @JsonProperty("messageCode")
 		@Schema(pattern = SchemaConstants.STRING_INPUT_PATTERN,maxLength = SchemaConstants.STRING_MAX_SIZE)
