@@ -37,7 +37,7 @@ public class UserService {
     }
 
     @Transactional
-@Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER)
+@Auditable(action = ActionConstants.CREATE, entity = EntityConstants.USER,isDeleted = "false")
 public ModifyUserDTO create(AddUserDto dto) {
 
     if (dto.getEmail() != null && repo.existsByEmail(dto.getEmail())) {
@@ -74,7 +74,7 @@ public ModifyUserDTO create(AddUserDto dto) {
     }
 
     @Transactional
-    @Auditable(action = ActionConstants.UPDATE, entity = EntityConstants.USER)
+    @Auditable(action = ActionConstants.UPDATE, entity = EntityConstants.USER, isDeleted ="")
     public ModifyUserDTO update(ModifyUserDTO dto) {
         User existing = repo.findById(dto.getId()).orElseThrow(() -> new ResourceNotFoundException("User", dto.getId()));
         existing.setName(dto.getName());
@@ -94,7 +94,7 @@ public ModifyUserDTO create(AddUserDto dto) {
     }
 
     @Transactional
-    @Auditable(action = ActionConstants.DELETE, entity = EntityConstants.USER)
+    @Auditable(action = ActionConstants.DELETE, entity = EntityConstants.USER,isDeleted= ActionConstants.IS_DELETE)
     public ModifyUserDTO delete(Long id) {
         User user = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User" , id));

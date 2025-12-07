@@ -25,7 +25,7 @@ public class AuditAspect {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         String entity = auditable.entity();
         String action = auditable.action();
-        Boolean isDeleted = Boolean.valueOf(auditable.action());
+        Boolean isDeleted = Boolean.valueOf(auditable.isDeleted());
 
 
         Long targetId = extractTargetEntityId(result);
