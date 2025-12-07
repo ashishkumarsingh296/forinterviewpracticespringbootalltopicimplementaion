@@ -3,6 +3,7 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.mapper;
 
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.AddUserDto;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.ModifyUserDTO;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Role;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.User;
 
 
@@ -20,7 +21,7 @@ public class UserMapper {
         User u = new User();
         u.setName(dto.getName());
         u.setEmail(dto.getEmail());
-        u.setRoles(Collections.singleton(dto.getRole()));
+        u.setRoles(Collections.singleton(Role.valueOf(dto.getRole())));
         return u;
     }
 
