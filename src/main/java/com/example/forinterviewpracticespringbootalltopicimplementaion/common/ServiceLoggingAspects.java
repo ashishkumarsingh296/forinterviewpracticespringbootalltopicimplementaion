@@ -23,7 +23,11 @@ import java.util.Arrays;
         private final ObjectMapper objectMapper = new ObjectMapper();
 
 
-        @Around("execution(* com.example.forinterviewpracticespringbootalltopicimplementaion.service..*(..))")
+        // @Around("execution(* com.example.forinterviewpracticespringbootalltopicimplementaion.service..*(..))")
+        @AfterReturning(
+    pointcut = "execution(* com.example.forinterviewpracticespringbootalltopicimplementaion..*(..))",
+    returning = "response"
+)
         public void logSuccess(JoinPoint joinPoint, Object response) {
 
             String method = joinPoint.getSignature().toShortString();
@@ -43,9 +47,9 @@ import java.util.Arrays;
 
         // ✅ Trace FAILURE with Exception
         @AfterThrowing(
-                pointcut = "execution(* com.example.forinterviewpracticespringbootalltopicimplementaion.service..*(..))",
-                throwing = "ex"
-        )
+    pointcut = "execution(* com.example.forinterviewpracticespringbootalltopicimplementaion..*(..))",
+    throwing = "ex"
+)
         public void logFailure(JoinPoint joinPoint, Exception ex) {
 
             String method = joinPoint.getSignature().toShortString();
