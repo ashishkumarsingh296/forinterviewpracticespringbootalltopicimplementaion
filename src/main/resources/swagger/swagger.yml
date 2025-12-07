@@ -131,10 +131,11 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/UserRequest"
-              name: "John"
-              email: "john@gmail.com"
-              password: "password123"
-              roles: [ "ROLE_USER" ]
+            example:
+              name: "John Doe"
+              email: "john.doe@example.com"
+              passord: "password@123"
+              role:   "USER_ROLE"
       responses:
         "201":
           description: User created successfully
