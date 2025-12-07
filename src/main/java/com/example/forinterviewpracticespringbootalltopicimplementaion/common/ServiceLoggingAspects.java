@@ -24,7 +24,6 @@ import java.util.Arrays;
 //        private final ObjectMapper objectMapper = new ObjectMapper();
 
 
-        // @Around("execution(* com.example.forinterviewpracticespringbootalltopicimplementaion.service..*(..))")
 //        @AfterReturning(
 //    pointcut = "execution(* com.example.forinterviewpracticespringbootalltopicimplementaion..*(..))",
 //    returning = "response"
@@ -72,7 +71,7 @@ import java.util.Arrays;
 //    }
 
 
-
+        @Around("execution(* com.example.forinterviewpracticespringbootalltopicimplementaion.service..*(..))")
         public Object logService(ProceedingJoinPoint joinPoint) throws Throwable {
 
             long startTime = System.currentTimeMillis();
