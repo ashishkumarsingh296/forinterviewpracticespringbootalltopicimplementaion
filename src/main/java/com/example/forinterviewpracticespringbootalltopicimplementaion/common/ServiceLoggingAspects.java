@@ -15,7 +15,7 @@ import java.util.Arrays;
     @RequiredArgsConstructor
     public class ServiceLoggingAspects {
 
-        @Around("execution(* com.yourapp.service..*(..))")
+        @Around("execution(* com.example.forinterviewpracticespringbootalltopicimplementaion.service..*(..))")
         public Object logService(ProceedingJoinPoint joinPoint) throws Throwable {
 
             long startTime = System.currentTimeMillis();
