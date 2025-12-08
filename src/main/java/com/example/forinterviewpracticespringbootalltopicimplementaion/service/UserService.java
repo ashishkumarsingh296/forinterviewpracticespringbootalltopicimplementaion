@@ -100,8 +100,9 @@ public ModifyUserDTO create(AddUserDto dto) {
                 .orElseThrow(() -> new ResourceNotFoundException("User" , id));
 
         user.setDeleted(true);
-        repo.delete(user);
+//        repo.delete(user); // hard delete
 
+        repo.save(user);                // ✅ UPDATE instead of DELETE
         return UserMapper.toDto(user);
     }
 //    public PageResponse<ModifyUserDTO> getAll(Pageable pageable) {
