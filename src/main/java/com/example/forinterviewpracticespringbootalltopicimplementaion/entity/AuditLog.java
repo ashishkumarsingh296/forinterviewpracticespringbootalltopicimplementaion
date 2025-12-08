@@ -25,7 +25,8 @@ public class AuditLog {
     private String entityName;
     private String actionType; // CREATE, UPDATE, DELETE
     private String details;
-    private Boolean isDeleted;
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted;
 
 
     @CreationTimestamp
