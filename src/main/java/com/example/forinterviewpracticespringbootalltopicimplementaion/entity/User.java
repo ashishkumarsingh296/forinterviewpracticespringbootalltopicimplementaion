@@ -38,7 +38,8 @@ public class User {
     @Column(name = "role")
     private Set<Role> roles;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted;
+
 
 }

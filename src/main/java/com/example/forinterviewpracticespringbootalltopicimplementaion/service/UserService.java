@@ -99,7 +99,7 @@ public ModifyUserDTO create(AddUserDto dto) {
         User user = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User" , id));
 
-        user.setIsDeleted(true);
+        user.setDeleted(true);
         repo.delete(user);
 
         return UserMapper.toDto(user);
