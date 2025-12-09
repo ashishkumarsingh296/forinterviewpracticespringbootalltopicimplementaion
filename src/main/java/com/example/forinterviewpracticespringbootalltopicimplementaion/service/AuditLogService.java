@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,6 +23,7 @@ public class AuditLogService {
                 .isDeleted(isDeleted)
                 .details(details)
                 .targetEntityId(targetEntityId)
+                .timestamp(LocalDateTime.now())
                 .build();
 
         auditLogRepository.save(log);

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Set;
+import org.hibernate.annotations.Where;
+@Where(clause = "is_deleted = false")
 
 @Entity
 @Table(name = "users", uniqueConstraints = {

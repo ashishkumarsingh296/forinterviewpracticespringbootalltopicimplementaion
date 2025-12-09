@@ -20,18 +20,16 @@ public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String username;
     private String entityName;
     private String actionType; // CREATE, UPDATE, DELETE
     private String details;
+    @CreationTimestamp
+    private LocalDateTime timestamp;
+    private Long targetEntityId;
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted;
 
 
-    @CreationTimestamp
-    private LocalDateTime timestamp;
-
-    private Long targetEntityId;
 
 }
