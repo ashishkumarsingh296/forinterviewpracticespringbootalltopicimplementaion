@@ -28,4 +28,9 @@ public class RedisConfig {
                 .cacheDefaults(config)
                 .build();
     }
+    @Bean
+    public RedisCacheConfiguration cacheConfiguration() {
+        return RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues();
+    }
 }
