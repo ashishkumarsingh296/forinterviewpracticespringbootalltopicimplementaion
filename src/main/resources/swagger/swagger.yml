@@ -206,7 +206,7 @@ paths:
   # Order Controller (SAME STYLE)
   # =======================
 
-  /api/allOrders:
+  /api/orders/allOrders:
     get:
       tags: [ order-controller ]
       summary: Get All Orders
@@ -221,7 +221,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/OrderResponse"
 
-  /api/createOrder:
+  /api/orders/createOrder:
     post:
       tags: [ order-controller ]
       summary: Create Order
@@ -245,10 +245,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/OrderResponse"
 
-  /api/orderBy/{id}:
+  /api/orders/user/{userId}:
     get:
       tags: [ order-controller ]
-      summary: Get Order By ID
+      summary: Get Order By User ID
       description: Fetch order by ID
       parameters:
         - in: path
@@ -264,11 +264,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/OrderResponse"
 
-  /api/updateOrder:
-    post:
+  /api/orders/{orderId}/status:
+    put:
       tags: [ order-controller ]
-      summary: Update Order
-      description: Update order
+      summary: Update Order Status
+      description: Update order Status
       requestBody:
         required: true
         content:
@@ -290,7 +290,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OrderResponse"
 
-  /api/deleteOrder/{id}:
+  /api/orders/delete/{orderId}:
     delete:
       tags: [ order-controller ]
       summary: Delete Order

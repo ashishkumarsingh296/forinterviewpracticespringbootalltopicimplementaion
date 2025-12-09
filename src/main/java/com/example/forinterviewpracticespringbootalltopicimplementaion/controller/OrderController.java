@@ -46,7 +46,7 @@ public class OrderController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("orders/{orderId}")
+    @DeleteMapping("orders/delete/{orderId}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long orderId) {
         service.softDeleteOrder(orderId);
         return ResponseEntity.noContent().build();
