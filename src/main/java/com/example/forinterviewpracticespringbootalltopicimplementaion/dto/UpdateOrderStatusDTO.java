@@ -1,14 +1,10 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateOrderStatusDTO {
-
-    @NotBlank
-    private String status;
+    private String status; // PAID, CANCELLED, FAILED, PENDING, etc.
 }

@@ -5,16 +5,11 @@ import lombok.*;
 import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(
-    name = "orders",
-    indexes = {
-        @Index(name = "idx_orders_user_id", columnList = "user_id"),
-        @Index(name = "idx_orders_status", columnList = "status"),
-        @Index(name = "idx_orders_created_at", columnList = "created_at")
-    }
-)
+@Table(name = "orders")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,6 +43,12 @@ public class Order {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items = new ArrayList<>();
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private Payment payment;
 
     @PrePersist
     void onCreate() {
