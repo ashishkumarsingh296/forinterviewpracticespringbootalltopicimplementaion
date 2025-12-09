@@ -101,16 +101,16 @@ public class OrderServiceImpl implements OrderService {
     /** GET USER ORDERS WITH CACHE */
     @Override
     @Cacheable(value = "userOrders", key = "#userId")
-    public Page<OrderResponseDTO> getOrderById(Long userId, Pageable pageable) {
+    public Page<OrderResponseDTO> getUserOrders(Long userId, Pageable pageable) {
         return orderRepository.findByUserIdAndIsDeletedFalse(userId, pageable)
                 .map(mapper::toDTO);
     }
 
-    @Override
-    @Cacheable(value = "userOrders", key = "#userId")
-    public Page<OrderResponseDTO> getUserOrders(Long userId, Pageable pageable) {
-        return null;
-    }
+//    @Override
+//    @Cacheable(value = "userOrders", key = "#userId")
+//    public Page<OrderResponseDTO> getUserOrders(Long userId, Pageable pageable) {
+//        return null;
+//    }
 
     /** GET SINGLE ORDER BY ID */
     @Override

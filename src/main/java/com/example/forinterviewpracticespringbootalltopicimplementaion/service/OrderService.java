@@ -12,13 +12,9 @@ public interface OrderService {
     OrderResponseDTO createOrder(CreateOrderRequestDTO dto);
 
     @Cacheable(value = "userOrders", key = "#userId")
-    Page<OrderResponseDTO> getOrderById(Long userId, Pageable pageable);
-
-    //    Page<OrderResponseDTO> getOrderById(Long userId, Pageable pageable);
     Page<OrderResponseDTO> getUserOrders(Long userId, Pageable pageable);
     @Cacheable(value = "userOrders", key = "#orderId")
     OrderResponseDTO getOrderById(Long orderId);
-
     void updateOrderStatus(Long orderId, UpdateOrderStatusDTO dto);
 
     void softDeleteOrder(Long orderId);
