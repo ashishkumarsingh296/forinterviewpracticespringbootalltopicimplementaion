@@ -320,173 +320,336 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthResponse"
 
+  components:
+    schemas:
 
-components:
-  schemas:
-    ProductRequest:
-      type: object
-      required: [ name, price, description, quantity ]
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        description:
-          type: string
-        price:
-          type: number
-        quantity:
-          type: integer
-
-    ProductResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: "Laptop"
-        description:
-          type: string
-          example: "High performance laptop"
-        price:
-          type: number
-          example: 49999.99
-        quantity:
-          type: integer
-          example: 10
-        status:
-          type: integer
-          example: 200
-        message:
-          type: string
-          example: "Success"
-        messageCode:
-          type: string
-          example: "PROD_UPD_001"
-
-    UserRequest:
-      type: object
-      required: [id ,name,email ,role ]
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string
-
-    UserResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: "John Doe"
-        email:
-          type: string
-          example: "john.doe@example.com"
-        role:
-          type: string
-          example: "TeamLead"
-        status:
-          type: integer
-          example: 200
-        message:
-          type: string
-          example: "Success"
-        messageCode:
-          type: string
-          example: "USER_CREATE_001"
-
-  CreateOrderRequestDTO:
-    type: object
-    required: [ userId, totalAmount, status ]
-    properties:
-      userId:
-        type: integer
-        example: 1
-      totalAmount:
-        type: number
-        example: 89999.99
-      status:
-        type: string
-        example: CREATED
-
-  UpdateOrderStatusDTO:
-    type: object
-    required: [ status ]
-    properties:
-      status:
-        type: string
-        example: PAID
-
-  OrderResponseDTO:
-    type: object
-    properties:
-      id:
-        type: integer
-        example: 101
-      orderNumber:
-        type: string
-        example: ORD-2025-0001
-      userId:
-        type: integer
-        example: 1
-      totalAmount:
-        type: number
-        example: 89999.99
-      status:
-        type: string
-        example: PAID
-      createdAt:
-        type: string
-        example: 2025-12-09T15:30:00
-
-    RegisterRequest:
-      type: object
-      required: [ name, email, password, roles ]
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-        password:
-          type: string
-          format: password
-        roles:
-          type: array
-          items:
+      ProductRequest:
+        type: object
+        required: [ name, price, description, quantity ]
+        properties:
+          id:
+            type: integer
+          name:
             type: string
-            enum: [ ROLE_ADMIN, ROLE_USER ]
-      example:
-        name: "John"
-        email: "john@gmail.com"
-        password: "pass123"
-        roles: [ "ROLE_USER" ]
+          description:
+            type: string
+          price:
+            type: number
+          quantity:
+            type: integer
 
-    AuthRequest:
-      type: object
-      required: [ email, password ]
-      properties:
-        email:
-          type: string
-        password:
-          type: string
-          format: password
-      example:
-        email: "john@gmail.com"
-        password: "pass123"
+      ProductResponse:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 1
+          name:
+            type: string
+            example: "Laptop"
+          description:
+            type: string
+            example: "High performance laptop"
+          price:
+            type: number
+            example: 49999.99
+          quantity:
+            type: integer
+            example: 10
+          status:
+            type: integer
+            example: 200
+          message:
+            type: string
+            example: "Success"
+          messageCode:
+            type: string
+            example: "PROD_UPD_001"
 
-    AuthResponse:
-      type: object
-      properties:
-        token:
-          type: string
-          example: "eyFakeJwtToken.abc.xyz"
+      UserRequest:
+        type: object
+        required: [ id, name, email, role ]
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+          email:
+            type: string
+          role:
+            type: string
+
+      UserResponse:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 1
+          name:
+            type: string
+            example: "John Doe"
+          email:
+            type: string
+            example: "john.doe@example.com"
+          role:
+            type: string
+            example: "TeamLead"
+          status:
+            type: integer
+            example: 200
+          message:
+            type: string
+            example: "Success"
+          messageCode:
+            type: string
+            example: "USER_CREATE_001"
+
+      ✅ CreateOrderRequestDTO:
+        type: object
+        required: [ userId, totalAmount, status ]
+        properties:
+          userId:
+            type: integer
+            example: 1
+          totalAmount:
+            type: number
+            example: 89999.99
+          status:
+            type: string
+            example: CREATED
+
+      ✅ UpdateOrderStatusDTO:
+        type: object
+        required: [ status ]
+        properties:
+          status:
+            type: string
+            example: PAID
+
+      ✅ OrderResponseDTO:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 101
+          orderNumber:
+            type: string
+            example: ORD-2025-0001
+          userId:
+            type: integer
+            example: 1
+          totalAmount:
+            type: number
+            example: 89999.99
+          status:
+            type: string
+            example: PAID
+          createdAt:
+            type: string
+            example: 2025-12-09T15:30:00
+
+      ✅ RegisterRequest:
+        type: object
+        required: [ name, email, password, roles ]
+        properties:
+          name:
+            type: string
+          email:
+            type: string
+          password:
+            type: string
+            format: password
+          roles:
+            type: array
+            items:
+              type: string
+              enum: [ ROLE_ADMIN, ROLE_USER ]
+
+      ✅ AuthRequest:
+        type: object
+        required: [ email, password ]
+        properties:
+          email:
+            type: string
+          password:
+            type: string
+            format: password
+
+      ✅ AuthResponse:
+        type: object
+        properties:
+          token:
+            type: string
+            example: "eyFakeJwtToken.abc.xyz"
+
+
+
+#components:
+#  schemas:
+#    ProductRequest:
+#      type: object
+#      required: [ name, price, description, quantity ]
+#      properties:
+#        id:
+#          type: integer
+#        name:
+#          type: string
+#        description:
+#          type: string
+#        price:
+#          type: number
+#        quantity:
+#          type: integer
+#
+#    ProductResponse:
+#      type: object
+#      properties:
+#        id:
+#          type: integer
+#          example: 1
+#        name:
+#          type: string
+#          example: "Laptop"
+#        description:
+#          type: string
+#          example: "High performance laptop"
+#        price:
+#          type: number
+#          example: 49999.99
+#        quantity:
+#          type: integer
+#          example: 10
+#        status:
+#          type: integer
+#          example: 200
+#        message:
+#          type: string
+#          example: "Success"
+#        messageCode:
+#          type: string
+#          example: "PROD_UPD_001"
+#
+#    UserRequest:
+#      type: object
+#      required: [id ,name,email ,role ]
+#      properties:
+#        id:
+#          type: integer
+#        name:
+#          type: string
+#        email:
+#          type: string
+#        role:
+#          type: string
+#
+#    UserResponse:
+#      type: object
+#      properties:
+#        id:
+#          type: integer
+#          example: 1
+#        name:
+#          type: string
+#          example: "John Doe"
+#        email:
+#          type: string
+#          example: "john.doe@example.com"
+#        role:
+#          type: string
+#          example: "TeamLead"
+#        status:
+#          type: integer
+#          example: 200
+#        message:
+#          type: string
+#          example: "Success"
+#        messageCode:
+#          type: string
+#          example: "USER_CREATE_001"
+#
+#  CreateOrderRequestDTO:
+#    type: object
+#    required: [ userId, totalAmount, status ]
+#    properties:
+#      userId:
+#        type: integer
+#        example: 1
+#      totalAmount:
+#        type: number
+#        example: 89999.99
+#      status:
+#        type: string
+#        example: CREATED
+#
+#  UpdateOrderStatusDTO:
+#    type: object
+#    required: [ status ]
+#    properties:
+#      status:
+#        type: string
+#        example: PAID
+#
+#  OrderResponseDTO:
+#    type: object
+#    properties:
+#      id:
+#        type: integer
+#        example: 101
+#      orderNumber:
+#        type: string
+#        example: ORD-2025-0001
+#      userId:
+#        type: integer
+#        example: 1
+#      totalAmount:
+#        type: number
+#        example: 89999.99
+#      status:
+#        type: string
+#        example: PAID
+#      createdAt:
+#        type: string
+#        example: 2025-12-09T15:30:00
+#
+#    RegisterRequest:
+#      type: object
+#      required: [ name, email, password, roles ]
+#      properties:
+#        name:
+#          type: string
+#        email:
+#          type: string
+#        password:
+#          type: string
+#          format: password
+#        roles:
+#          type: array
+#          items:
+#            type: string
+#            enum: [ ROLE_ADMIN, ROLE_USER ]
+#      example:
+#        name: "John"
+#        email: "john@gmail.com"
+#        password: "pass123"
+#        roles: [ "ROLE_USER" ]
+#
+#    AuthRequest:
+#      type: object
+#      required: [ email, password ]
+#      properties:
+#        email:
+#          type: string
+#        password:
+#          type: string
+#          format: password
+#      example:
+#        email: "john@gmail.com"
+#        password: "pass123"
+#
+#    AuthResponse:
+#      type: object
+#      properties:
+#        token:
+#          type: string
+#          example: "eyFakeJwtToken.abc.xyz"
 
