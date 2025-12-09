@@ -50,27 +50,16 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-//    public ResponseEntity<Page<OrderResponseDTO>> getUserOrders(
-//            @PathVariable Long userId,
-//            Pageable pageable,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "5") int size,
-//            @RequestParam(defaultValue = "id,asc") String[] sort
-//    ) {
-//        Page<OrderResponseDTO> orders = orderService.getUserOrders(userId, pageable);
-//        return ResponseEntity.ok(orders);
-//    }
-
     /** UPDATE ORDER STATUS */
-    @PatchMapping("/orders/{orderId}/status")
-    public ResponseEntity<Void> updateOrderStatus(
+    @PutMapping("/orders/{orderId}/status")
+    public ResponseEntity<?> updateOrderStatus(
             @PathVariable Long orderId,
-            @RequestBody UpdateOrderStatusDTO dto
+            @RequestBody UpdateOrderStatusDTO dto) {
 
-    ) {
         orderService.updateOrderStatus(orderId, dto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Order status updated successfully");
     }
+
 
     /** SOFT DELETE ORDER */
     @DeleteMapping("/orders/delete/{orderId}")

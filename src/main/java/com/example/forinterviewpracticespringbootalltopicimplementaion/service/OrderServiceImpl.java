@@ -14,6 +14,7 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.repositor
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
@@ -94,6 +96,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Kafka event
         kafkaTemplate.send("orders-topic", "Order created: " + saved.getId());
+        log.info("Order {}  Created to {}", saved.getId());
 
         return mapper.toDTO(saved);
     }
@@ -106,11 +109,6 @@ public class OrderServiceImpl implements OrderService {
                 .map(mapper::toDTO);
     }
 
-//    @Override
-//    @Cacheable(value = "userOrders", key = "#userId")
-//    public Page<OrderResponseDTO> getUserOrders(Long userId, Pageable pageable) {
-//        return null;
-//    }
 
     /** GET SINGLE ORDER BY ID */
     @Override
@@ -118,45 +116,70 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDTO getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+        log.info("Order {}  fetched to {}", orderId);
         return mapper.toDTO(order);
+
     }
 
     /** UPDATE ORDER STATUS AND SYNC PAYMENT */
+
     @Override
-    @CacheEvict(value = "userOrders", key = "#orderId")
+    @CacheEvict(value = {"order", "userOrders"}, allEntries = true)
+    @Transactional
     public void updateOrderStatus(Long orderId, UpdateOrderStatusDTO dto) {
+
         meterRegistry.counter("orders.updated").increment();
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with id: " + orderId));
 
-        order.setStatus(dto.getStatus());
+        String newStatus = dto.getStatus().toUpperCase();
 
-        // Sync payment status automatically
+        // ✅ Validate allowed statuses
+        List<String> allowedStatuses = List.of(
+                "CREATED", "PAID", "SHIPPED", "DELIVERED",
+                "CANCELLED", "FAILED", "PENDING"
+        );
+
+        if (!allowedStatuses.contains(newStatus)) {
+            throw new IllegalArgumentException("Invalid order status: " + newStatus);
+        }
+
+        // ✅ Update Order Status
+        order.setStatus(newStatus);
+
+        // ✅ Auto-sync Payment Status
         if (order.getPayment() != null) {
-            switch (dto.getStatus()) {
+            switch (newStatus) {
                 case "PAID":
+                case "DELIVERED":
                     order.getPayment().setStatus("PAID");
                     break;
+
                 case "CANCELLED":
                 case "FAILED":
                     order.getPayment().setStatus("FAILED");
                     break;
+
                 case "PENDING":
                     order.getPayment().setStatus("PENDING");
                     break;
+
                 default:
                     break;
             }
         }
 
-        Order saved = orderRepository.save(order);
+        // ✅ Persist changes
+        orderRepository.save(order);
 
-        auditLogService.log(currentUsername(), "Order", "UPDATED", false,
-                "Order status updated, payment synced", saved.getId());
+        // ✅ Send Kafka event
+        kafkaTemplate.send("orders-topic",
+                "Order Status Updated | OrderId: " + orderId + " | Status: " + newStatus);
 
-        kafkaTemplate.send("orders-topic", "Order updated: " + saved.getId());
+        log.info("Order {} status updated to {}", orderId, newStatus);
     }
+
 
     /** SOFT DELETE ORDER */
     @Override
@@ -172,6 +195,8 @@ public class OrderServiceImpl implements OrderService {
 
         auditLogService.log(currentUsername(), "Order", "DELETED", true, "Order soft-deleted", saved.getId());
         kafkaTemplate.send("orders-topic", "Order deleted: " + saved.getId());
+        log.info("Order {}  Deleted to {}", orderId);
+
     }
 
     /** MOCK CURRENT USERNAME (replace with actual auth logic) */
