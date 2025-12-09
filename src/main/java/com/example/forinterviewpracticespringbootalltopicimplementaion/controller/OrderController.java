@@ -4,26 +4,30 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.Creat
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.OrderResponseDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.UpdateOrderStatusDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.service.OrderService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import static com.example.forinterviewpracticespringbootalltopicimplementaion.constants.ApiPathConstants.BASE_PATH;
+
 @RestController
-@RequestMapping("/api/orders")
 @RequiredArgsConstructor
+@RequestMapping(BASE_PATH)
+@SecurityRequirement(name = "bearerAuth")
 public class OrderController {
 
     private final OrderService service;
 
-    @PostMapping
+    @PostMapping("orders/addOrder")
     public ResponseEntity<OrderResponseDTO> createOrder(
             @RequestBody @Valid CreateOrderRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createOrder(dto));
     }
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("orders/user/{userId}")
     public ResponseEntity<Page<OrderResponseDTO>> getUserOrders(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
@@ -33,7 +37,7 @@ public class OrderController {
         return ResponseEntity.ok(service.getUserOrders(userId, pageable));
     }
 
-    @PutMapping("/{orderId}/status")
+    @PutMapping("orders/{orderId}/status")
     public ResponseEntity<Void> updateStatus(
             @PathVariable Long orderId,
             @RequestBody @Valid UpdateOrderStatusDTO dto) {
@@ -42,7 +46,7 @@ public class OrderController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{orderId}")
+    @DeleteMapping("orders/{orderId}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long orderId) {
         service.softDeleteOrder(orderId);
         return ResponseEntity.noContent().build();

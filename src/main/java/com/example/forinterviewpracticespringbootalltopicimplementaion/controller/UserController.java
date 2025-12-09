@@ -73,10 +73,6 @@ public class UserController {
         PageResponse<ModifyUserDTO> users =
                 service.getAllUsers(page, size, sortBy, direction);
 
-
-//        PageResponse<ModifyUserDTO> result =
-//                service.getAllUsers(page, size, sortBy, direction);
-
         ApiResponse<PageResponse<ModifyUserDTO>> response = new ApiResponse<>();
         String messageCode = users.isEmpty() ? AppErrorCodesI.NO_RECORDS_FOUND : AppErrorCodesI.USER_LIST_FETCH_SUCCESS;
         String message = restAPIStringParser.getMessage(messageCode);
@@ -87,17 +83,6 @@ public class UserController {
 
         return ResponseEntity.ok(response);
 
-//        Pageable pageable = PageRequest.of(page, size, Sort.by(sort[0]).ascending());
-//        PageResponse<ModifyUserDTO> users = service.getAllUsers(pageable);
-//        String messageCode = users.isEmpty() ? AppErrorCodesI.NO_RECORDS_FOUND : AppErrorCodesI.USER_LIST_FETCH_SUCCESS;
-//        String message = restAPIStringParser.getMessage(messageCode);
-//
-//        ApiResponse<Page<ModifyUserDTO>> response = new ApiResponse<>();
-//        response.setStatus(HttpStatus.OK.value());
-//        response.setMessageCode(messageCode);
-//        response.setMessage(message);
-//        response.setData(users);
-//        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize(HAS_ANY_ROLE_USER_ADMIN)
