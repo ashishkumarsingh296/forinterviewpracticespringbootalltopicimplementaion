@@ -1,11 +1,23 @@
 openapi: 3.0.1
+
 info:
   title: Interview Practice API Docs
   version: "1.0.0"
   description: Custom API documentation using swagger.yml file
 
+servers:
+  - url: http://localhost:8080
+    description: Local Server
+
+security:
+  - bearerAuth: []
+
 paths:
-  # Product Controller
+
+  # ============================
+  # PRODUCT CONTROLLER
+  # ============================
+
   /api/allProducts:
     get:
       tags: [ product-controller ]
@@ -74,7 +86,6 @@ paths:
     get:
       tags: [ product-controller ]
       summary: Get Product Details
-      description: Fetch product by ID
       parameters:
         - in: path
           name: id
@@ -93,7 +104,6 @@ paths:
     delete:
       tags: [ product-controller ]
       summary: Delete Product
-      description: Delete product by ID
       parameters:
         - in: path
           name: id
@@ -104,110 +114,18 @@ paths:
         "204":
           description: Product deleted successfully
 
-  # Order Controller
-  /api/orders/addOrder:
-    post:
-      tags: [ order-controller ]
-      summary: Create Order
-      description: Create new order for a user after product selection
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateOrderRequestDTO"
-            example:
-              userId: 1
-              totalAmount: 89999.99
-              status: CREATED
-      responses:
-        "201":
-          description: Order created successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OrderResponseDTO"
 
-  /api/orders/user/{userId}:
-    get:
-      tags: [ order-controller ]
-      summary: Get User Orders
-      description: Fetch all orders of a user with pagination
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: integer
-        - in: query
-          name: page
-          required: false
-          schema:
-            type: integer
-            example: 0
-        - in: query
-          name: size
-          required: false
-          schema:
-            type: integer
-            example: 10
-      responses:
-        "200":
-          description: Orders fetched successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/OrderResponseDTO"
+  # ============================
+  # USER CONTROLLER
+  # ============================
 
-  /api/orders/{orderId}/status:
-    put:
-      tags: [ order-controller ]
-      summary: Update Order Status
-      description: Update order status after payment
-      parameters:
-        - in: path
-          name: orderId
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateOrderStatusDTO"
-            example:
-              status: PAID
-      responses:
-        "200":
-          description: Order status updated successfully
-
-  /api/orders/{orderId}:
-    delete:
-      tags: [ order-controller ]
-      summary: Delete Order
-      description: Soft delete order
-      parameters:
-        - in: path
-          name: orderId
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: Order deleted successfully
-
-  # User Controller
   /api/allUsers:
     get:
       tags: [ user-controller ]
       summary: Get All Users
-      description: Fetch all users
       responses:
         "200":
-          description: List fetched successfully
+          description: Users fetched
           content:
             application/json:
               schema:
@@ -219,7 +137,6 @@ paths:
     post:
       tags: [ user-controller ]
       summary: Create User
-      description: Create new user
       requestBody:
         required: true
         content:
@@ -228,9 +145,8 @@ paths:
               $ref: "#/components/schemas/UserRequest"
             example:
               name: "John Doe"
-              email: "john.doe@example.com"
-              password: "password@123"
-              role:   "ROLE_USER"
+              email: "john@gmail.com"
+              role: "ROLE_USER"
       responses:
         "201":
           description: User created successfully
@@ -243,7 +159,6 @@ paths:
     get:
       tags: [ user-controller ]
       summary: Get User by ID
-      description: Fetch a specific user by ID
       parameters:
         - in: path
           name: id
@@ -252,7 +167,25 @@ paths:
             type: integer
       responses:
         "200":
-          description: User fetched successfully
+          description: User fetched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+
+  /api/updateUser:
+    post:
+      tags: [ user-controller ]
+      summary: Update User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+      responses:
+        "200":
+          description: User updated successfully
           content:
             application/json:
               schema:
@@ -262,7 +195,6 @@ paths:
     delete:
       tags: [ user-controller ]
       summary: Delete User
-      description: Delete a specific user by ID
       parameters:
         - in: path
           name: id
@@ -271,38 +203,17 @@ paths:
             type: integer
       responses:
         "204":
-          description: User deleted successfully
+          description: User deleted
 
-  /api/updateUser:
-    post:
-      tags: [ user-controller ]
-      summary: Update User
-      description: Update a specific user by ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserRequest"
-            example:
-              id: 1
-              name: "John Doe"
-              email: "john.doe@example.com"
-              role: "TeamLead"
-      responses:
-        "200":
-          description: User updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserResponse"
 
-  # Auth Controller
+  # ============================
+  # AUTH CONTROLLER
+  # ============================
+
   /auth/login:
     post:
       tags: [ auth-controller ]
       summary: User Login
-      description: Authenticate user & return JWT token
       requestBody:
         required: true
         content:
@@ -320,336 +231,217 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthResponse"
 
-  components:
-    schemas:
 
-      ProductRequest:
-        type: object
-        required: [ name, price, description, quantity ]
-        properties:
-          id:
+  # ============================
+  # ORDER CONTROLLER ✅✅✅
+  # ============================
+
+  /api/orders/addOrder:
+    post:
+      tags: [ order-controller ]
+      summary: Create Order
+      description: Create new order after payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+            example:
+              userId: 1
+              productId: 5
+              quantity: 2
+              amount: 99999.98
+              paymentId: "PAY123456"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+
+  /api/orders/user/{userId}:
+    get:
+      tags: [ order-controller ]
+      summary: Get Orders By User
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
             type: integer
-          name:
-            type: string
-          description:
-            type: string
-          price:
-            type: number
-          quantity:
+      responses:
+        "200":
+          description: Orders fetched
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrderResponse"
+
+  /api/orders/{orderId}/status:
+    put:
+      tags: [ order-controller ]
+      summary: Update Order Status
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
             type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderStatus"
+            example:
+              status: "DELIVERED"
+      responses:
+        "200":
+          description: Order status updated
 
-      ProductResponse:
-        type: object
-        properties:
-          id:
+  /api/orders/{orderId}:
+    delete:
+      tags: [ order-controller ]
+      summary: Delete Order (Soft Delete)
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
             type: integer
-            example: 1
-          name:
-            type: string
-            example: "Laptop"
-          description:
-            type: string
-            example: "High performance laptop"
-          price:
-            type: number
-            example: 49999.99
-          quantity:
-            type: integer
-            example: 10
-          status:
-            type: integer
-            example: 200
-          message:
-            type: string
-            example: "Success"
-          messageCode:
-            type: string
-            example: "PROD_UPD_001"
-
-      UserRequest:
-        type: object
-        required: [ id, name, email, role ]
-        properties:
-          id:
-            type: integer
-          name:
-            type: string
-          email:
-            type: string
-          role:
-            type: string
-
-      UserResponse:
-        type: object
-        properties:
-          id:
-            type: integer
-            example: 1
-          name:
-            type: string
-            example: "John Doe"
-          email:
-            type: string
-            example: "john.doe@example.com"
-          role:
-            type: string
-            example: "TeamLead"
-          status:
-            type: integer
-            example: 200
-          message:
-            type: string
-            example: "Success"
-          messageCode:
-            type: string
-            example: "USER_CREATE_001"
-
-      ✅ CreateOrderRequestDTO:
-        type: object
-        required: [ userId, totalAmount, status ]
-        properties:
-          userId:
-            type: integer
-            example: 1
-          totalAmount:
-            type: number
-            example: 89999.99
-          status:
-            type: string
-            example: CREATED
-
-      ✅ UpdateOrderStatusDTO:
-        type: object
-        required: [ status ]
-        properties:
-          status:
-            type: string
-            example: PAID
-
-      ✅ OrderResponseDTO:
-        type: object
-        properties:
-          id:
-            type: integer
-            example: 101
-          orderNumber:
-            type: string
-            example: ORD-2025-0001
-          userId:
-            type: integer
-            example: 1
-          totalAmount:
-            type: number
-            example: 89999.99
-          status:
-            type: string
-            example: PAID
-          createdAt:
-            type: string
-            example: 2025-12-09T15:30:00
-
-      ✅ RegisterRequest:
-        type: object
-        required: [ name, email, password, roles ]
-        properties:
-          name:
-            type: string
-          email:
-            type: string
-          password:
-            type: string
-            format: password
-          roles:
-            type: array
-            items:
-              type: string
-              enum: [ ROLE_ADMIN, ROLE_USER ]
-
-      ✅ AuthRequest:
-        type: object
-        required: [ email, password ]
-        properties:
-          email:
-            type: string
-          password:
-            type: string
-            format: password
-
-      ✅ AuthResponse:
-        type: object
-        properties:
-          token:
-            type: string
-            example: "eyFakeJwtToken.abc.xyz"
+      responses:
+        "204":
+          description: Order deleted
 
 
+# ============================
+# COMPONENTS
+# ============================
 
-#components:
-#  schemas:
-#    ProductRequest:
-#      type: object
-#      required: [ name, price, description, quantity ]
-#      properties:
-#        id:
-#          type: integer
-#        name:
-#          type: string
-#        description:
-#          type: string
-#        price:
-#          type: number
-#        quantity:
-#          type: integer
-#
-#    ProductResponse:
-#      type: object
-#      properties:
-#        id:
-#          type: integer
-#          example: 1
-#        name:
-#          type: string
-#          example: "Laptop"
-#        description:
-#          type: string
-#          example: "High performance laptop"
-#        price:
-#          type: number
-#          example: 49999.99
-#        quantity:
-#          type: integer
-#          example: 10
-#        status:
-#          type: integer
-#          example: 200
-#        message:
-#          type: string
-#          example: "Success"
-#        messageCode:
-#          type: string
-#          example: "PROD_UPD_001"
-#
-#    UserRequest:
-#      type: object
-#      required: [id ,name,email ,role ]
-#      properties:
-#        id:
-#          type: integer
-#        name:
-#          type: string
-#        email:
-#          type: string
-#        role:
-#          type: string
-#
-#    UserResponse:
-#      type: object
-#      properties:
-#        id:
-#          type: integer
-#          example: 1
-#        name:
-#          type: string
-#          example: "John Doe"
-#        email:
-#          type: string
-#          example: "john.doe@example.com"
-#        role:
-#          type: string
-#          example: "TeamLead"
-#        status:
-#          type: integer
-#          example: 200
-#        message:
-#          type: string
-#          example: "Success"
-#        messageCode:
-#          type: string
-#          example: "USER_CREATE_001"
-#
-#  CreateOrderRequestDTO:
-#    type: object
-#    required: [ userId, totalAmount, status ]
-#    properties:
-#      userId:
-#        type: integer
-#        example: 1
-#      totalAmount:
-#        type: number
-#        example: 89999.99
-#      status:
-#        type: string
-#        example: CREATED
-#
-#  UpdateOrderStatusDTO:
-#    type: object
-#    required: [ status ]
-#    properties:
-#      status:
-#        type: string
-#        example: PAID
-#
-#  OrderResponseDTO:
-#    type: object
-#    properties:
-#      id:
-#        type: integer
-#        example: 101
-#      orderNumber:
-#        type: string
-#        example: ORD-2025-0001
-#      userId:
-#        type: integer
-#        example: 1
-#      totalAmount:
-#        type: number
-#        example: 89999.99
-#      status:
-#        type: string
-#        example: PAID
-#      createdAt:
-#        type: string
-#        example: 2025-12-09T15:30:00
-#
-#    RegisterRequest:
-#      type: object
-#      required: [ name, email, password, roles ]
-#      properties:
-#        name:
-#          type: string
-#        email:
-#          type: string
-#        password:
-#          type: string
-#          format: password
-#        roles:
-#          type: array
-#          items:
-#            type: string
-#            enum: [ ROLE_ADMIN, ROLE_USER ]
-#      example:
-#        name: "John"
-#        email: "john@gmail.com"
-#        password: "pass123"
-#        roles: [ "ROLE_USER" ]
-#
-#    AuthRequest:
-#      type: object
-#      required: [ email, password ]
-#      properties:
-#        email:
-#          type: string
-#        password:
-#          type: string
-#          format: password
-#      example:
-#        email: "john@gmail.com"
-#        password: "pass123"
-#
-#    AuthResponse:
-#      type: object
-#      properties:
-#        token:
-#          type: string
-#          example: "eyFakeJwtToken.abc.xyz"
+components:
 
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    ProductRequest:
+      type: object
+      required: [ name, price, description, quantity ]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: integer
+
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: integer
+
+    UserRequest:
+      type: object
+      required: [ name, email, role ]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    AuthRequest:
+      type: object
+      required: [ email, password ]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          format: password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+
+    CreateOrderRequest:
+      type: object
+      required: [ userId, productId, quantity, amount, paymentId ]
+      properties:
+        userId:
+          type: integer
+        productId:
+          type: integer
+        quantity:
+          type: integer
+        amount:
+          type: number
+        paymentId:
+          type: string
+
+    UpdateOrderStatus:
+      type: object
+      required: [ status ]
+      properties:
+        status:
+          type: string
+          enum: [ CREATED, PAID, SHIPPED, DELIVERED, CANCELLED ]
+
+    OrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: integer
+        userId:
+          type: integer
+        productId:
+          type: integer
+        quantity:
+          type: integer
+        amount:
+          type: number
+        paymentId:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
