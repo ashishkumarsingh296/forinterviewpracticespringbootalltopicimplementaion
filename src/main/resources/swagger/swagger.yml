@@ -206,25 +206,25 @@ paths:
   # Order Controller (SAME STYLE)
   # =======================
 
-  /api/orders/allOrders:
-    get:
-      tags: [ order-controller ]
-      summary: Get All Orders
-      description: Fetch all orders
-      responses:
-        "200":
-          description: Orders fetched successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/OrderResponse"
+#  /api/orders/allOrders:
+#    get:
+#      tags: [ order-controller ]
+#      summary: Get All Orders
+#      description: Fetch all orders
+#      responses:
+#        "200":
+#          description: Orders fetched successfully
+#          content:
+#            application/json:
+#              schema:
+#                type: array
+#                items:
+#                  $ref: "#/components/schemas/OrderResponse"
 
-  /api/orders/createOrder:
+  /api/orders/addOrder:
     post:
       tags: [ order-controller ]
-      summary: Create Order
+      summary: Add Order
       description: Create new order
       requestBody:
         required: true
