@@ -35,7 +35,7 @@ public class PaymentService {
         Payment payment = Payment.builder()
                 .paymentReference("DUMMY_TXN_" + UUID.randomUUID())
                 .amount(dto.getAmount())
-                .method(dto.getMethod())
+                .paymentMethod(dto.getMethod())
                 .status("PENDING")
                 .order(order)
                 .createdAt(LocalDateTime.now())
@@ -51,7 +51,7 @@ public class PaymentService {
                 .paymentReference(payment.getPaymentReference())
                 .amount(payment.getAmount())
                 .status(payment.getStatus())
-                .method(payment.getMethod())
+                .method(payment.getPaymentMethod())
                 .orderId(order.getId())
                 .build();
     }

@@ -25,7 +25,7 @@ public class PaymentHistoryService {
                 .paymentReference(p.getPaymentReference())
                 .amount(p.getAmount())
                 .status(p.getStatus())
-                .method(p.getMethod())
+                .method(p.getPaymentMethod())
                 .orderId(p.getOrder() != null ? p.getOrder().getId() : null)
                 .build();
     }

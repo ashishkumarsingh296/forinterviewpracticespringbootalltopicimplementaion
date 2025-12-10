@@ -27,7 +27,7 @@ public class Payment {
     @Column(nullable = false)
     private String status;  // PENDING, PAID, FAILED
 
-    private String method;  // UPI, CARD, CASH
+    private String paymentMethod;  // UPI, CARD, CASH
 
     @OneToOne
     @JoinColumn(name = "order_id")

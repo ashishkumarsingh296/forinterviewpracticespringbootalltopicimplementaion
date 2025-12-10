@@ -31,6 +31,8 @@ public class OrderMapper {
             paymentDTO.setAmount(order.getPayment().getAmount());
             paymentDTO.setStatus(order.getPayment().getStatus());
             paymentDTO.setPaymentMethod(order.getPayment().getPaymentMethod());
+            paymentDTO.setPaymentMethod(order.getPayment().getPaymentReference());
+
             dto.setPayment(paymentDTO);
         }
 
