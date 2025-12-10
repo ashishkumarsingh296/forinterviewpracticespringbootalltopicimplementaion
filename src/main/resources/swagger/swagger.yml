@@ -350,6 +350,158 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthResponse"
 
+  # =======================
+  # Payment Controller
+  # =======================
+
+  /api/payments:
+    post:
+      tags: [ payment-controller ]
+      summary: Create Dummy Payment for Order
+      description: Create a dummy payment for a given order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+            example:
+              orderId: 1
+              amount: 1500
+              method: "CARD"
+      responses:
+        "201":
+          description: Payment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+
+  /api/payments/user/{userId}:
+    get:
+      tags: [ payment-controller ]
+      summary: Get Payment History By User
+      description: Fetch payment history for a specific user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payment history fetched
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentResponse"
+
+
+  # =======================
+  # Refund Controller
+  # =======================
+
+  /api/refunds:
+    post:
+      tags: [ refund-controller ]
+      summary: Create Refund
+      description: Create refund using paymentId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              paymentId: 10
+              reason: "Order Cancelled"
+      responses:
+        "200":
+          description: Refund processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefundResponse"
+
+
+  # =======================
+  # Invoice Controller
+  # =======================
+
+  /api/invoices/{orderId}:
+    get:
+      tags: [ invoice-controller ]
+      summary: Download Invoice PDF
+      description: Generate and download invoice PDF
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice downloaded
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+
+  # =======================
+  # Wallet Controller
+  # =======================
+
+  /api/wallet/{userId}/credit:
+    post:
+      tags: [ wallet-controller ]
+      summary: Credit Wallet
+      description: Add amount to wallet
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Wallet credited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletResponse"
+
+  /api/wallet/{userId}/debit:
+    post:
+      tags: [ wallet-controller ]
+      summary: Debit Wallet
+      description: Debit amount from wallet
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: amount
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Wallet debited or failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletResponse"
+
+
 
 components:
   schemas:
@@ -470,3 +622,55 @@ components:
       properties:
         token:
           type: string
+
+  PaymentRequest:
+    type: object
+    required: [ orderId, amount, method ]
+    properties:
+      orderId:
+        type: integer
+      amount:
+        type: number
+      method:
+        type: string
+
+  PaymentResponse:
+    type: object
+    properties:
+      paymentId:
+        type: integer
+      orderId:
+        type: integer
+      amount:
+        type: number
+      status:
+        type: string
+      method:
+        type: string
+      createdAt:
+        type: string
+
+  RefundResponse:
+    type: object
+    properties:
+      refundId:
+        type: integer
+      paymentId:
+        type: integer
+      status:
+        type: string
+      refundedAt:
+        type: string
+
+  WalletResponse:
+    type: object
+    properties:
+      userId:
+        type: integer
+      balance:
+        type: number
+      status:
+        type: string
+      message:
+        type: string
+
