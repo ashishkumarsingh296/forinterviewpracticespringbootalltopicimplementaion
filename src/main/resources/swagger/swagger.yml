@@ -501,8 +501,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/WalletResponse"
 
-
-
 components:
   schemas:
 
@@ -623,54 +621,53 @@ components:
         token:
           type: string
 
-  PaymentRequest:
-    type: object
-    required: [ orderId, amount, method ]
-    properties:
-      orderId:
-        type: integer
-      amount:
-        type: number
-      method:
-        type: string
+    PaymentRequest:
+      type: object
+      required: [ orderId, amount, method ]
+      properties:
+        orderId:
+          type: integer
+        amount:
+          type: number
+        method:
+          type: string
 
-  PaymentResponse:
-    type: object
-    properties:
-      paymentId:
-        type: integer
-      orderId:
-        type: integer
-      amount:
-        type: number
-      status:
-        type: string
-      method:
-        type: string
-      createdAt:
-        type: string
+    PaymentResponse:
+      type: object
+      properties:
+        paymentId:
+          type: integer
+        orderId:
+          type: integer
+        amount:
+          type: number
+        status:
+          type: string
+        method:
+          type: string
+        createdAt:
+          type: string
 
-  RefundResponse:
-    type: object
-    properties:
-      refundId:
-        type: integer
-      paymentId:
-        type: integer
-      status:
-        type: string
-      refundedAt:
-        type: string
+    RefundResponse:
+      type: object
+      properties:
+        refundId:
+          type: integer
+        paymentId:
+          type: integer
+        status:
+          type: string
+        refundedAt:
+          type: string
 
-  WalletResponse:
-    type: object
-    properties:
-      userId:
-        type: integer
-      balance:
-        type: number
-      status:
-        type: string
-      message:
-        type: string
-
+    WalletResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        balance:
+          type: number
+        status:
+          type: string
+        message:
+          type: string
