@@ -20,7 +20,7 @@ public class PaymentController {
         return paymentService.createDummyPayment(dto);
     }
 
-    @PostMapping("/payments/{paymentId}/complete")
+    @PostMapping("/payments/complete/{paymentId}")
     public void completePayment(@PathVariable Long paymentId, @RequestParam String status) {
         paymentService.completeDummyPayment(paymentId, status);
     }

@@ -135,7 +135,7 @@ paths:
   /api/updateProduct:
     post:
       tags: [ product-controller ]
-      summary: Update Order Status
+      summary: Update Product Details
       parameters:
         - in: path
           name: orderId
@@ -331,10 +331,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/PaymentResponse"
 
+  /api/payments/complete/{paymentId}:
+    post:
+      tags: [ payment-controller ]
+      summary: Complete Dummy Payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+            example:
+              paymentId: 1
+              STATUS: "PENDING"
+      responses:
+        "201":
+          description: Payment completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+
   # =======================
   # REFUND CONTROLLER
   # =======================
-  /api/requestRefund:
+  /api/refunds/requestRefund:
     post:
       tags: [refund-controller]
       summary: Create Refund
@@ -358,6 +379,24 @@ paths:
   # =======================
   # WALLET CONTROLLER
   # =======================
+  /api/wallet/{userId}:
+    post:
+      tags: [ wallet-controller ]
+      summary: Get Wallet By UserId
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Wallet credited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletResponse"
+
   /api/wallet/{userId}/credit:
     post:
       tags: [wallet-controller]
@@ -403,6 +442,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WalletResponse"
+
+  /api/wallet/{userId}/transactions:
+    post:
+      tags: [ wallet-transactions-controller ]
+      summary: Wallet Transactions
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Wallet transactions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletTransactionsResponse"
 
   # =======================
   # INVOICE CONTROLLER
