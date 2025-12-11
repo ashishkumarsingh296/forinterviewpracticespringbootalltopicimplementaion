@@ -228,19 +228,16 @@ pipeline {
   agent any
 
   options {
-    // Prevent concurrent builds of the same job (avoid race on same tomcat dirs)
     disableConcurrentBuilds()
-    // Timeout as a safety (optional)
     timeout(time: 30, unit: 'MINUTES')
   }
 
   parameters {
     choice(name: 'BUILD', choices: ['dev','qa','prod'], description: 'Deploy target environment')
-    booleanParam(name: 'SHRINK_WSL', defaultValue: false, description: 'Run WSL ext4.vhdx compact (requires admin & diskpart script)')
+    booleanParam(name: 'SHRINK_WSL', defaultValue: false, description: 'Run WSL ext4.vhdx compact')
   }
 
   environment {
-    // WSL tomcat base paths (adjust if needed)
     WSL_BASE = "/home/aashudev/tomcat/multiple-server-config/bin"
     TOMCAT_DEV = "/home/aashudev/tomcat/multiple-server-config/dev-server/apache-tomcat-10.1.49-dev"
     TOMCAT_QA  = "/home/aashudev/tomcat/multiple-server-config/qa-server/apache-tomcat-10.1.49-qa"
@@ -248,15 +245,11 @@ pipeline {
     TOMCAT_PROD_2 = "/home/aashudev/tomcat/multiple-server-config/prod2-server/apache-tomcat-10.1.49-prod-2"
     TOMCAT_PROD_3 = "/home/aashudev/tomcat/multiple-server-config/prod3-server/apache-tomcat-10.1.49-prod-3"
 
-    // artifact
-    ARTIFACT_NAME = "my-new-app"         // final WAR name (without .war)
+    ARTIFACT_NAME = "my-new-app"
     START_SCRIPT = "${WSL_BASE}/myappstartup.sh"
     STOP_SCRIPT  = "${WSL_BASE}/myappstop.sh"
 
-    // Controlled maven local on Windows so WSL's ext4 isn't flooded by downloads
-    // NOTE: Use double backslashes in Windows path for bat commands below.
     MAVEN_LOCAL = "C:\\\\.m2-jenkins-cache"
-
     BACKUP_DIR = "/home/aashudev/deploy/war_backups"
     LOGS_DIR   = "/home/aashudev/deploy/jenkins_logs"
   }
@@ -265,13 +258,9 @@ pipeline {
 
     stage('Prepare') {
       steps {
-        script {
-          echo "Preparing environment and ensuring directories"
-          // Create backup/log dirs inside WSL
-          bat """
-            wsl -- bash -c "mkdir -p ${BACKUP_DIR} ${LOGS_DIR}"
-          """
-        }
+        bat """
+          wsl -- bash -c "mkdir -p ${BACKUP_DIR} ${LOGS_DIR}"
+        """
       }
     }
 
@@ -280,9 +269,7 @@ pipeline {
         script {
           def profile = (params.BUILD == 'prod') ? 'wsl-prod' :
                         (params.BUILD == 'qa')   ? 'wsl-qa'  : 'wsl-dev'
-          echo "Building with Maven profile: ${profile} using local repo at ${env.MAVEN_LOCAL}"
 
-          // Use mvnw if available. On Windows, prefer running native mvnw which will call WSL java if required; using -Dmaven.repo.local to store cache on C:\
           bat """
             if exist mvnw (
               mvnw clean package -P${profile} -DskipTests -Dmaven.repo.local=${MAVEN_LOCAL}
@@ -294,60 +281,52 @@ pipeline {
       }
     }
 
-    stage('Stop Tomcat (target)') {
+    stage('Stop Tomcat') {
       steps {
         script {
-          if (params.BUILD == 'dev' || params.BUILD == 'qa') {
-            bat "wsl -- bash -c \"${STOP_SCRIPT} ${params.BUILD} || true\""
-          } else {
-            // Only stop prod1 for zero-downtime on other prod nodes
-            bat "wsl -- bash -c \"${STOP_SCRIPT} prod1 || true\""
-          }
+          def envName = (params.BUILD == 'prod') ? "prod1" : params.BUILD
+          bat "wsl -- bash -c \"${STOP_SCRIPT} ${envName} || true\""
         }
       }
     }
 
-    stage('Clean Tomcat caches & backup previous WAR') {
+    stage('Clean & Backup WAR') {
       steps {
         script {
-          // choose what tomcatHome to target for logs/backup
-          def tomcatTarget = (params.BUILD == 'dev') ? TOMCAT_DEV : (params.BUILD == 'qa') ? TOMCAT_QA : TOMCAT_PROD_1
+          def tomcatTarget =
+            (params.BUILD == 'dev') ? TOMCAT_DEV :
+            (params.BUILD == 'qa')  ? TOMCAT_QA  : TOMCAT_PROD_1
 
-          // Clean work/temp, move existing WAR to backup (if exists)
-          bat """
+          bat '''
             wsl -- bash -lc '
               set -e
-              # backup if war exists
-              if [ -f "${tomcatTarget}/webapps/${ARTIFACT_NAME}.war" ]; then
-                mkdir -p ${BACKUP_DIR}
-                cp -v "${tomcatTarget}/webapps/${ARTIFACT_NAME}.war" "${BACKUP_DIR}/${ARTIFACT_NAME}.war.$(date +%Y%m%d_%H%M%S)" || true
+
+              if [ -f "%s/webapps/%s.war" ]; then
+                mkdir -p %s
+                cp -v "%s/webapps/%s.war" "%s/%s_$(date +%%Y%%m%%d_%%H%%M%%S).war"
               fi
 
-              # cleanup tomcat caches to release disk and avoid old classloader issues
-              rm -rf "${tomcatTarget}/work/*"  || true
-              rm -rf "${tomcatTarget}/temp/*"  || true
-
-              # remove exploded webapp folder if exists (safe because we backup war)
-              rm -rf "${tomcatTarget}/webapps/${ARTIFACT_NAME}" || true
+              rm -rf "%s/work/"* || true
+              rm -rf "%s/temp/"* || true
+              rm -rf "%s/webapps/%s" || true
             '
-          """
+          '''.sprintf(tomcatTarget, ARTIFACT_NAME, BACKUP_DIR,
+                      tomcatTarget, ARTIFACT_NAME, BACKUP_DIR, ARTIFACT_NAME,
+                      tomcatTarget, tomcatTarget, tomcatTarget, ARTIFACT_NAME)
         }
       }
     }
 
-    stage('Copy WAR to target(s)') {
+    stage('Copy WAR') {
       steps {
         script {
-          // Copy WAR from Jenkins workspace into WSL tomcat webapps
-          // Source path from Windows-mounted workspace; adjust JOB_NAME if folder differs
-          def src = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war"
+          def src = "/mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/${ARTIFACT_NAME}.war"
 
           if (params.BUILD == 'dev') {
             bat "wsl -- bash -c 'cp -v ${src} ${TOMCAT_DEV}/webapps/${ARTIFACT_NAME}.war'"
           } else if (params.BUILD == 'qa') {
             bat "wsl -- bash -c 'cp -v ${src} ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}.war'"
           } else {
-            // Copy to all prod nodes, but start only prod1 to minimize downtime
             bat """
               wsl -- bash -c 'cp -v ${src} ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME}.war'
               wsl -- bash -c 'cp -v ${src} ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME}.war'
@@ -358,103 +337,51 @@ pipeline {
       }
     }
 
-    stage('Start Tomcat (target)') {
+    stage('Start Tomcat') {
       steps {
         script {
-          if (params.BUILD == 'dev' || params.BUILD == 'qa') {
-            bat "wsl -- bash -c '${START_SCRIPT} ${params.BUILD}'"
-          } else {
-            bat "wsl -- bash -c '${START_SCRIPT} prod1'"
-          }
+          def envName = (params.BUILD == 'prod') ? "prod1" : params.BUILD
+          bat "wsl -- bash -c '${START_SCRIPT} ${envName}'"
         }
       }
     }
-
-    stage('Health Check') {
-      steps {
-        script {
-          echo "Waiting for service to come up and running..."
-          // adjustable retries and sleep
-          def url = "http://localhost:8080/actuator/health"
-          retry(6) {
-            bat """
-              powershell -Command "
-                try {
-                  \$resp = Invoke-WebRequest -Uri '${url}' -UseBasicParsing -TimeoutSec 5
-                  if (\$resp.StatusCode -ne 200) { throw 'not 200' }
-                } catch {
-                  exit 1
-                }
-              "
-            """
-            sleep 5
-          }
-          echo "Healthcheck OK"
-        }
-      }
-    }
-
-    stage('Tail Logs (short)') {
-      steps {
-        script {
-          def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV : (params.BUILD == 'qa') ? TOMCAT_QA : TOMCAT_PROD_1
-          // show last 200 lines to console for quick troubleshooting
-          bat "wsl -- bash -c \"tail -n 200 ${tomcatHome}/logs/myapplog.out || echo 'No log found'\""
-        }
-      }
-    }
-  } // stages
+  }
 
   post {
+
     success {
       script {
-        echo "✅ Deployment successful for ${params.BUILD}"
+        echo "✅ Deployment Successful for ${params.BUILD}"
+
+        // Copy logs for record
+        bat """
+          wsl -- bash -c 'cp -v ${TOMCAT_PROD_1}/logs/myapplog.out ${LOGS_DIR}/success_log_$(date +%Y%m%d_%H%M%S).log || true'
+        """
       }
     }
 
     failure {
       script {
-        echo "❌ Deployment failed — collecting logs and archiving"
+        echo "❌ Deployment FAILED for ${params.BUILD}"
 
-        def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV : (params.BUILD == 'qa') ? TOMCAT_QA : TOMCAT_PROD_1
+        def tomcatHome =
+          (params.BUILD == 'dev') ? TOMCAT_DEV :
+          (params.BUILD == 'qa')  ? TOMCAT_QA  : TOMCAT_PROD_1
 
-        // Copy log out and list backup dir
         bat """
-          wsl -- bash -lc '
+          wsl -- bash -c '
             mkdir -p ${LOGS_DIR}
-            cp -v ${tomcatHome}/logs/myapplog.out ${LOGS_DIR}/myapplog.out_$(date +%Y%m%d_%H%M%S) || true
-            ls -l ${LOGS_DIR} || true
+            cp -v ${tomcatHome}/logs/myapplog.out ${LOGS_DIR}/failed_log_$(date +%Y%m%d_%H%M%S).log || true
           '
         """
 
-        // copy to workspace and archive
-        bat "wsl -- bash -c 'cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true'"
-
-        // make sure the artifacts are available to Jenkins (pattern)
-        archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
+        archiveArtifacts artifacts: '**/*failed_log*.log', allowEmptyArchive: true
       }
     }
 
     always {
       script {
-        // Clean workspace to prevent disk bloat on C: (and remove old target files)
-        echo "Cleaning workspace"
         cleanWs()
-
-        // Optional: compact WSL ext4 (admin required). This uses diskpart with shrink script on Windows.
-        if (params.SHRINK_WSL.toBoolean()) {
-          echo "Attempting WSL ext4.vhdx compact (requires diskpart script at C:\\shrink-wsl.txt and admin permissions)."
-          // run diskpart script if present
-          bat """
-            if exist C:\\shrink-wsl.txt (
-              powershell -Command "Start-Process -FilePath diskpart -ArgumentList '/s C:\\shrink-wsl.txt' -Verb runAs -Wait"
-            ) else (
-              echo 'C:\\shrink-wsl.txt not found. Skipping.'
-            )
-          """
-        } else {
-          echo "WSL shrink disabled for this run (SHRINK_WSL=false)."
-        }
       }
     }
   }
