@@ -313,10 +313,12 @@ pipeline {
         stage('Tail Logs') {
             steps {
                 script {
-                    def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV :
-                                     (params.BUILD == 'qa')  ? TOMCAT_QA :
-                                                               TOMCAT_PROD_1
-                    bat """wsl bash -c "tail -n 200 ${tomcatHome}/logs/myapplog.out || echo NoLogs" """
+                  if (params.BUILD == 'prod') {
+                   echo "=== Tail Tomcat Logs Productions==="
+                   bat """
+                   wsl bash -c "tail -n 200 /home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1/logs/myapplog.out || echo No catalina.out"
+                   """
+                  }   
                 }
             }
         }
