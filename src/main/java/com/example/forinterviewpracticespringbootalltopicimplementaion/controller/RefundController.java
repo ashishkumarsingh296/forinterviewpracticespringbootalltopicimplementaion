@@ -6,14 +6,16 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.service.R
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import static com.example.forinterviewpracticespringbootalltopicimplementaion.constants.ApiPathConstants.BASE_PATH;
+
 @RestController
-@RequestMapping("/api/refunds")
+@RequestMapping(BASE_PATH)
 @RequiredArgsConstructor
 public class RefundController {
 
     private final RefundService refundService;
 
-    @PostMapping
+    @PostMapping("/refunds/requestRefund")
     public RefundResponseDTO requestRefund(@RequestBody RefundRequestDTO dto) {
         return refundService.requestRefund(dto);
     }

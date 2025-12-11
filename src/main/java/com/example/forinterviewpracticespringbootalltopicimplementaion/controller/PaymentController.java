@@ -6,19 +6,21 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.service.P
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import static com.example.forinterviewpracticespringbootalltopicimplementaion.constants.ApiPathConstants.BASE_PATH;
+
 @RestController
-@RequestMapping("/api/payments")
+@RequestMapping(BASE_PATH)
 @RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping
+    @PostMapping("/payments/createPayment")
     public PaymentResponseDTO createPayment(@RequestBody CreatePaymentRequestDTO dto) {
         return paymentService.createDummyPayment(dto);
     }
 
-    @PostMapping("/{paymentId}/complete")
+    @PostMapping("/payments/{paymentId}/complete")
     public void completePayment(@PathVariable Long paymentId, @RequestParam String status) {
         paymentService.completeDummyPayment(paymentId, status);
     }

@@ -8,29 +8,31 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
+import static com.example.forinterviewpracticespringbootalltopicimplementaion.constants.ApiPathConstants.BASE_PATH;
+
 @RestController
-@RequestMapping("/api/wallet")
+@RequestMapping(BASE_PATH)
 @RequiredArgsConstructor
 public class WalletController {
 
     private final WalletService walletService;
 
-    @GetMapping("/{userId}")
+    @GetMapping("/wallet/{userId}")
     public Wallet getWallet(@PathVariable Long userId) {
         return walletService.getOrCreateWalletForUser(userId);
     }
 
-    @PostMapping("/{userId}/credit")
+    @PostMapping("/wallet/{userId}/credit")
     public void creditWallet(@PathVariable Long userId, @RequestParam Double amount) {
         walletService.creditWallet(userId, amount, null);
     }
 
-    @PostMapping("/{userId}/debit")
+    @PostMapping("/wallet/{userId}/debit")
     public void debitWallet(@PathVariable Long userId, @RequestParam Double amount) {
         walletService.debitWallet(userId, amount, null);
     }
 
-    @GetMapping("/{userId}/transactions")
+    @GetMapping("/wallet/{userId}/transactions")
     public Page<WalletTransaction> getTransactions(@PathVariable Long userId,
                                                    @RequestParam(defaultValue = "0") int page,
                                                    @RequestParam(defaultValue = "10") int size) {
