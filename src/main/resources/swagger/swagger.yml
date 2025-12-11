@@ -444,7 +444,7 @@ paths:
                 $ref: "#/components/schemas/WalletResponse"
 
   /api/wallet/{userId}/transactions:
-    post:
+    get:
       tags: [ wallet-transactions-controller ]
       summary: Wallet Transactions
       parameters:
