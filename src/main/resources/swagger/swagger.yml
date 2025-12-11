@@ -1,20 +1,18 @@
 openapi: 3.0.1
 info:
   title: Interview Practice API Docs
-  version: "1.0.0"
-  description: Custom API documentation using swagger.yml file
+  version: "1.0.1"
+  description: Custom API documentation for Ecommerce Platform including payments, wallet, refunds, invoices, Redis & Kafka flows
 
 paths:
 
   # =======================
   # Product Controller
   # =======================
-
   /api/allProducts:
     get:
-      tags: [ product-controller ]
+      tags: [product-controller]
       summary: Get All Products
-      description: Fetch list of products
       responses:
         "200":
           description: List fetched successfully
@@ -27,9 +25,8 @@ paths:
 
   /api/createProducts:
     post:
-      tags: [ product-controller ]
+      tags: [product-controller]
       summary: Add Product
-      description: Add new product
       requestBody:
         required: true
         content:
@@ -49,75 +46,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProductResponse"
 
-  /api/updateProduct:
-    post:
-      tags: [ product-controller ]
-      summary: Update Product
-      description: Update product by ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ProductRequest"
-            example:
-              id: 1
-              name: "Laptop"
-              description: "High performance laptop"
-              price: 49999.99
-              quantity: 10
-      responses:
-        "200":
-          description: Product updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProductResponse"
-
-  /api/productBy/{id}:
-    get:
-      tags: [ product-controller ]
-      summary: Get Product Details
-      description: Fetch product by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Product fetched successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProductResponse"
-
-  /api/deleteProduct/{id}:
-    delete:
-      tags: [ product-controller ]
-      summary: Delete Product
-      description: Delete product by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: Product deleted successfully
-
-
   # =======================
   # User Controller
   # =======================
-
   /api/allUsers:
     get:
-      tags: [ user-controller ]
+      tags: [user-controller]
       summary: Get All Users
-      description: Fetch all users
       responses:
         "200":
           description: List fetched successfully
@@ -130,9 +65,8 @@ paths:
 
   /api/createUsers:
     post:
-      tags: [ user-controller ]
+      tags: [user-controller]
       summary: Create User
-      description: Create new user
       requestBody:
         required: true
         content:
@@ -142,7 +76,7 @@ paths:
             example:
               name: "John Doe"
               email: "john.doe@example.com"
-              passord: "password@123"
+              password: "password@123"
               role: "USER_ROLE"
       responses:
         "201":
@@ -152,74 +86,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserResponse"
 
-  /api/usersBy/{id}:
-    get:
-      tags: [ user-controller ]
-      summary: Get User by ID
-      description: Fetch a specific user by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: User fetched successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-
-  /api/deleteUser/{id}:
-    delete:
-      tags: [ user-controller ]
-      summary: Delete User
-      description: Delete a specific user by ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: User deleted successfully
-
-  /api/updateUser:
-    post:
-      tags: [ user-controller ]
-      summary: Update User
-      description: Update a specific user by ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserRequest"
-            example:
-              id: 1
-              name: "John Doe"
-              email: "john.doe@example.com"
-              role: "TeamLead"
-      responses:
-        "200":
-          description: User updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-
-
   # =======================
   # Order Controller
   # =======================
-
   /api/orders/addOrder:
     post:
-      tags: [ order-controller ]
+      tags: [order-controller]
       summary: Create Order
-      description: Create new order
       requestBody:
         required: true
         content:
@@ -245,9 +118,8 @@ paths:
 
   /api/orders/{orderId}:
     get:
-      tags: [ order-controller ]
+      tags: [order-controller]
       summary: Get Order By ID
-      description: Fetch order by ID
       parameters:
         - in: path
           name: orderId
@@ -264,9 +136,8 @@ paths:
 
   /api/orders/user/{userId}:
     get:
-      tags: [ order-controller ]
+      tags: [order-controller]
       summary: Get Orders By User ID
-      description: Fetch orders by user ID
       parameters:
         - in: path
           name: userId
@@ -285,9 +156,8 @@ paths:
 
   /api/orders/{orderId}/status:
     patch:
-      tags: [ order-controller ]
+      tags: [order-controller]
       summary: Update Order Status
-      description: Update order status
       parameters:
         - in: path
           name: orderId
@@ -308,57 +178,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/OrderResponse"
 
-  /api/orders/delete/{orderId}:
-    delete:
-      tags: [ order-controller ]
-      summary: Delete Order
-      description: Delete order by ID
-      parameters:
-        - in: path
-          name: orderId
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: Order deleted successfully
-
-
-  # =======================
-  # Auth Controller
-  # =======================
-
-  /auth/login:
-    post:
-      tags: [ auth-controller ]
-      summary: User Login
-      description: Authenticate user & return JWT token
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AuthRequest"
-            example:
-              email: "john@gmail.com"
-              password: "password123"
-      responses:
-        "200":
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthResponse"
-
   # =======================
   # Payment Controller
   # =======================
-
   /api/payments:
     post:
-      tags: [ payment-controller ]
-      summary: Create Dummy Payment for Order
-      description: Create a dummy payment for a given order
+      tags: [payment-controller]
+      summary: Create Dummy Payment
       requestBody:
         required: true
         content:
@@ -379,9 +205,8 @@ paths:
 
   /api/payments/user/{userId}:
     get:
-      tags: [ payment-controller ]
+      tags: [payment-controller]
       summary: Get Payment History By User
-      description: Fetch payment history for a specific user
       parameters:
         - in: path
           name: userId
@@ -398,20 +223,19 @@ paths:
                 items:
                   $ref: "#/components/schemas/PaymentResponse"
 
-
   # =======================
   # Refund Controller
   # =======================
-
   /api/refunds:
     post:
-      tags: [ refund-controller ]
+      tags: [refund-controller]
       summary: Create Refund
-      description: Create refund using paymentId
       requestBody:
         required: true
         content:
           application/json:
+            schema:
+              $ref: "#/components/schemas/RefundRequest"
             example:
               paymentId: 10
               reason: "Order Cancelled"
@@ -423,41 +247,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RefundResponse"
 
-
-  # =======================
-  # Invoice Controller
-  # =======================
-
-  /api/invoices/{orderId}:
-    get:
-      tags: [ invoice-controller ]
-      summary: Download Invoice PDF
-      description: Generate and download invoice PDF
-      parameters:
-        - in: path
-          name: orderId
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Invoice downloaded
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
-
-
   # =======================
   # Wallet Controller
   # =======================
-
   /api/wallet/{userId}/credit:
     post:
-      tags: [ wallet-controller ]
+      tags: [wallet-controller]
       summary: Credit Wallet
-      description: Add amount to wallet
       parameters:
         - in: path
           name: userId
@@ -479,9 +275,8 @@ paths:
 
   /api/wallet/{userId}/debit:
     post:
-      tags: [ wallet-controller ]
+      tags: [wallet-controller]
       summary: Debit Wallet
-      description: Debit amount from wallet
       parameters:
         - in: path
           name: userId
@@ -495,7 +290,7 @@ paths:
             type: number
       responses:
         "200":
-          description: Wallet debited or failed
+          description: Wallet debited
           content:
             application/json:
               schema:
@@ -506,168 +301,106 @@ components:
 
     ProductRequest:
       type: object
-      required: [ name, price, description, quantity ]
+      required: [name, price, description, quantity]
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        description:
-          type: string
-        price:
-          type: number
-        quantity:
-          type: integer
+        id: {type: integer}
+        name: {type: string}
+        description: {type: string}
+        price: {type: number}
+        quantity: {type: integer}
 
     ProductResponse:
       type: object
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        description:
-          type: string
-        price:
-          type: number
-        quantity:
-          type: integer
-        status:
-          type: integer
-        message:
-          type: string
-        messageCode:
-          type: string
+        id: {type: integer}
+        name: {type: string}
+        description: {type: string}
+        price: {type: number}
+        quantity: {type: integer}
+        status: {type: integer}
+        message: {type: string}
 
     UserRequest:
       type: object
-      required: [ name, email, role ]
+      required: [name, email, role]
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string
+        id: {type: integer}
+        name: {type: string}
+        email: {type: string}
+        password: {type: string}
+        role: {type: string}
 
     UserResponse:
       type: object
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string
-        status:
-          type: integer
-        message:
-          type: string
-        messageCode:
-          type: string
+        id: {type: integer}
+        name: {type: string}
+        email: {type: string}
+        role: {type: string}
+        status: {type: integer}
+        message: {type: string}
 
     OrderRequest:
       type: object
-      required: [ userId, status, items ]
+      required: [userId, status, items]
       properties:
-        userId:
-          type: integer
-        status:
-          type: string
-        paymentMethod:
-          type: string
+        userId: {type: integer}
+        status: {type: string}
+        paymentMethod: {type: string}
         items:
           type: array
           items:
             type: object
             properties:
-              productId:
-                type: integer
-              quantity:
-                type: integer
+              productId: {type: integer}
+              quantity: {type: integer}
 
     OrderResponse:
       type: object
       properties:
-        id:
-          type: integer
-        userId:
-          type: integer
-        totalAmount:
-          type: number
-        status:
-          type: string
-        message:
-          type: string
-        messageCode:
-          type: string
-
-    AuthRequest:
-      type: object
-      required: [ email, password ]
-      properties:
-        email:
-          type: string
-        password:
-          type: string
-
-    AuthResponse:
-      type: object
-      properties:
-        token:
-          type: string
+        id: {type: integer}
+        userId: {type: integer}
+        totalAmount: {type: number}
+        status: {type: string}
+        message: {type: string}
 
     PaymentRequest:
       type: object
-      required: [ orderId, amount, method ]
+      required: [orderId, amount, method]
       properties:
-        orderId:
-          type: integer
-        amount:
-          type: number
-        method:
-          type: string
+        orderId: {type: integer}
+        amount: {type: number}
+        method: {type: string}
 
     PaymentResponse:
       type: object
       properties:
-        paymentId:
-          type: integer
-        orderId:
-          type: integer
-        amount:
-          type: number
-        status:
-          type: string
-        method:
-          type: string
-        createdAt:
-          type: string
+        paymentId: {type: integer}
+        orderId: {type: integer}
+        amount: {type: number}
+        status: {type: string}
+        method: {type: string}
+        createdAt: {type: string}
+
+    RefundRequest:
+      type: object
+      required: [paymentId, reason]
+      properties:
+        paymentId: {type: integer}
+        reason: {type: string}
 
     RefundResponse:
       type: object
       properties:
-        refundId:
-          type: integer
-        paymentId:
-          type: integer
-        status:
-          type: string
-        refundedAt:
-          type: string
+        refundId: {type: integer}
+        paymentId: {type: integer}
+        status: {type: string}
+        refundedAt: {type: string}
 
     WalletResponse:
       type: object
       properties:
-        userId:
-          type: integer
-        balance:
-          type: number
-        status:
-          type: string
-        message:
-          type: string
+        userId: {type: integer}
+        balance: {type: number}
+        status: {type: string}
+        message: {type: string}
