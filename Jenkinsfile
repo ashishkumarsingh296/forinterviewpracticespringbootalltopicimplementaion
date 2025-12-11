@@ -346,38 +346,35 @@ pipeline {
       }
     }
   }
+post {
+ success {
+  script {
+    echo "✅ Deployment Successful for ${params.BUILD}"
 
-  post {
+    bat '''
+      wsl -- bash -c "
+        cp -v /home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1/logs/myapplog.out \
+              /home/aashudev/deploy/jenkins_logs/success_log_$(date +%Y%m%d_%H%M%S).log || true
+      "
+    '''
+  }
+}
+   failure {
+  script {
+    echo "❌ Deployment FAILED for ${params.BUILD}"
 
-    success {
-      script {
-        echo "✅ Deployment Successful for ${params.BUILD}"
+    bat '''
+      wsl -- bash -c "
+        mkdir -p /home/aashudev/deploy/jenkins_logs
+        cp -v /home/aashudev/tomcat/multiple-server-config/prod1-server/apache-tomcat-10.1.49-prod-1/logs/myapplog.out \
+              /home/aashudev/deploy/jenkins_logs/failed_log_$(date +%Y%m%d_%H%M%S).log || true
+      "
+    '''
+  }
 
-        // Copy logs for record
-        bat """
-          wsl -- bash -c 'cp -v ${TOMCAT_PROD_1}/logs/myapplog.out ${LOGS_DIR}/success_log_$(date +%Y%m%d_%H%M%S).log || true'
-        """
-      }
-    }
+  archiveArtifacts artifacts: 'failed_log_*.log', allowEmptyArchive: true
+}
 
-    failure {
-      script {
-        echo "❌ Deployment FAILED for ${params.BUILD}"
-
-        def tomcatHome =
-          (params.BUILD == 'dev') ? TOMCAT_DEV :
-          (params.BUILD == 'qa')  ? TOMCAT_QA  : TOMCAT_PROD_1
-
-        bat """
-          wsl -- bash -c '
-            mkdir -p ${LOGS_DIR}
-            cp -v ${tomcatHome}/logs/myapplog.out ${LOGS_DIR}/failed_log_$(date +%Y%m%d_%H%M%S).log || true
-          '
-        """
-
-        archiveArtifacts artifacts: '**/*failed_log*.log', allowEmptyArchive: true
-      }
-    }
 
     always {
       script {
