@@ -7,8 +7,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreatePaymentRequestDTO {
-    private Long orderId;
-    private Double amount;
-    private String method;
+public class OrderItemResponseDTO {
+    private Long productId;
+    private String productName;
+    private Integer quantity;
+    private Double price;
 }

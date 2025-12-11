@@ -26,15 +26,15 @@ public class WalletService {
     public Wallet getOrCreateWalletForUser(Long userId) {
         return walletRepository.findByUserId(userId)
                 .orElseGet(() -> {
-                    var user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
-                    Wallet w = Wallet.builder().user(user).balance(0.0).build();
-                    return walletRepository.save(w);
+                    var user = userRepository.findById(userId)
+                            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                    Wallet wallet = Wallet.builder().user(user).balance(0.0).build();
+                    return walletRepository.save(wallet);
                 });
     }
 
     @Transactional
     public void creditWallet(Long userId, Double amount, String reference) {
-        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
         Wallet wallet = getOrCreateWalletForUser(userId);
         wallet.setBalance(wallet.getBalance() + amount);
         walletRepository.save(wallet);
@@ -50,9 +50,9 @@ public class WalletService {
 
     @Transactional
     public void debitWallet(Long userId, Double amount, String reference) {
-        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
         Wallet wallet = getOrCreateWalletForUser(userId);
-        if (wallet.getBalance() < amount) throw new IllegalStateException("Insufficient wallet balance");
+        if (wallet.getBalance() < amount)
+            throw new IllegalStateException("Insufficient wallet balance");
         wallet.setBalance(wallet.getBalance() - amount);
         walletRepository.save(wallet);
 

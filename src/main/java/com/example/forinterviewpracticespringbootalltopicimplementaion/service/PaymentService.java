@@ -7,9 +7,9 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Pa
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.OrderRepository;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.PaymentRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,14 +23,11 @@ public class PaymentService {
     private final OrderRepository orderRepository;
 
     public PaymentResponseDTO createDummyPayment(CreatePaymentRequestDTO dto) {
-
         Order order = orderRepository.findById(dto.getOrderId())
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
-        // ❌ Prevent duplicate payments
-        if (paymentRepository.findByOrderId(dto.getOrderId()).isPresent()) {
-            throw new IllegalStateException("Payment already exists for this order");
-        }
+        if (paymentRepository.findByOrderId(dto.getOrderId()).isPresent())
+            throw new IllegalStateException("Payment already exists");
 
         Payment payment = Payment.builder()
                 .paymentReference("DUMMY_TXN_" + UUID.randomUUID())
@@ -56,21 +53,13 @@ public class PaymentService {
                 .build();
     }
 
-    // ✅ Simulate Payment Success / Failure
     public void completeDummyPayment(Long paymentId, String status) {
-
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
 
         payment.setStatus(status.toUpperCase());
-
         Order order = payment.getOrder();
-
-        if ("PAID".equalsIgnoreCase(status)) {
-            order.setStatus("PAID");
-        } else {
-            order.setStatus("FAILED");
-        }
+        order.setStatus(status.equalsIgnoreCase("PAID") ? "PAID" : "FAILED");
 
         paymentRepository.save(payment);
         orderRepository.save(order);

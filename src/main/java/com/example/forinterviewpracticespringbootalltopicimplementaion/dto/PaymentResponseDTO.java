@@ -1,9 +1,11 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class PaymentResponseDTO {
     private Long id;

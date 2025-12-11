@@ -2,7 +2,6 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,7 +25,7 @@ public class WalletTransaction {
 
     private String type; // CREDIT, DEBIT, REFUND
 
-    private String reference; // e.g. PAYMENT_3, REFUND_5
+    private String reference; // PAYMENT_3, REFUND_5
 
     private LocalDateTime createdAt;
 

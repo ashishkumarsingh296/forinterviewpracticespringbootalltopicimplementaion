@@ -2,7 +2,6 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,7 +18,7 @@ public class Payment {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String paymentReference;   // DUMMY_TXN_123
+    private String paymentReference;
 
     @Column(nullable = false)
     private Double amount;

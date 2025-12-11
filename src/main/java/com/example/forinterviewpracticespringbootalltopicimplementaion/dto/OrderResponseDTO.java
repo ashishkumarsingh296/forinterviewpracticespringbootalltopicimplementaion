@@ -1,20 +1,19 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
 public class OrderResponseDTO {
-    private Long orderId;
+    private Long id;
     private String orderNumber;
-    private Double totalAmount;
     private String status;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Long userId;
+    private double totalAmount;
+    private String paymentStatus;
     private LocalDateTime createdAt;
     private List<OrderItemDTO> items;
-    private PaymentDTO payment;
 }

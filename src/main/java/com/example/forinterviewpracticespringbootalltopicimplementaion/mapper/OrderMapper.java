@@ -1,50 +1,16 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.mapper;
 
-import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.*;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.OrderDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Order;
-import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.OrderItem;
-import lombok.RequiredArgsConstructor;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
-
 @Component
-@RequiredArgsConstructor
-public class OrderMapper {
+public interface OrderMapper {
 
-    public OrderResponseDTO toDTO(Order order) {
-        OrderResponseDTO dto = new OrderResponseDTO();
-        dto.setOrderId(order.getId());
-        dto.setOrderNumber(order.getOrderNumber());
-        dto.setTotalAmount(order.getTotalAmount());
-        dto.setStatus(order.getStatus());
-        dto.setCreatedAt(order.getCreatedAt());
-
-        // Map order items
-        dto.setItems(order.getItems().stream()
-                .map(this::toOrderItemDTO)
-                .collect(Collectors.toList()));
-
-        // Map payment
-        if (order.getPayment() != null) {
-            PaymentDTO paymentDTO = new PaymentDTO();
-            paymentDTO.setAmount(order.getPayment().getAmount());
-            paymentDTO.setStatus(order.getPayment().getStatus());
-            paymentDTO.setPaymentMethod(order.getPayment().getPaymentMethod());
-            paymentDTO.setPaymentMethod(order.getPayment().getPaymentReference());
-
-            dto.setPayment(paymentDTO);
-        }
-
-        return dto;
-    }
-
-    private OrderItemDTO toOrderItemDTO(OrderItem item) {
-        OrderItemDTO dto = new OrderItemDTO();
-        dto.setProductId(item.getProduct().getId());
-        dto.setProductName(item.getProduct().getName());
-        dto.setQuantity(item.getQuantity());
-        dto.setPrice(item.getPrice());
-        return dto;
-    }
+    @Mapping(target = "userId", expression = "java(order.getUser() != null ? order.getUser().getId() : null)")
+    @Mapping(target = "paymentStatus", expression = "java(order.getPayment() != null ? order.getPayment().getStatus() : null)")
+    @Mapping(target = "paymentMethod", expression = "java(order.getPayment() != null ? order.getPayment().getPaymentMethod() : null)")
+    OrderDTO toDTO(Order order);
 }

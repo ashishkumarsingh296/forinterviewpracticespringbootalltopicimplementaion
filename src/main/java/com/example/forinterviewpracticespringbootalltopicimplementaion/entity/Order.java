@@ -3,7 +3,6 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Where;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +48,6 @@ public class Order {
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Payment payment;
-
 
     @PrePersist
     void onCreate() {

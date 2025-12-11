@@ -1,13 +1,13 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
 public class OrderItemDTO {
     private Long productId;
-    private String productName; // optional for response
-    private Integer quantity;
-    private Double price;       // total price for this item (product.price * quantity)
+    private String productName;
+    private int quantity;
+    private double price;
 }

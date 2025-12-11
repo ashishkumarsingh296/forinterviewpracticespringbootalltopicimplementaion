@@ -2,9 +2,11 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UpdateOrderStatusDTO {
-    private String status; // PAID, CANCELLED, FAILED, PENDING, etc.
+    private String status;
 }

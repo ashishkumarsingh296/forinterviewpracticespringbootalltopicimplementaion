@@ -1,20 +1,17 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderRequestDto {
-    private String orderNumber;
+@Builder
+public class WalletDTO {
+    private Long walletId;
     private Long userId;
-    private String status;
-    private List<OrderItemDTO> items;
-
-    // Payment info
-    private String paymentMethod;
+    private Double balance;
 }

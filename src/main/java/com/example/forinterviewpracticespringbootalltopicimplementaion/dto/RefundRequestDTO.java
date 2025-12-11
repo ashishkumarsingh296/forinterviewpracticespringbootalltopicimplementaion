@@ -2,11 +2,13 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.dto;
 
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentDTO {
+@Builder
+public class RefundRequestDTO {
+    private Long paymentId;
     private Double amount;
-    private String status;        // PAID / FAILED / PENDING
-    private String paymentMethod; // CARD / UPI etc.
+    private String reason;
 }
