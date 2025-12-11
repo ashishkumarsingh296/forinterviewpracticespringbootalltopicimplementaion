@@ -326,19 +326,18 @@ pipeline {
 
     post {
 
-        failure {
-        echo "=== DEPLOYMENT FAILED → COLLECTING LOGS ==="
+      failure {
+    echo "=== DEPLOYMENT FAILED → COLLECTING LOGS ==="
 
-        bat """
-        wsl bash -c 'mkdir -p /home/aashudev/deploy/jenkins_logs'
-        """
+    bat """
+    wsl bash -c 'mkdir -p /home/aashudev/deploy/jenkins_logs'
+    """
 
-        bat """
-        wsl bash -c 'cp ${TOMCAT_PROD_1}/logs/catalina.out /home/aashudev/deploy/jenkins_logs/catalina_$(date +%Y%m%d_%H%M%S).log || true'
-        """
+    bat """
+    wsl bash -c 'cp ${TOMCAT_PROD_1}/logs/catalina.out /home/aashudev/deploy/jenkins_logs/catalina_\$(date +%Y%m%d_%H%M%S).log || true'
+    """
+   }
 
-        archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true
-      }
 
        success {
         echo "=== DEPLOYMENT SUCCESS ==="
