@@ -7,7 +7,55 @@ info:
 paths:
 
   # =======================
-  # Product Controller
+  # AUTH CONTROLLER
+  # =======================
+  /auth/login:
+    post:
+      tags: [auth-controller]
+      summary: User Login
+      description: Authenticate user & return JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+            example:
+              email: "john@gmail.com"
+              password: "password123"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/register:
+    post:
+      tags: [auth-controller]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              name: "John Doe"
+              email: "john@gmail.com"
+              password: "password123"
+              role: "USER_ROLE"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+
+  # =======================
+  # PRODUCT CONTROLLER
   # =======================
   /api/allProducts:
     get:
@@ -47,7 +95,7 @@ paths:
                 $ref: "#/components/schemas/ProductResponse"
 
   # =======================
-  # User Controller
+  # USER CONTROLLER
   # =======================
   /api/allUsers:
     get:
@@ -87,7 +135,7 @@ paths:
                 $ref: "#/components/schemas/UserResponse"
 
   # =======================
-  # Order Controller
+  # ORDER CONTROLLER
   # =======================
   /api/orders/addOrder:
     post:
@@ -179,7 +227,7 @@ paths:
                 $ref: "#/components/schemas/OrderResponse"
 
   # =======================
-  # Payment Controller
+  # PAYMENT CONTROLLER
   # =======================
   /api/payments:
     post:
@@ -224,7 +272,7 @@ paths:
                   $ref: "#/components/schemas/PaymentResponse"
 
   # =======================
-  # Refund Controller
+  # REFUND CONTROLLER
   # =======================
   /api/refunds:
     post:
@@ -248,7 +296,7 @@ paths:
                 $ref: "#/components/schemas/RefundResponse"
 
   # =======================
-  # Wallet Controller
+  # WALLET CONTROLLER
   # =======================
   /api/wallet/{userId}/credit:
     post:
@@ -296,8 +344,108 @@ paths:
               schema:
                 $ref: "#/components/schemas/WalletResponse"
 
+  # =======================
+  # INVOICE CONTROLLER
+  # =======================
+  /api/invoice/{orderId}:
+    get:
+      tags: [invoice-controller]
+      summary: Generate invoice for an order
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Invoice generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceResponse"
+
+  # =======================
+  # REDIS CONTROLLER
+  # =======================
+  /redis/save:
+    post:
+      tags: [redis-controller]
+      summary: Save data in Redis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              key: "user:101"
+              value: "John Doe"
+      responses:
+        "200":
+          description: Value saved
+
+  /redis/{key}:
+    get:
+      tags: [redis-controller]
+      summary: Get value from Redis
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Fetched Redis value
+
+  # =======================
+  # KAFKA CONTROLLER
+  # =======================
+  /kafka/publish:
+    post:
+      tags: [kafka-controller]
+      summary: Publish a message to Kafka
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              message: "Order created notification"
+      responses:
+        "200":
+          description: Published successfully
+
 components:
   schemas:
+
+    AuthRequest:
+      type: object
+      properties:
+        email: {type: string}
+        password: {type: string}
+
+    AuthResponse:
+      type: object
+      properties:
+        token: {type: string}
+        role: {type: string}
+        message: {type: string}
+
+    RegisterRequest:
+      type: object
+      properties:
+        name: {type: string}
+        email: {type: string}
+        password: {type: string}
+        role: {type: string}
+
+    RegisterResponse:
+      type: object
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        email: {type: string}
+        role: {type: string}
+        message: {type: string}
 
     ProductRequest:
       type: object
@@ -396,6 +544,14 @@ components:
         paymentId: {type: integer}
         status: {type: string}
         refundedAt: {type: string}
+
+    InvoiceResponse:
+      type: object
+      properties:
+        orderId: {type: integer}
+        totalAmount: {type: number}
+        generatedAt: {type: string}
+        downloadUrl: {type: string}
 
     WalletResponse:
       type: object
