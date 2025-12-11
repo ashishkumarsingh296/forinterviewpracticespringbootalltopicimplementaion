@@ -1,7 +1,9 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.controller;
 
+import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.WalletDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Wallet;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.WalletTransaction;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.mapper.WalletMapper;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,11 +18,14 @@ import static com.example.forinterviewpracticespringbootalltopicimplementaion.co
 public class WalletController {
 
     private final WalletService walletService;
+    private final WalletMapper walletMapper;
 
     @GetMapping("/wallet/{userId}")
-    public Wallet getWallet(@PathVariable Long userId) {
-        return walletService.getOrCreateWalletForUser(userId);
+    public WalletDTO getWallet(@PathVariable Long userId) {
+        Wallet wallet = walletService.getOrCreateWalletForUser(userId);
+        return walletMapper.toDTO(wallet);
     }
+
 
     @PostMapping("/wallet/{userId}/credit")
     public void creditWallet(@PathVariable Long userId, @RequestParam Double amount) {
