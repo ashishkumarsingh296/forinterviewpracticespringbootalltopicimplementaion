@@ -326,22 +326,20 @@ pipeline {
 
     post {
 
-          // ✅ NEW CLEANUP BLOCK ADDED HERE — NOTHING ELSE CHANGED
        cleanup {
-        echo "=== CLEANING WORKSPACE SAFELY ==="
+    echo "=== CLEANING WORKSPACE SAFELY ==="
 
-        // Windows cleanup
-        bat """
-        if exist target rmdir /s /q target
-        if exist build rmdir /s /q build
-        if exist *.log del /q *.log
-        """
+    // Windows cleanup
+    bat """
+    if exist target rmdir /s /q target
+    if exist build rmdir /s /q build
+    if exist *.log del /q *.log
+    """
 
-        // WSL cleanup if needed
-        bat """
-        wsl bash -c 'rm -rf /home/aashudev/deploy/jenkins_temp || true'
-        """
-    }
+    // WSL cleanup
+    bat 'wsl bash -c "rm -rf /home/aashudev/deploy/jenkins_temp || true"'
+}
+
 
        failure {
     echo "=== DEPLOYMENT FAILED → COLLECTING LOGS ==="
