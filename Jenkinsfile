@@ -265,21 +265,20 @@ pipeline {
         }
 
         stage('Stop Tomcat') {
-    steps {
-        script {
-            if (params.BUILD == 'dev' || params.BUILD == 'qa') {
-                bat """
-                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.BUILD}; true"
-                """
-            } else {
-               // ✅ PROD: Sirf PROD-1 stop (zero downtime)
-                bat """
-                wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod1; true"
-                """
+            steps {
+                script {
+                    if (params.BUILD == 'dev' || params.BUILD == 'qa') {
+                        bat """
+                        wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh ${params.BUILD}; true"
+                        """
+                    } else {
+                        bat """
+                        wsl -- bash -c "/home/aashudev/tomcat/multiple-server-config/bin/myappstop.sh prod1; true"
+                        """
+                    }
+                }
             }
         }
-    }
-}
 
         stage('Copy WAR') {
             steps {
@@ -289,7 +288,6 @@ pipeline {
                     } else if (params.BUILD == 'qa') {
                         bat """wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_QA}/webapps/${ARTIFACT_NAME}.war"""
                     } else {
-                        // ✅ PROD: WAR sab jagah copy hoti rahe (DO NOT restart all)
                         bat """
                         wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_1}/webapps/${ARTIFACT_NAME}.war
                         wsl cp /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/target/*.war ${TOMCAT_PROD_2}/webapps/${ARTIFACT_NAME}.war
@@ -306,9 +304,7 @@ pipeline {
                     if (params.BUILD == 'dev' || params.BUILD == 'qa') {
                         bat "wsl bash -c '${START_SCRIPT} ${params.BUILD}'"
                     } else {
-                        bat """
-                        wsl bash -c '${START_SCRIPT} prod1'
-                        """
+                        bat "wsl bash -c '${START_SCRIPT} prod1'"
                     }
                 }
             }
@@ -327,6 +323,7 @@ pipeline {
     }
 
     post {
+
         failure {
             script {
                 def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV :
@@ -349,6 +346,32 @@ pipeline {
 
         success {
             echo "✅ Deployment successful for ${params.BUILD}"
+        }
+
+        // ✅ NEW CLEANUP BLOCK ADDED HERE — NOTHING ELSE CHANGED
+        always {
+            echo "=== Cleaning Jenkins Workspace ==="
+
+            bat "rm -rf target/"
+            bat "rm -rf .m2/"
+            bat "rm -rf workspace/"
+            bat "rm -rf build/"
+            bat "rm -rf *.log"
+
+            echo "=== Removing extra WAR files ==="
+            bat "rm -f *success*.war"
+            bat "rm -f *failure*.war"
+            bat "rm -f *.war"
+
+            echo "=== Cleaning Jenkins Job Workspace ==="
+            bat """rm -rf /var/lib/jenkins/workspace/${env.JOB_NAME}/target/"""
+            bat """rm -rf /var/lib/jenkins/workspace/${env.JOB_NAME}/*.war"""
+            bat """rm -rf /var/lib/jenkins/workspace/${env.JOB_NAME}/*.log"""
+
+            echo "=== Removing Old Jenkins Builds ==="
+            bat """rm -rf /var/lib/jenkins/jobs/${env.JOB_NAME}/builds/*"""
+
+            echo "=== Cleanup Completed ==="
         }
     }
 }
