@@ -1,7 +1,9 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.mapper;
 
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.WalletDTO;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.WalletTransactionDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Wallet;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.WalletTransaction;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,6 +17,18 @@ public class WalletMapper {
         dto.setUserId(wallet.getUser() != null ? wallet.getUser().getId() : null);
         dto.setBalance(wallet.getBalance());
 
+        return dto;
+    }
+
+    public WalletTransactionDTO toDTO(WalletTransaction walletTransaction ) {
+        if (walletTransaction == null) return null;
+
+        WalletTransactionDTO dto = new WalletTransactionDTO();
+        dto.setTransactionId(walletTransaction.getId());
+        dto.setType(walletTransaction.getType());
+        dto.setAmount(walletTransaction.getAmount());
+        dto.setReference(walletTransaction.getReference());
+        dto.setCreatedAt(walletTransaction.getCreatedAt());
         return dto;
     }
 }

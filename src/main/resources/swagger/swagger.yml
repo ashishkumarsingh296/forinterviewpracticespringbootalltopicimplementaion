@@ -272,7 +272,7 @@ paths:
   # =======================
   # REFUND CONTROLLER
   # =======================
-  /api/refunds:
+  /api/requestRefund:
     post:
       tags: [refund-controller]
       summary: Create Refund

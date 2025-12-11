@@ -7,14 +7,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.example.forinterviewpracticespringbootalltopicimplementaion.constants.ApiPathConstants.BASE_PATH;
+
 @RestController
-@RequestMapping("/api/invoices")
+@RequestMapping(BASE_PATH)
 @RequiredArgsConstructor
 public class InvoiceController {
 
     private final InvoiceService invoiceService;
 
-    @GetMapping("/{orderId}")
+    @GetMapping("/invoices/{orderId}")
     public ResponseEntity<byte[]> generateInvoice(@PathVariable Long orderId) throws Exception {
         byte[] pdf = invoiceService.generateInvoicePdf(orderId);
 

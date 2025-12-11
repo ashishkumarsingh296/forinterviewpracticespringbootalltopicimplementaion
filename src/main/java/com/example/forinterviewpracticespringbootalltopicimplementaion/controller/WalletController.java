@@ -1,6 +1,7 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.controller;
 
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.WalletDTO;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.WalletTransactionDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Wallet;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.WalletTransaction;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.mapper.WalletMapper;
@@ -38,9 +39,15 @@ public class WalletController {
     }
 
     @GetMapping("/wallet/{userId}/transactions")
-    public Page<WalletTransaction> getTransactions(@PathVariable Long userId,
-                                                   @RequestParam(defaultValue = "0") int page,
-                                                   @RequestParam(defaultValue = "10") int size) {
-        return walletService.getWalletTransactions(userId, PageRequest.of(page, size));
+    public Page<WalletTransactionDTO> getTransactions(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<WalletTransaction> txPage =
+                walletService.getWalletTransactions(userId, PageRequest.of(page, size));
+
+        return txPage.map(walletMapper::toDTO);
     }
+
 }
