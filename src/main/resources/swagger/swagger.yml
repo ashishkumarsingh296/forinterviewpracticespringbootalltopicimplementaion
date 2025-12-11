@@ -94,6 +94,68 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProductResponse"
 
+  /api/deleteProduct/{id}:
+    delete:
+      tags: [product-controller ]
+      summary: Delete Product By ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product Deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+
+  /api/productBy/{id}:
+    get:
+      tags: [ product-controller ]
+      summary: Get Product By Product ID
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product fetched successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductResponse"
+
+  /api/updateProduct:
+    post:
+      tags: [ product-controller ]
+      summary: Update Order Status
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              status: "SHIPPED"
+      responses:
+        "200":
+          description: Order updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductResponse"
+
   # =======================
   # USER CONTROLLER
   # =======================
@@ -362,55 +424,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InvoiceResponse"
-
-  # =======================
-  # REDIS CONTROLLER
-  # =======================
-  /redis/save:
-    post:
-      tags: [redis-controller]
-      summary: Save data in Redis
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              key: "user:101"
-              value: "John Doe"
-      responses:
-        "200":
-          description: Value saved
-
-  /redis/{key}:
-    get:
-      tags: [redis-controller]
-      summary: Get value from Redis
-      parameters:
-        - in: path
-          name: key
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Fetched Redis value
-
-  # =======================
-  # KAFKA CONTROLLER
-  # =======================
-  /kafka/publish:
-    post:
-      tags: [kafka-controller]
-      summary: Publish a message to Kafka
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              message: "Order created notification"
-      responses:
-        "200":
-          description: Published successfully
 
 components:
   schemas:

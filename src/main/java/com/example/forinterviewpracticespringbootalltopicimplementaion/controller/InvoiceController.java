@@ -16,7 +16,7 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
 
-    @GetMapping("/invoices/{orderId}")
+    @GetMapping("/invoice/{orderId}")
     public ResponseEntity<byte[]> generateInvoice(@PathVariable Long orderId) throws Exception {
         byte[] pdf = invoiceService.generateInvoicePdf(orderId);
 
