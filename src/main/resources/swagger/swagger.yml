@@ -203,7 +203,7 @@ paths:
                   $ref: "#/components/schemas/OrderResponse"
 
   /api/orders/{orderId}/status:
-    patch:
+    put:
       tags: [order-controller]
       summary: Update Order Status
       parameters:
@@ -227,7 +227,7 @@ paths:
                 $ref: "#/components/schemas/OrderResponse"
 
   /api/orders/delete/{orderId}:
-    get:
+    delete:
       tags: [ order-controller ]
       summary: Delete Order By ID
       parameters:
