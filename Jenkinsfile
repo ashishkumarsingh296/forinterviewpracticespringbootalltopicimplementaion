@@ -327,53 +327,39 @@ pipeline {
     post {
 
         failure {
-            script {
-                def tomcatHome = (params.BUILD == 'dev') ? TOMCAT_DEV :
-                                 (params.BUILD == 'qa')  ? TOMCAT_QA :
-                                                           TOMCAT_PROD_1
+        echo "=== DEPLOYMENT FAILED → COLLECTING LOGS ==="
 
-                bat """
-                wsl bash -c \"
-                    mkdir -p ${LOGS_DIR} &&
-                    cp ${tomcatHome}/logs/myapplog.out ${LOGS_DIR}/myapplog.out_\\\\\$(date +%Y%m%d_%H%M%S) &&
-                    ls -l ${LOGS_DIR}
-                \"
-                """
+        bat """
+        wsl bash -c 'mkdir -p /home/aashudev/deploy/jenkins_logs'
+        """
 
-                bat """wsl cp -r ${LOGS_DIR} /mnt/c/ProgramData/Jenkins/.jenkins/workspace/${env.JOB_NAME}/ || true"""
-                archiveArtifacts artifacts: '**/myapplog.out_*', allowEmptyArchive: true
-            }
-            echo "❌ Deployment failed — logs archived"
-        }
+        bat """
+        wsl bash -c 'cp ${TOMCAT_PROD_1}/logs/catalina.out /home/aashudev/deploy/jenkins_logs/catalina_$(date +%Y%m%d_%H%M%S).log || true'
+        """
 
-        success {
-            echo "✅ Deployment successful for ${params.BUILD}"
-        }
+        archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true
+      }
+
+       success {
+        echo "=== DEPLOYMENT SUCCESS ==="
+        bat "echo Deployment success on %date% %time% >> deploy-success.log"
+       }
 
         // ✅ NEW CLEANUP BLOCK ADDED HERE — NOTHING ELSE CHANGED
-        always {
-            echo "=== Cleaning Jenkins Workspace ==="
+       cleanup {
+        echo "=== CLEANING WORKSPACE SAFELY ==="
 
-            bat "rm -rf target/"
-            bat "rm -rf .m2/"
-            bat "rm -rf workspace/"
-            bat "rm -rf build/"
-            bat "rm -rf *.log"
+        // Windows cleanup
+        bat """
+        if exist target rmdir /s /q target
+        if exist build rmdir /s /q build
+        if exist *.log del /q *.log
+        """
 
-            echo "=== Removing extra WAR files ==="
-            bat "rm -f *success*.war"
-            bat "rm -f *failure*.war"
-            bat "rm -f *.war"
-
-            echo "=== Cleaning Jenkins Job Workspace ==="
-            bat """rm -rf /var/lib/jenkins/workspace/${env.JOB_NAME}/target/"""
-            bat """rm -rf /var/lib/jenkins/workspace/${env.JOB_NAME}/*.war"""
-            bat """rm -rf /var/lib/jenkins/workspace/${env.JOB_NAME}/*.log"""
-
-            echo "=== Removing Old Jenkins Builds ==="
-            bat """rm -rf /var/lib/jenkins/jobs/${env.JOB_NAME}/builds/*"""
-
-            echo "=== Cleanup Completed ==="
-        }
+        // WSL cleanup if needed
+        bat """
+        wsl bash -c 'rm -rf /home/aashudev/deploy/jenkins_temp || true'
+        """
+    }
     }
 }
