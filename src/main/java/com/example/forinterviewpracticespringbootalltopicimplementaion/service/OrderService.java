@@ -69,14 +69,8 @@ public class OrderService {
         order.setItems(items);
         order.setTotalAmount(totalAmount);
 
-        // Payment (dummy)
-        Payment payment = Payment.builder()
-                .order(order)
-                .amount(totalAmount)
-                .status("PENDING")
-                .paymentMethod(dto.getPaymentMethod())
-                .build();
-        order.setPayment(payment);
+        // No payment processed yet
+        order.setPayment(null);  // optional, can omit if already null
 
         Order saved = orderRepository.save(order);
 
@@ -84,7 +78,10 @@ public class OrderService {
         kafkaTemplate.send("orders-topic", "Order created: " + saved.getId());
         log.info("Order {} created", saved.getId());
 
-        return mapper.toDTO(saved);
+        // Map to DTO
+        OrderDTO dtoResponse = mapper.toDTO(saved);
+        dtoResponse.setPaymentStatus("No payment processed yet"); // ✅ indicate payment status
+        return dtoResponse;
     }
 
     @Cacheable(value = "userOrders", key = "#userId")
