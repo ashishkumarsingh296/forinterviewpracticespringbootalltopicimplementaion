@@ -74,12 +74,25 @@ public class WalletService {
 
     @Transactional
     public void checkSufficientBalance(Long userId, Double amount, String reference) {
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Wallet not found"));
 
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Wallet not found for userId " + userId));
+
+        // ❗ 1. Validate amount
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+
+        // ❗ 2. Check balance
+        if (wallet.getBalance() < amount) {
+            throw new IllegalStateException("Insufficient wallet balance");
+        }
+
+        // ❗ 3. Deduct balance
         wallet.setBalance(wallet.getBalance() - amount);
         walletRepository.save(wallet);
 
+        // ❗ 4. Save transaction entry
         WalletTransaction txn = WalletTransaction.builder()
                 .wallet(wallet)
                 .type("DEBIT")
@@ -90,5 +103,6 @@ public class WalletService {
 
         walletTransactionRepository.save(txn);
     }
+
 
 }

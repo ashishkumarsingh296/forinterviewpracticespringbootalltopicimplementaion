@@ -70,38 +70,6 @@ public class PaymentService {
 
 
 
-
-//    public PaymentResponseDTO createDummyPayment(CreatePaymentRequestDTO dto) {
-//        Order order = orderRepository.findById(dto.getOrderId())
-//                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-//
-//        if (paymentRepository.findByOrderId(dto.getOrderId()).isPresent())
-//            throw new IllegalStateException("Payment already exists");
-//
-//        Payment payment = Payment.builder()
-//                .paymentReference("DUMMY_TXN_" + UUID.randomUUID())
-//                .amount(dto.getAmount())
-//                .paymentMethod(dto.getMethod())
-//                .status("PENDING")
-//                .order(order)
-//                .createdAt(LocalDateTime.now())
-//                .build();
-//
-//        order.setPayment(payment);
-//        order.setStatus("PENDING");
-//
-//        paymentRepository.save(payment);
-//
-//        return PaymentResponseDTO.builder()
-//                .id(payment.getId())
-//                .paymentReference(payment.getPaymentReference())
-//                .amount(payment.getAmount())
-//                .status(payment.getStatus())
-//                .method(payment.getPaymentMethod())
-//                .orderId(order.getId())
-//                .build();
-//    }
-
     public void completeDummyPayment(Long paymentId, String status) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
