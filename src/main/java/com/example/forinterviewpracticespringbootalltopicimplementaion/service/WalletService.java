@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -70,4 +71,24 @@ public class WalletService {
                 .orElseThrow(() -> new EntityNotFoundException("Wallet not found"));
         return walletTransactionRepository.findByWalletId(wallet.getId(), pageable);
     }
+
+    @Transactional
+    public void checkSufficientBalance(Long userId, Double amount, String reference) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Wallet not found"));
+
+        wallet.setBalance(wallet.getBalance() - amount);
+        walletRepository.save(wallet);
+
+        WalletTransaction txn = WalletTransaction.builder()
+                .wallet(wallet)
+                .type("DEBIT")
+                .amount(amount)
+                .reference(reference)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        walletTransactionRepository.save(txn);
+    }
+
 }
