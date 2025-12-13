@@ -23,13 +23,34 @@ public class InvoiceService {
     private final OrderRepository orderRepo;
     private final InvoiceRepository invoiceRepo;
 
+//    public byte[] generateInvoice(Long orderId) {
+//
+//        Order order = orderRepo.findById(orderId)
+//                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+//
+//        String invoiceId = UUID.randomUUID().toString();
+//
+//        String path = "C:\\Users\\ASHISH\\Downloads\\" + invoiceId + ".pdf";
+//
+//        createPdf(order, path);
+//
+//        Invoice invoice = new Invoice();
+//        invoice.setInvoiceId(invoiceId);
+//        invoice.setOrderId(orderId.toString());
+//        invoice.setTotalAmount(order.getTotalAmount());
+//        invoice.setPdfPath(path);
+//        invoice.setGeneratedAt(LocalDateTime.now());
+//
+//        invoiceRepo.save(invoice);
+//        return null;
+//    }
+
     public byte[] generateInvoice(Long orderId) {
 
         Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
         String invoiceId = UUID.randomUUID().toString();
-
         String path = "C:\\Users\\ASHISH\\Downloads\\" + invoiceId + ".pdf";
 
         createPdf(order, path);
@@ -40,9 +61,15 @@ public class InvoiceService {
         invoice.setTotalAmount(order.getTotalAmount());
         invoice.setPdfPath(path);
         invoice.setGeneratedAt(LocalDateTime.now());
-
         invoiceRepo.save(invoice);
-        return null;
+
+        try {
+            return java.nio.file.Files.readAllBytes(
+                    java.nio.file.Paths.get(path)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read invoice pdf", e);
+        }
     }
 
     private void createPdf(Order order, String path) {

@@ -17,12 +17,14 @@ public class InvoiceController {
     private final InvoiceService invoiceService;
 
     @GetMapping("/invoice/{orderId}")
-    public ResponseEntity<byte[]> generateInvoice(@PathVariable Long orderId) throws Exception {
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long orderId) {
+
         byte[] pdf = invoiceService.generateInvoice(orderId);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice_" + orderId + ".pdf")
-                .contentType(MediaType.APPLICATION_PDF)
+                .header("Content-Disposition", "attachment; filename=invoice.pdf")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
+
 }
