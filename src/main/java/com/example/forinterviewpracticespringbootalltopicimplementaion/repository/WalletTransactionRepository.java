@@ -1,16 +1,12 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.repository;
 
-import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Wallet;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.WalletTransaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
-import jakarta.persistence.LockModeType;
-import java.util.Optional;
-
-@Repository
-public interface WalletRepository extends JpaRepository<Wallet, Long> {
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<Wallet> findTopByUserIdForUpdate(String userId);
+public interface WalletTransactionRepository extends JpaRepository<WalletTransaction, Long> {
+    Page<WalletTransaction> findById(Long id, Pageable pageable);
 }
+
