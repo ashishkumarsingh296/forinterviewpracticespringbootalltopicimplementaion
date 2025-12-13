@@ -51,12 +51,12 @@ public class WalletService {
     public void credit(String userId, Double amount) {
 
         // 1️⃣ Fetch wallet with pessimistic lock
-        Wallet wallet = walletRepository.findTopByUserIdForUpdate(userId)
-                .orElseGet(() -> new Wallet(userId, 0.0));
+        Wallet wallet = walletRepository.findTopByUserIdOrderByIdDesc(userId)
+                .orElse(new Wallet(userId, 0.0));
 
-        // 2️⃣ Add balance
         wallet.setBalance(wallet.getBalance() + amount);
         walletRepository.save(wallet);
+
 
         // 3️⃣ Create transaction
         WalletTransaction tx = new WalletTransaction();

@@ -12,5 +12,6 @@ import java.util.Optional;
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<Wallet> findTopByUserIdForUpdate(String userId);
+    Optional<Wallet> findTopByUserIdOrderByIdDesc(String userId);
+
 }
