@@ -21,6 +21,11 @@ public class Wallet {
 
     private String userId;
     private Double balance;
+    // Custom constructor for creating a wallet without specifying ID
+    public Wallet(String userId, Double balance) {
+        this.userId = userId;
+        this.balance = balance;
+    }
 
 }
 
