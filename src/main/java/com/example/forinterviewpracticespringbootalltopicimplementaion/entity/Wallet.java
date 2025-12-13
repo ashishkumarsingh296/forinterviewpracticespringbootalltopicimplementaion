@@ -2,6 +2,9 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "wallets")
@@ -18,5 +21,6 @@ public class Wallet {
 
     private Long userId;
     private Double balance;
+
 }
 

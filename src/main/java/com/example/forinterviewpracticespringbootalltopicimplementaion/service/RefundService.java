@@ -27,7 +27,7 @@ public class RefundService {
         }
 
         walletService.credit(
-                order.getUser().getId().toString(),
+                Long.valueOf(order.getUser().getId().toString()),
                 order.getTotalAmount()
         );
 

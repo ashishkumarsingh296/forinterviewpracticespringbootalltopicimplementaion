@@ -25,10 +25,10 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
     @Transactional
-    public void credit(String userId, Double amount) {
+    public void credit(Long userId, Double amount) {
 
         Optional<Wallet> lastWallet =
-                walletRepository.findLastBalance(userId);
+                walletRepository.findTopByUserIdOrderByIdDesc(userId);
 
         double previousBalance = lastWallet
                 .map(Wallet::getBalance)
