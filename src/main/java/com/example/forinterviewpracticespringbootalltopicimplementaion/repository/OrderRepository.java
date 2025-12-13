@@ -12,10 +12,13 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
     @Query("""
-    select o from Order o
+    select distinct o from Order o
     join fetch o.user
+    join fetch o.items i
+    join fetch i.product
     where o.id = :orderId
 """)
-    Optional<Order> findByIdWithUser(@Param("orderId") Long orderId);
+    Optional<Order> findOrderForInvoice(@Param("orderId") Long orderId);
+
 
 }

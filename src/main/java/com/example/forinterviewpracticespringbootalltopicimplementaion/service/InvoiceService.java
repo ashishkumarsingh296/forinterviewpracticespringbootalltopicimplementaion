@@ -24,7 +24,7 @@ public class InvoiceService {
     private final OrderRepository orderRepo;
     private final InvoiceRepository invoiceRepo;
     public byte[] generateInvoice(Long orderId) {
-        Order order = orderRepo.findByIdWithUser(orderId)
+        Order order = orderRepo.findOrderForInvoice(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 //        Order order = orderRepo.findById(orderId)
 //                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
