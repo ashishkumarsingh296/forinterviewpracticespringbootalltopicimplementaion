@@ -149,12 +149,12 @@ public class InvoiceService {
 
                     cs.beginText();
                     cs.newLineAtOffset(300, y);
-                    cs.showText("₹ " + item.getPrice());
+                    cs.showText("Rs. " + item.getPrice());
                     cs.endText();
 
                     cs.beginText();
                     cs.newLineAtOffset(380, y);
-                    cs.showText("₹ " + itemTotal);
+                    cs.showText("Rs. " + itemTotal);
                     cs.endText();
 
                     y -= 15;
@@ -173,7 +173,7 @@ public class InvoiceService {
 
                 cs.beginText();
                 cs.newLineAtOffset(380, y);
-                cs.showText("₹ " + subtotal);
+                cs.showText("Rs. " + subtotal);
                 cs.endText();
 
                 y -= 15;
@@ -185,7 +185,7 @@ public class InvoiceService {
 
                 cs.beginText();
                 cs.newLineAtOffset(380, y);
-                cs.showText("₹ " + gst);
+                cs.showText("Rs. " + gst);
                 cs.endText();
 
                 y -= 20;
@@ -198,7 +198,7 @@ public class InvoiceService {
 
                 cs.beginText();
                 cs.newLineAtOffset(380, y);
-                cs.showText("₹ " + grandTotal);
+                cs.showText("Rs. " + grandTotal);
                 cs.endText();
 
                 cs.close();
