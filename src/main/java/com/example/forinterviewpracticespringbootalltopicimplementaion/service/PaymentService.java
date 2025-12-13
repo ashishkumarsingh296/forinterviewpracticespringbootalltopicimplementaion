@@ -4,6 +4,7 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.Payme
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.*;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.IdempotentRequestRepository;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.OrderRepository;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.PaymentRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -23,6 +24,8 @@ public class PaymentService {
     private final WalletService walletService;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final PaymentRepository paymentRepository;
+
 
     public PaymentResponseDTO pay(String idempotencyKey, Long orderId) throws Exception {
 
@@ -40,14 +43,23 @@ public class PaymentService {
             throw new IllegalStateException("Order already paid");
         }
 
-        // 3️⃣ Debit wallet
+        // 3️⃣ Create Payment record
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setAmount(order.getTotalAmount());
+        payment.setPaymentMethod("WALLET");
+        payment.setPaymentReference("WALLET-" + order.getId() + "-" + System.currentTimeMillis());
+        payment.setStatus("SUCCESS");
+        paymentRepository.save(payment);
+
+        // 5️⃣ Debit wallet
         walletService.debit(String.valueOf(order.getUser().getId()), order.getTotalAmount());
 
-        // 4️⃣ Mark order as PAID
+        // 6️⃣ Mark order as PAID
         order.setOrderStatus(OrderStatus.PAID);
         orderRepo.save(order);
 
-        // 5️⃣ Build response
+        // 7️⃣ Build response
         PaymentResponseDTO response = PaymentResponseDTO.builder()
                 .status("SUCCESS")
                 .orderId(orderId)

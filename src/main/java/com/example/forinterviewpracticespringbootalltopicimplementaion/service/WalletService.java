@@ -42,6 +42,7 @@ public class WalletService {
         tx.setBalance(wallet.getBalance());
         tx.setCreatedAt(LocalDateTime.now());
         walletTransactionRepository.save(tx);
+
     }
 
     @Transactional
