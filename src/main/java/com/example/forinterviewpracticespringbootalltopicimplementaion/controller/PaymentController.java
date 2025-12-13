@@ -16,7 +16,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping
+    @PostMapping("payments/pay")
     public ResponseEntity<PaymentResponseDTO> pay(
             @RequestBody CreatePaymentRequestDTO dto) {
 
