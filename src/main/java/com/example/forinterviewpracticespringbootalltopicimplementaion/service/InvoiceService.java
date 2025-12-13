@@ -29,7 +29,8 @@ public class InvoiceService {
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
         String invoiceId = UUID.randomUUID().toString();
-        String path = "/home/aashudev/invoices/" + invoiceId + ".pdf";
+
+        String path = "C:\\Users\\ASHISH\\Downloads\\" + invoiceId + ".pdf";
 
         createPdf(order, path);
 
