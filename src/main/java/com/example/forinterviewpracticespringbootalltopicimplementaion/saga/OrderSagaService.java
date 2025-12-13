@@ -42,7 +42,6 @@ public class OrderSagaService {
         sagaRepo.save(saga);
 
         try {
-            // 1️⃣ Wallet reserve
             walletService.debit(
                     String.valueOf(order.getUser().getId()),
                     order.getTotalAmount(),
@@ -51,19 +50,19 @@ public class OrderSagaService {
             saga.setStatus(SagaStatus.WALLET_DEBITED);
             sagaRepo.save(saga);
 
-            // 2️⃣ Payment
             paymentService.pay(idempotencyKey, orderId);
             saga.setStatus(SagaStatus.PAYMENT_DONE);
             sagaRepo.save(saga);
 
-            // 3️⃣ Invoice
             invoiceService.generateInvoice(orderId);
             saga.setStatus(SagaStatus.INVOICE_GENERATED);
             sagaRepo.save(saga);
 
-            // 4️⃣ Complete
             order.setOrderStatus(OrderStatus.COMPLETED);
+            orderRepo.save(order);
+
             saga.setStatus(SagaStatus.COMPLETED);
+            sagaRepo.save(saga);
 
         } catch (Exception ex) {
             compensate(order);
@@ -81,4 +80,12 @@ public class OrderSagaService {
         );
         order.setOrderStatus(OrderStatus.FAILED);
     }
+
+    public void startSaga(Long orderId) {
+        OrderSaga saga = new OrderSaga();
+        saga.setOrderId(orderId);
+        saga.setStatus(SagaStatus.STARTED);
+        sagaRepo.save(saga);
+    }
+
 }
