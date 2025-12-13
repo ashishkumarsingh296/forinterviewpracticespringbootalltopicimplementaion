@@ -27,40 +27,33 @@ public class WalletService {
     @Transactional
     public void credit(String userId, Double amount) {
 
-        double previousBalance = walletRepository
+        // 1️⃣ Wallet row lock karo
+        Wallet wallet = walletRepository
                 .findTopByUserIdOrderByIdDesc(userId)
-                .map(Wallet::getBalance)
-                .orElse(0.0);
+                .orElseGet(() -> {
+                    Wallet w = new Wallet();
+                    w.setUserId(userId);
+                    w.setBalance(0.0);
+                    return walletRepository.save(w);
+                });
 
+        // 2️⃣ Balance update
+        double newBalance = wallet.getBalance() + amount;
+        wallet.setBalance(newBalance);
+        walletRepository.save(wallet);
+
+        // 3️⃣ Transaction history
         WalletTransaction tx = new WalletTransaction();
         tx.setUserId(userId);
         tx.setAmount(amount);
         tx.setType(TxType.CREDIT);
-        tx.setBalance(previousBalance + amount);
+        tx.setBalance(newBalance);
+        tx.setReference("CREDIT");
 
         walletTransactionRepository.save(tx);
+
     }
-
-//    public void credit(String userId, Double amount) {
-//
-//        Optional<Wallet> lastWallet =
-//                walletRepository.findTopByUserIdOrderByIdDesc(userId);
-//
-//        double previousBalance = lastWallet
-//                .map(Wallet::getBalance)
-//                .orElse(0.0);
-//
-//        WalletTransaction tx = new WalletTransaction();
-//        tx.setId(Long.valueOf(UUID.randomUUID().toString()));
-//        tx.setUserId(userId);
-//        tx.setAmount(amount);
-//        tx.setType(TxType.CREDIT);
-//        tx.setBalance(previousBalance + amount);
-//        tx.setCreatedAt(LocalDateTime.now());
-//
-//        walletTransactionRepository.save(tx); // ✅ CORRECT
-//    }
-
+    
     @Transactional
     public void debit(String userId, Double amount) {
 
