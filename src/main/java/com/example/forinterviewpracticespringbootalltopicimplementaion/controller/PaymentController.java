@@ -16,10 +16,13 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("payments/pay")
+    @PostMapping("/payments/pay")
     public ResponseEntity<PaymentResponseDTO> pay(
-            @RequestBody CreatePaymentRequestDTO dto) {
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestBody CreatePaymentRequestDTO dto) throws Exception {
 
-        return ResponseEntity.ok(paymentService.createDummyPayment(dto));
+        return ResponseEntity.ok(
+                paymentService.pay(idempotencyKey, Long.valueOf(String.valueOf(dto.getOrderId())))
+        );
     }
 }

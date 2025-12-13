@@ -18,7 +18,7 @@ public class InvoiceController {
 
     @GetMapping("/invoice/{orderId}")
     public ResponseEntity<byte[]> generateInvoice(@PathVariable Long orderId) throws Exception {
-        byte[] pdf = invoiceService.generateInvoicePdf(orderId);
+        byte[] pdf = invoiceService.generateInvoice(orderId);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice_" + orderId + ".pdf")

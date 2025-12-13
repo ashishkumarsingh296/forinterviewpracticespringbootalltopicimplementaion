@@ -1,28 +1,28 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "wallet_transactions")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data
 public class WalletTransaction {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
-    private String type; // CREDIT / DEBIT
+    private String userId;
+
     private Double amount;
+
+    @Enumerated(EnumType.STRING)
+    private TxType type;
+
+    private Double balance;
+
     private String reference;
+
     private LocalDateTime createdAt;
-
-    @ManyToOne
-    private Wallet wallet;
 }
-

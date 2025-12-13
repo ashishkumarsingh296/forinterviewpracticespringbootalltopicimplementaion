@@ -1,6 +1,8 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.service;
 
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Invoice;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Order;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.InvoiceRepository;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.OrderRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -11,20 +13,41 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class InvoiceService {
 
-    private final OrderRepository orderRepository;
+    private final OrderRepository orderRepo;
+    private final InvoiceRepository invoiceRepo;
 
-    public byte[] generateInvoicePdf(Long orderId) throws Exception {
-        Order order = orderRepository.findById(orderId)
+    public byte[] generateInvoice(Long orderId) {
+
+        Order order = orderRepo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
+        String invoiceId = UUID.randomUUID().toString();
+        String path = "/home/aashudev/invoices/" + invoiceId + ".pdf";
+
+        createPdf(order, path);
+
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceId(invoiceId);
+        invoice.setOrderId(orderId.toString());
+        invoice.setTotalAmount(order.getTotalAmount());
+        invoice.setPdfPath(path);
+        invoice.setGeneratedAt(LocalDateTime.now());
+
+        invoiceRepo.save(invoice);
+        return null;
+    }
+
+    private void createPdf(Order order, String path) {
+
         try (PDDocument doc = new PDDocument()) {
+
             PDPage page = new PDPage(PDRectangle.A4);
             doc.addPage(page);
 
@@ -32,58 +55,32 @@ public class InvoiceService {
 
             cs.beginText();
             cs.setFont(PDType1Font.HELVETICA_BOLD, 18);
-            cs.newLineAtOffset(50, 800);
+            cs.newLineAtOffset(50, 750);
             cs.showText("INVOICE");
             cs.endText();
 
             cs.beginText();
             cs.setFont(PDType1Font.HELVETICA, 12);
-            cs.newLineAtOffset(50, 770);
-            cs.showText("Order#: " + order.getOrderNumber());
+            cs.newLineAtOffset(50, 720);
+            cs.showText("Order#: " + order.getId());
             cs.endText();
 
             cs.beginText();
-            cs.setFont(PDType1Font.HELVETICA, 12);
-            cs.newLineAtOffset(50, 750);
-            cs.showText("Date: " + order.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+            cs.newLineAtOffset(50, 700);
+            cs.showText("Date: " + LocalDateTime.now());
             cs.endText();
 
-            float y = 720;
+            cs.beginText();
+            cs.newLineAtOffset(50, 660);
             cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
-            cs.beginText();
-            cs.newLineAtOffset(50, y);
-            cs.showText("Product");
-            cs.newLineAtOffset(200, 0);
-            cs.showText("Qty");
-            cs.newLineAtOffset(50, 0);
-            cs.showText("Price");
-            cs.endText();
-
-            cs.setFont(PDType1Font.HELVETICA, 12);
-            y -= 20;
-            for (var item : order.getItems()) {
-                cs.beginText();
-                cs.newLineAtOffset(50, y);
-                cs.showText(item.getProduct().getName());
-                cs.newLineAtOffset(200, 0);
-                cs.showText(String.valueOf(item.getQuantity()));
-                cs.newLineAtOffset(50, 0);
-                cs.showText(String.valueOf(item.getPrice()));
-                cs.endText();
-                y -= 20;
-            }
-
-            cs.beginText();
-            cs.newLineAtOffset(50, y - 10);
-            cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
-            cs.showText("Total: " + order.getTotalAmount());
+            cs.showText("Total Amount: " + order.getTotalAmount());
             cs.endText();
 
             cs.close();
+            doc.save(path);
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            doc.save(baos);
-            return baos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Invoice PDF generation failed", e);
         }
     }
 }

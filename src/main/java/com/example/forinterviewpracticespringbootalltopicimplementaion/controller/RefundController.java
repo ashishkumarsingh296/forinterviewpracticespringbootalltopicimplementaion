@@ -16,7 +16,7 @@ public class RefundController {
     private final RefundService refundService;
 
     @PostMapping("/refunds/requestRefund")
-    public RefundResponseDTO requestRefund(@RequestBody RefundRequestDTO dto) {
-        return refundService.requestRefund(dto);
+    public RefundResponseDTO requestRefund(@RequestParam Long orderId) {
+        return refundService.refund(orderId);
     }
 }

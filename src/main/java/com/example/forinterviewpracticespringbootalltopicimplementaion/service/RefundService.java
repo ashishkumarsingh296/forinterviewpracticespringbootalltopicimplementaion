@@ -1,50 +1,46 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.service;
 
-import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.RefundRequestDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.RefundResponseDTO;
-import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Payment;
-import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Refund;
-import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.PaymentRepository;
-import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.RefundRepository;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Order;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.OrderStatus;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.OrderRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class RefundService {
 
-    private final RefundRepository refundRepository;
-    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepo;
+    private final WalletService walletService;
 
     @Transactional
-    public RefundResponseDTO requestRefund(RefundRequestDTO dto) {
-        Payment payment = paymentRepository.findById(dto.getPaymentId())
-                .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
+    public RefundResponseDTO refund(Long orderId) {
 
-        if (dto.getAmount() <= 0 || dto.getAmount() > payment.getAmount())
-            throw new IllegalArgumentException("Invalid refund amount");
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
-        Refund refund = Refund.builder()
-                .payment(payment)
-                .amount(dto.getAmount())
-                .reason(dto.getReason())
-                .status("REFUNDED")
-                .build();
+        if (order.getOrderStatus() != OrderStatus.PAID) {
+            throw new IllegalStateException("Refund not allowed");
+        }
 
-        refund = refundRepository.save(refund);
+        walletService.credit(
+                order.getUser().getId().toString(),
+                order.getTotalAmount()
+        );
 
-        payment.setStatus("REFUNDED");
-        paymentRepository.save(payment);
+        order.setOrderStatus(OrderStatus.REFUNDED);
+        orderRepo.save(order);
 
         return RefundResponseDTO.builder()
-                .id(refund.getId())
-                .paymentId(payment.getId())
-                .amount(refund.getAmount())
-                .status(refund.getStatus())
-                .reason(refund.getReason())
-                .createdAt(refund.getCreatedAt())
+                .orderId(order.getId())
+                .status("SUCCESS")
+                .paymentId(order.getPayment().getId())
                 .build();
     }
 }
+
+
+

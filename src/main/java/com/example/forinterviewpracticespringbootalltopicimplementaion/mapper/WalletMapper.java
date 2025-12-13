@@ -24,8 +24,8 @@ public class WalletMapper {
         if (walletTransaction == null) return null;
 
         WalletTransactionDTO dto = new WalletTransactionDTO();
-        dto.setTransactionId(walletTransaction.getId());
-        dto.setType(walletTransaction.getType());
+        dto.setTransactionId(Long.valueOf(walletTransaction.getId()));
+        dto.setType(String.valueOf(walletTransaction.getType()));
         dto.setAmount(walletTransaction.getAmount());
         dto.setReference(walletTransaction.getReference());
         dto.setCreatedAt(walletTransaction.getCreatedAt());

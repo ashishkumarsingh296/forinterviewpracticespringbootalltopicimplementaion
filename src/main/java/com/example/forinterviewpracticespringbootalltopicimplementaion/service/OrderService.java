@@ -3,7 +3,7 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.service;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.*;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Order;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.OrderItem;
-import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Payment;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.OrderStatus;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.User;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.mapper.OrderMapper;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.OrderRepository;
@@ -44,7 +44,7 @@ public class OrderService {
 
         Order order = Order.builder()
                 .orderNumber(UUID.randomUUID().toString())
-                .status(dto.getStatus())
+                .orderStatus(OrderStatus.valueOf(dto.getStatus()))
                 .user(user)
                 .isDeleted(false)
                 .build();
@@ -102,7 +102,7 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
         String status = dto.getStatus().toUpperCase();
-        order.setStatus(status);
+        order.setOrderStatus(OrderStatus.valueOf(status));
 
         // Sync payment
         if (order.getPayment() != null) {
