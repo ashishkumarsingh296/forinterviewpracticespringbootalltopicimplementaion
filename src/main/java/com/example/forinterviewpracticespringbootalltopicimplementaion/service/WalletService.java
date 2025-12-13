@@ -7,10 +7,8 @@ import com.example.forinterviewpracticespringbootalltopicimplementaion.repositor
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.WalletTransactionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 
 @Service
@@ -24,7 +22,7 @@ public class WalletService {
     public void debit(String userId, Double amount) {
 
         // 1️⃣ Fetch wallet with pessimistic lock
-        Wallet wallet = walletRepository.findTopByUserIdForUpdate(userId)
+        Wallet wallet = walletRepository.findTopByUserIdOrderByIdDesc(userId)
                 .orElseGet(() -> new Wallet(userId, 0.0));
 
         // 2️⃣ Check balance
@@ -32,18 +30,17 @@ public class WalletService {
             throw new IllegalStateException("Insufficient wallet balance");
         }
 
-        // 3️⃣ Deduct balance
+        // 3️⃣ Deduct balance and save
         wallet.setBalance(wallet.getBalance() - amount);
         walletRepository.save(wallet);
 
-        // 4️⃣ Create transaction
+        // 4️⃣ Record transaction
         WalletTransaction tx = new WalletTransaction();
         tx.setUserId(userId);
         tx.setAmount(amount);
         tx.setType(TxType.DEBIT);
         tx.setBalance(wallet.getBalance());
         tx.setCreatedAt(LocalDateTime.now());
-
         walletTransactionRepository.save(tx);
     }
 
@@ -52,20 +49,19 @@ public class WalletService {
 
         // 1️⃣ Fetch wallet with pessimistic lock
         Wallet wallet = walletRepository.findTopByUserIdOrderByIdDesc(userId)
-                .orElse(new Wallet(userId, 0.0));
+                .orElseGet(() -> new Wallet(userId, 0.0));
 
+        // 2️⃣ Add balance and save
         wallet.setBalance(wallet.getBalance() + amount);
         walletRepository.save(wallet);
 
-
-        // 3️⃣ Create transaction
+        // 3️⃣ Record transaction
         WalletTransaction tx = new WalletTransaction();
         tx.setUserId(userId);
         tx.setAmount(amount);
         tx.setType(TxType.CREDIT);
         tx.setBalance(wallet.getBalance());
         tx.setCreatedAt(LocalDateTime.now());
-
         walletTransactionRepository.save(tx);
     }
 }
