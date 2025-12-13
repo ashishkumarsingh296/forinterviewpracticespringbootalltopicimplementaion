@@ -12,7 +12,6 @@ public class WalletTransaction {
 
     @Id
     private Long id;
-
     private Long userId;
 
     private Double amount;

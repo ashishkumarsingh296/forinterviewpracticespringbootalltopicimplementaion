@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 public interface WalletTransactionRepository extends JpaRepository<WalletTransaction, Long> {
-    Page<WalletTransaction> findByWalletId(Long id, Pageable pageable);
+    Page<WalletTransaction> findById(Long id, Pageable pageable);
 }
 
