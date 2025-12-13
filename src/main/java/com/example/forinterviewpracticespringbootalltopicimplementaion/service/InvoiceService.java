@@ -2,6 +2,7 @@ package com.example.forinterviewpracticespringbootalltopicimplementaion.service;
 
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Invoice;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Order;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.OrderItem;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.InvoiceRepository;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.repository.OrderRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,29 +23,6 @@ public class InvoiceService {
 
     private final OrderRepository orderRepo;
     private final InvoiceRepository invoiceRepo;
-
-//    public byte[] generateInvoice(Long orderId) {
-//
-//        Order order = orderRepo.findById(orderId)
-//                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
-//
-//        String invoiceId = UUID.randomUUID().toString();
-//
-//        String path = "C:\\Users\\ASHISH\\Downloads\\" + invoiceId + ".pdf";
-//
-//        createPdf(order, path);
-//
-//        Invoice invoice = new Invoice();
-//        invoice.setInvoiceId(invoiceId);
-//        invoice.setOrderId(orderId.toString());
-//        invoice.setTotalAmount(order.getTotalAmount());
-//        invoice.setPdfPath(path);
-//        invoice.setGeneratedAt(LocalDateTime.now());
-//
-//        invoiceRepo.save(invoice);
-//        return null;
-//    }
-
     public byte[] generateInvoice(Long orderId) {
 
         Order order = orderRepo.findById(orderId)
@@ -53,7 +31,7 @@ public class InvoiceService {
         String invoiceId = UUID.randomUUID().toString();
         String path = "C:\\Users\\ASHISH\\Downloads\\" + invoiceId + ".pdf";
 
-        createPdf(order, path);
+        createPdf(order,invoiceId, path);
 
         Invoice invoice = new Invoice();
         invoice.setInvoiceId(invoiceId);
@@ -72,43 +50,163 @@ public class InvoiceService {
         }
     }
 
-    private void createPdf(Order order, String path) {
+    /**
+         * Generates invoice PDF and stores metadata
+         */
 
-        try (PDDocument doc = new PDDocument()) {
+        /**
+         * REAL invoice PDF generation
+         */
+        private void createPdf(Order order, String invoiceId, String path) {
 
-            PDPage page = new PDPage(PDRectangle.A4);
-            doc.addPage(page);
+            try (PDDocument doc = new PDDocument()) {
 
-            PDPageContentStream cs = new PDPageContentStream(doc, page);
+                PDPage page = new PDPage(PDRectangle.A4);
+                doc.addPage(page);
 
-            cs.beginText();
-            cs.setFont(PDType1Font.HELVETICA_BOLD, 18);
-            cs.newLineAtOffset(50, 750);
-            cs.showText("INVOICE");
-            cs.endText();
+                PDPageContentStream cs = new PDPageContentStream(doc, page);
 
-            cs.beginText();
-            cs.setFont(PDType1Font.HELVETICA, 12);
-            cs.newLineAtOffset(50, 720);
-            cs.showText("Order#: " + order.getId());
-            cs.endText();
+                // ================= HEADER =================
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 20);
+                cs.newLineAtOffset(50, 770);
+                cs.showText("INVOICE");
+                cs.endText();
 
-            cs.beginText();
-            cs.newLineAtOffset(50, 700);
-            cs.showText("Date: " + LocalDateTime.now());
-            cs.endText();
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA, 12);
+                cs.newLineAtOffset(50, 740);
+                cs.showText("Invoice ID: " + invoiceId);
+                cs.endText();
 
-            cs.beginText();
-            cs.newLineAtOffset(50, 660);
-            cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
-            cs.showText("Total Amount: " + order.getTotalAmount());
-            cs.endText();
+                cs.beginText();
+                cs.newLineAtOffset(50, 720);
+                cs.showText("Order ID: " + order.getId());
+                cs.endText();
 
-            cs.close();
-            doc.save(path);
+                cs.beginText();
+                cs.newLineAtOffset(50, 700);
+                cs.showText("Date: " + LocalDateTime.now());
+                cs.endText();
 
-        } catch (Exception e) {
-            throw new RuntimeException("Invoice PDF generation failed", e);
+                // ================= CUSTOMER =================
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
+                cs.newLineAtOffset(50, 670);
+                cs.showText("Billed To:");
+                cs.endText();
+
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA, 11);
+                cs.newLineAtOffset(50, 650);
+                cs.showText(order.getUser().getEmail());
+                cs.endText();
+
+                // ================= TABLE HEADER =================
+                float y = 610;
+
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 11);
+                cs.newLineAtOffset(50, y);
+                cs.showText("Item");
+                cs.endText();
+
+                cs.beginText();
+                cs.newLineAtOffset(250, y);
+                cs.showText("Qty");
+                cs.endText();
+
+                cs.beginText();
+                cs.newLineAtOffset(300, y);
+                cs.showText("Price");
+                cs.endText();
+
+                cs.beginText();
+                cs.newLineAtOffset(380, y);
+                cs.showText("Total");
+                cs.endText();
+
+                y -= 20;
+                cs.setFont(PDType1Font.HELVETICA, 11);
+
+                double subtotal = 0.0;
+
+                // ================= ITEMS =================
+                for (OrderItem item : order.getItems()) {
+
+                    double itemTotal = item.getPrice() * item.getQuantity();
+                    subtotal += itemTotal;
+
+                    cs.beginText();
+                    cs.newLineAtOffset(50, y);
+                    cs.showText(item.getProduct().getName());
+                    cs.endText();
+
+                    cs.beginText();
+                    cs.newLineAtOffset(250, y);
+                    cs.showText(item.getQuantity().toString());
+                    cs.endText();
+
+                    cs.beginText();
+                    cs.newLineAtOffset(300, y);
+                    cs.showText("₹ " + item.getPrice());
+                    cs.endText();
+
+                    cs.beginText();
+                    cs.newLineAtOffset(380, y);
+                    cs.showText("₹ " + itemTotal);
+                    cs.endText();
+
+                    y -= 15;
+                }
+
+                // ================= TOTALS =================
+                double gst = subtotal * 0.18;
+                double grandTotal = subtotal + gst;
+
+                y -= 20;
+
+                cs.beginText();
+                cs.newLineAtOffset(300, y);
+                cs.showText("Subtotal:");
+                cs.endText();
+
+                cs.beginText();
+                cs.newLineAtOffset(380, y);
+                cs.showText("₹ " + subtotal);
+                cs.endText();
+
+                y -= 15;
+
+                cs.beginText();
+                cs.newLineAtOffset(300, y);
+                cs.showText("GST (18%):");
+                cs.endText();
+
+                cs.beginText();
+                cs.newLineAtOffset(380, y);
+                cs.showText("₹ " + gst);
+                cs.endText();
+
+                y -= 20;
+
+                cs.beginText();
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 12);
+                cs.newLineAtOffset(300, y);
+                cs.showText("Total Payable:");
+                cs.endText();
+
+                cs.beginText();
+                cs.newLineAtOffset(380, y);
+                cs.showText("₹ " + grandTotal);
+                cs.endText();
+
+                cs.close();
+                doc.save(path);
+
+            } catch (Exception e) {
+                throw new RuntimeException("Invoice PDF generation failed", e);
+            }
         }
     }
-}
+
