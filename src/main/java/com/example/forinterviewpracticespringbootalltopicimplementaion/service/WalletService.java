@@ -19,7 +19,7 @@ public class WalletService {
     private final WalletTransactionRepository walletTransactionRepository;
 
     @Transactional
-    public void debit(String userId, Double amount) {
+    public void debit(String userId, Double amount,String reference) {
 
         // 1️⃣ Fetch wallet with pessimistic lock
         Wallet wallet = walletRepository.findTopByUserIdOrderByIdDesc(userId)
@@ -38,6 +38,7 @@ public class WalletService {
         WalletTransaction tx = new WalletTransaction();
         tx.setUserId(userId);
         tx.setAmount(amount);
+        tx.setReference(reference);
         tx.setType(TxType.DEBIT);
         tx.setBalance(wallet.getBalance());
         tx.setCreatedAt(LocalDateTime.now());
@@ -46,7 +47,7 @@ public class WalletService {
     }
 
     @Transactional
-    public void credit(String userId, Double amount) {
+    public void credit(String userId, Double amount,String reference) {
 
         // 1️⃣ Fetch wallet with pessimistic lock
         Wallet wallet = walletRepository.findTopByUserIdOrderByIdDesc(userId)
@@ -60,6 +61,7 @@ public class WalletService {
         WalletTransaction tx = new WalletTransaction();
         tx.setUserId(userId);
         tx.setAmount(amount);
+        tx.setReference(reference);
         tx.setType(TxType.CREDIT);
         tx.setBalance(wallet.getBalance());
         tx.setCreatedAt(LocalDateTime.now());

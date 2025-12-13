@@ -28,7 +28,7 @@ public class RefundService {
 
         walletService.credit(
                 order.getUser().getId().toString(),
-                order.getTotalAmount()
+                order.getTotalAmount(),order.getPayment().getPaymentReference()
         );
 
         order.setOrderStatus(OrderStatus.REFUNDED);

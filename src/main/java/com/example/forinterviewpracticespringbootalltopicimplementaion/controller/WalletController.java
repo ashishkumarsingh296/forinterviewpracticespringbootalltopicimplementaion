@@ -21,8 +21,8 @@ public class WalletController {
     private final WalletService walletService;
     private final WalletMapper walletMapper;
     @PostMapping("/wallet/{userId}/credit")
-    public void debitWallet(@PathVariable String userId, @RequestParam Double amount) {
-        walletService.credit(userId, amount);
+    public void debitWallet(@PathVariable String userId, @RequestParam Double amount,@RequestParam String reference) {
+        walletService.credit(userId, amount,reference);
     }
 
 }

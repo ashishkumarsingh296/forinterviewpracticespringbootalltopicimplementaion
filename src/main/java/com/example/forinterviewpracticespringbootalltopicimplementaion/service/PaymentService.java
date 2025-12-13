@@ -68,7 +68,7 @@ public class PaymentService {
             paymentRepository.save(payment);
 
             // 5️⃣ Debit wallet
-            walletService.debit(String.valueOf(order.getUser().getId()), order.getTotalAmount());
+            walletService.debit(String.valueOf(order.getUser().getId()), order.getTotalAmount(),order.getPayment().getPaymentReference());
 
             // 6️⃣ Mark order as PAID
             order.setOrderStatus(OrderStatus.PAID);
