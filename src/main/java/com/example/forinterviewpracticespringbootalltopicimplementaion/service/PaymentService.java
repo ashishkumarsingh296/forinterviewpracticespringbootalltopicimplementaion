@@ -25,7 +25,9 @@ public class PaymentService {
     private final OrderRepository orderRepo;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final WalletService walletService;
 
+    @Transactional
     public PaymentResponseDTO pay(String idempotencyKey, Long orderId) throws Exception {
 
         // 1️⃣ Idempotency check
@@ -47,22 +49,31 @@ public class PaymentService {
             throw new IllegalStateException("Order already paid");
         }
 
-        // 3️⃣ Mark PAID
-        order.setOrderStatus(OrderStatus.valueOf(String.valueOf(OrderStatus.PAID)));
+        // 3️⃣ Wallet debit (REAL PAYMENT STEP)
+        walletService.debit(
+                String.valueOf(order.getUser().getId()),
+                order.getTotalAmount()
+        );
+
+        // 4️⃣ Mark PAID
+        order.setOrderStatus(OrderStatus.PAID);
         orderRepo.save(order);
 
+        // 5️⃣ Build response
         PaymentResponseDTO response = PaymentResponseDTO.builder()
                 .status("SUCCESS")
                 .orderId(orderId)
+                .amount(order.getTotalAmount())
+                .method("WALLET")
                 .build();
 
-        // 4️⃣ Save idempotent record
+        // 6️⃣ Save idempotent record
         IdempotentRequest record = new IdempotentRequest();
         record.setIdempotencyKey(idempotencyKey);
         record.setResponse(objectMapper.writeValueAsString(response));
         idempotentRepo.save(record);
 
-        // 5️⃣ Kafka event
+        // 7️⃣ Kafka event (AFTER DB COMMIT ideally)
         kafkaTemplate.send(
                 "payment-events",
                 new PaymentEvent(orderId.toString(), "PAYMENT_SUCCESS")

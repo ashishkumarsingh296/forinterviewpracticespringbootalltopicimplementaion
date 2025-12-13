@@ -25,7 +25,7 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
     @Transactional
-    public void credit(Long userId, Double amount) {
+    public void credit(String userId, Double amount) {
 
         Optional<Wallet> lastWallet =
                 walletRepository.findTopByUserIdOrderByIdDesc(userId);
@@ -45,6 +45,39 @@ public class WalletService {
         walletTransactionRepository.save(tx); // ✅ CORRECT
     }
 
+    @Transactional
+    public void debit(String userId, Double amount) {
 
+        // 1️⃣ Get latest wallet balance
+        Wallet wallet = walletRepository.findTopByUserIdOrderByIdDesc(userId)
+                .orElseThrow(() -> new IllegalStateException("Wallet not found"));
 
+        // 2️⃣ Balance check
+        if (wallet.getBalance() < amount) {
+            throw new IllegalStateException("Insufficient wallet balance");
+        }
+
+        // 3️⃣ Calculate new balance
+        Double newBalance = wallet.getBalance() - amount;
+
+        // 4️⃣ Save wallet snapshot
+        Wallet updatedWallet = Wallet.builder()
+                .userId(wallet.getUserId())
+                .balance(newBalance)
+                .build();
+
+        walletRepository.save(updatedWallet);
+
+        // 5️⃣ Save transaction (ledger)
+        WalletTransaction tx = new WalletTransaction();
+        tx.setId(UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE);
+        tx.setUserId(String.valueOf(userId));
+        tx.setAmount(amount);
+        tx.setType(TxType.DEBIT);
+        tx.setBalance(newBalance);
+        tx.setReference("PAYMENT");
+        tx.setCreatedAt(LocalDateTime.now());
+
+        walletTransactionRepository.save(tx);
+    }
 }

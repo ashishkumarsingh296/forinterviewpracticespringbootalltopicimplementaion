@@ -358,10 +358,10 @@ paths:
   # =======================
   # WALLET CONTROLLER
   # =======================
-  /api/wallet/{userId}/debit:
+  /api/wallet/{userId}/credit:
     post:
       tags: [wallet-controller]
-      summary: Debit Wallet
+      summary: Credit Wallet
       parameters:
         - in: path
           name: userId
@@ -375,7 +375,7 @@ paths:
             type: number
       responses:
         "200":
-          description: Wallet debited
+          description: Wallet credited
           content:
             application/json:
               schema:

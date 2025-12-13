@@ -12,7 +12,7 @@ public class WalletTransaction {
 
     @Id
     private Long id;
-    private Long userId;
+    private String userId;
 
     private Double amount;
 
