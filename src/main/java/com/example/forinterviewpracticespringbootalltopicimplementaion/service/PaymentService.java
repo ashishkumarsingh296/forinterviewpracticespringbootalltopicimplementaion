@@ -93,11 +93,12 @@ public class PaymentService {
                     "payment-events",
                     new PaymentEvent(orderId.toString(), "PAYMENT_SUCCESS")
             );
+            return response;
+
         } finally {
             lockService.releaseLock(lockKey);
 
         }
-        return response;
 
     }
 
