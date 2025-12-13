@@ -17,20 +17,12 @@ public class WalletTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "wallet_id", nullable = false)
-    private Wallet wallet;
-
-    private Double amount; // positive credit, negative debit
-
-    private String type; // CREDIT, DEBIT, REFUND
-
-    private String reference; // PAYMENT_3, REFUND_5
-
+    private String type; // CREDIT / DEBIT
+    private Double amount;
+    private String reference;
     private LocalDateTime createdAt;
 
-    @PrePersist
-    void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    @ManyToOne
+    private Wallet wallet;
 }
+

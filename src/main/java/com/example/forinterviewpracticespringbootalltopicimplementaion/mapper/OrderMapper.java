@@ -1,7 +1,7 @@
 package com.example.forinterviewpracticespringbootalltopicimplementaion.mapper;
 
-import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.OrderDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.OrderItemDTO;
+import com.example.forinterviewpracticespringbootalltopicimplementaion.dto.OrderResponseDTO;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.Order;
 import com.example.forinterviewpracticespringbootalltopicimplementaion.entity.OrderItem;
 import org.springframework.stereotype.Component;
@@ -12,10 +12,10 @@ import java.util.stream.Collectors;
 @Component
 public class OrderMapper {
 
-    public OrderDTO toDTO(Order order) {
+    public OrderResponseDTO toDTO(Order order) {
         if (order == null) return null;
 
-        OrderDTO dto = new OrderDTO();
+        OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
         dto.setOrderNumber(order.getOrderNumber());
         dto.setStatus(order.getStatus());

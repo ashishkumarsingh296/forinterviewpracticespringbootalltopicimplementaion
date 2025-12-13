@@ -17,19 +17,19 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/orders/addOrder")
-    public OrderDTO createOrder(@RequestBody CreateOrderRequestDTO dto) {
+    public OrderResponseDTO createOrder(@RequestBody CreateOrderRequestDTO dto) {
         return orderService.createOrder(dto);
     }
 
     @GetMapping("/orders/user/{userId}")
-    public Page<OrderDTO> getUserOrders(@PathVariable Long userId,
+    public Page<OrderResponseDTO> getUserOrders(@PathVariable Long userId,
                                         @RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "10") int size) {
         return orderService.getUserOrders(userId, PageRequest.of(page, size));
     }
 
     @GetMapping("/orders/{orderId}")
-    public OrderDTO getOrderById(@PathVariable Long orderId) {
+    public OrderResponseDTO getOrderById(@PathVariable Long orderId) {
         return orderService.getOrderById(orderId);
     }
 

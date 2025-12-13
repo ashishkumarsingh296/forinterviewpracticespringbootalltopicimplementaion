@@ -19,90 +19,49 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WalletService {
 
+
+
+//    @Transactional
+//    public void creditWallet(Long userId, Double amount, String reference) {
+//        Wallet wallet = getOrCreateWalletForUser(userId);
+//        wallet.setBalance(wallet.getBalance() + amount);
+//        walletRepository.save(wallet);
+//
+//        WalletTransaction tx = WalletTransaction.builder()
+//                .wallet(wallet)
+//                .amount(amount)
+//                .type("CREDIT")
+//                .reference(reference != null ? reference : "CREDIT_" + UUID.randomUUID())
+//                .build();
+//        walletTransactionRepository.save(tx);
+//    }
+
+
     private final WalletRepository walletRepository;
     private final WalletTransactionRepository walletTransactionRepository;
-    private final UserRepository userRepository;
 
-    @Transactional
-    public Wallet getOrCreateWalletForUser(Long userId) {
-        return walletRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    var user = userRepository.findById(userId)
-                            .orElseThrow(() -> new EntityNotFoundException("User not found"));
-                    Wallet wallet = Wallet.builder().user(user).balance(0.0).build();
-                    return walletRepository.save(wallet);
-                });
-    }
+    public void debit(Long userId, Double amount, String ref) {
 
-    @Transactional
-    public void creditWallet(Long userId, Double amount, String reference) {
-        Wallet wallet = getOrCreateWalletForUser(userId);
-        wallet.setBalance(wallet.getBalance() + amount);
-        walletRepository.save(wallet);
-
-        WalletTransaction tx = WalletTransaction.builder()
-                .wallet(wallet)
-                .amount(amount)
-                .type("CREDIT")
-                .reference(reference != null ? reference : "CREDIT_" + UUID.randomUUID())
-                .build();
-        walletTransactionRepository.save(tx);
-    }
-
-    @Transactional
-    public void debitWallet(Long userId, Double amount, String reference) {
-        Wallet wallet = getOrCreateWalletForUser(userId);
-        if (wallet.getBalance() < amount)
-            throw new IllegalStateException("Insufficient wallet balance");
-        wallet.setBalance(wallet.getBalance() - amount);
-        walletRepository.save(wallet);
-
-        WalletTransaction tx = WalletTransaction.builder()
-                .wallet(wallet)
-                .amount(-amount)
-                .type("DEBIT")
-                .reference(reference != null ? reference : "DEBIT_" + UUID.randomUUID())
-                .build();
-        walletTransactionRepository.save(tx);
-    }
-
-    public Page<WalletTransaction> getWalletTransactions(Long userId, Pageable pageable) {
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Wallet not found"));
-        return walletTransactionRepository.findByWalletId(wallet.getId(), pageable);
-    }
 
-    @Transactional
-    public void checkSufficientBalance(Long userId, Double amount, String reference) {
-
-        Wallet wallet = walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Wallet not found for userId " + userId));
-
-        // ❗ 1. Validate amount
-        if (amount == null || amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero");
-        }
-
-        // ❗ 2. Check balance
         if (wallet.getBalance() < amount) {
-            throw new IllegalStateException("Insufficient wallet balance");
+            throw new IllegalStateException("Insufficient balance");
         }
 
-        // ❗ 3. Deduct balance
         wallet.setBalance(wallet.getBalance() - amount);
-        walletRepository.save(wallet);
 
-        // ❗ 4. Save transaction entry
-        WalletTransaction txn = WalletTransaction.builder()
-                .wallet(wallet)
-                .type("DEBIT")
-                .amount(amount)
-                .reference(reference)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        walletTransactionRepository.save(txn);
+        walletTransactionRepository.save(
+                WalletTransaction.builder()
+                        .wallet(wallet)
+                        .type("DEBIT")
+                        .amount(amount)
+                        .reference(ref)
+                        .createdAt(LocalDateTime.now())
+                        .build()
+        );
     }
+
 
 
 }

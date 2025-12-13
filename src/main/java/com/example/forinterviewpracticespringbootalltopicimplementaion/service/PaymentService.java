@@ -19,66 +19,43 @@ import java.util.UUID;
 @Transactional
 public class PaymentService {
 
-    private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository;
-    private final WalletService walletService;
+        private final PaymentRepository paymentRepository;
+        private final OrderRepository orderRepository;
+        private final WalletService walletService;
 
-    public PaymentResponseDTO createDummyPayment(CreatePaymentRequestDTO dto) {
+        public PaymentResponseDTO createDummyPayment(CreatePaymentRequestDTO dto) {
 
-        Order order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new EntityNotFoundException("Order not found"));
+            Order order = orderRepository.findById(dto.getOrderId())
+                    .orElseThrow(() -> new EntityNotFoundException("Order not found"));
 
-        // Prevent duplicate payment
-        if (paymentRepository.findByOrderId(dto.getOrderId()).isPresent())
-            throw new IllegalStateException("Payment already exists for this order");
+            Payment payment = Payment.builder()
+                    .paymentReference("TXN_" + UUID.randomUUID())
+                    .amount(dto.getAmount())
+                    .paymentMethod(dto.getMethod())
+                    .status("PENDING")
+                    .createdAt(LocalDateTime.now())
+                    .order(order)
+                    .build();
 
-        // 🔥 1️⃣ Check wallet balance first
-        walletService.checkSufficientBalance(order.getUser().getId(), dto.getAmount(),
-                "PAYMENT_ORDER_" + dto.getOrderId());
+            walletService.debit(order.getUser().getId(), dto.getAmount(), payment.getPaymentReference());
 
-        // 🔥 2️⃣ Deduct wallet money
-//        walletService.deductAmount(order.getUser().getId(), dto.getAmount(),
-//                "PAYMENT_ORDER_" + dto.getOrderId());
+            payment.setStatus("PAID");
+            order.setStatus("PAID");
 
-        // 🔥 3️⃣ Create payment entry
-        Payment payment = Payment.builder()
-                .paymentReference("DUMMY_TXN_" + UUID.randomUUID())
-                .amount(dto.getAmount())
-                .paymentMethod(dto.getMethod())
-                .status("PAID")  // payment successful because wallet deducted
-                .order(order)
-                .createdAt(LocalDateTime.now())
-                .build();
+            paymentRepository.save(payment);
 
-        paymentRepository.save(payment);
-
-        // 🔥 4️⃣ Update order status
-        order.setPayment(payment);
-        order.setStatus("PAID");
-        orderRepository.save(order);
-
-        // 🔥 5️⃣ Prepare response
-        return PaymentResponseDTO.builder()
-                .id(payment.getId())
-                .paymentReference(payment.getPaymentReference())
-                .amount(payment.getAmount())
-                .status(payment.getStatus())
-                .method(payment.getPaymentMethod())
-                .orderId(order.getId())
-                .build();
+            return PaymentResponseDTO.builder()
+                    .id(payment.getId())
+                    .paymentReference(payment.getPaymentReference())
+                    .amount(payment.getAmount())
+                    .status(payment.getStatus())
+                    .method(payment.getPaymentMethod())
+                    .orderId(order.getId())
+                    .build();
+        }
     }
 
 
 
-    public void completeDummyPayment(Long paymentId, String status) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
 
-        payment.setStatus(status.toUpperCase());
-        Order order = payment.getOrder();
-        order.setStatus(status.equalsIgnoreCase("PAID") ? "PAID" : "FAILED");
 
-        paymentRepository.save(payment);
-        orderRepository.save(order);
-    }
-}

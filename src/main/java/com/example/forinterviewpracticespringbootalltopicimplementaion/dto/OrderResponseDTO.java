@@ -16,9 +16,10 @@ public class OrderResponseDTO {
     private Long id;
     private String orderNumber;
     private String status;
-    private Long userId;
-    private double totalAmount;
-    private String paymentStatus;
+    private Long userId;              // ✅ add this
+    private String paymentStatus;     // ✅ add this
+    private String paymentMethod;     // ✅ add this
+    private Double totalAmount;
     private LocalDateTime createdAt;
     private List<OrderItemDTO> items;
 }

@@ -17,20 +17,15 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
     private String paymentReference;
-
-    @Column(nullable = false)
     private Double amount;
+    private String paymentMethod;
+    private String status; // PENDING, PAID, FAILED
 
-    @Column(nullable = false)
-    private String status;  // PENDING, PAID, FAILED
-
-    private String paymentMethod;  // UPI, CARD, CASH
+    private LocalDateTime createdAt;
 
     @OneToOne
     @JoinColumn(name = "order_id")
     private Order order;
-
-    private LocalDateTime createdAt;
 }
+

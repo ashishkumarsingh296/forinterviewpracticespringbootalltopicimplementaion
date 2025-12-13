@@ -38,7 +38,7 @@ public class OrderService {
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @CacheEvict(value = "userOrders", key = "#dto.userId")
-    public OrderDTO createOrder(CreateOrderRequestDTO dto) {
+    public OrderResponseDTO createOrder(CreateOrderRequestDTO dto) {
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
@@ -79,19 +79,19 @@ public class OrderService {
         log.info("Order {} created", saved.getId());
 
         // Map to DTO
-        OrderDTO dtoResponse = mapper.toDTO(saved);
+        OrderResponseDTO dtoResponse = mapper.toDTO(saved);
         dtoResponse.setPaymentStatus("No payment processed yet"); // ✅ indicate payment status
         return dtoResponse;
     }
 
     @Cacheable(value = "userOrders", key = "#userId")
-    public Page<OrderDTO> getUserOrders(Long userId, Pageable pageable) {
+    public Page<OrderResponseDTO> getUserOrders(Long userId, Pageable pageable) {
         return orderRepository.findByUserIdAndIsDeletedFalse(userId, pageable)
                 .map(mapper::toDTO);
     }
 
     @Cacheable(value = "order", key = "#orderId")
-    public OrderDTO getOrderById(Long orderId) {
+    public OrderResponseDTO getOrderById(Long orderId) {
         return mapper.toDTO(orderRepository.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found")));
     }

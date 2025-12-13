@@ -21,33 +21,33 @@ public class WalletController {
     private final WalletService walletService;
     private final WalletMapper walletMapper;
 
-    @GetMapping("/wallet/{userId}")
-    public WalletDTO getWallet(@PathVariable Long userId) {
-        Wallet wallet = walletService.getOrCreateWalletForUser(userId);
-        return walletMapper.toDTO(wallet);
-    }
+//    @GetMapping("/wallet/{userId}")
+//    public WalletDTO getWallet(@PathVariable Long userId) {
+//        Wallet wallet = walletService.getOrCreateWalletForUser(userId);
+//        return walletMapper.toDTO(wallet);
+//    }
 
-
-    @PostMapping("/wallet/{userId}/credit")
-    public void creditWallet(@PathVariable Long userId, @RequestParam Double amount) {
-        walletService.creditWallet(userId, amount, null);
-    }
+//
+//    @PostMapping("/wallet/{userId}/credit")
+//    public void creditWallet(@PathVariable Long userId, @RequestParam Double amount) {
+//        walletService.creditWallet(userId, amount, null);
+//    }
 
     @PostMapping("/wallet/{userId}/debit")
     public void debitWallet(@PathVariable Long userId, @RequestParam Double amount) {
-        walletService.debitWallet(userId, amount, null);
+        walletService.debit(userId, amount, null);
     }
 
-    @GetMapping("/wallet/{userId}/transactions")
-    public Page<WalletTransactionDTO> getTransactions(
-            @PathVariable Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        Page<WalletTransaction> txPage =
-                walletService.getWalletTransactions(userId, PageRequest.of(page, size));
-
-        return txPage.map(walletMapper::toDTO);
-    }
+//    @GetMapping("/wallet/{userId}/transactions")
+//    public Page<WalletTransactionDTO> getTransactions(
+//            @PathVariable Long userId,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size) {
+//
+//        Page<WalletTransaction> txPage =
+//                walletService.getWalletTransactions(userId, PageRequest.of(page, size));
+//
+//        return txPage.map(walletMapper::toDTO);
+//    }
 
 }
