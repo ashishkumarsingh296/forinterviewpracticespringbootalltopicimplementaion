@@ -27,10 +27,8 @@ public class WalletService {
     @Transactional
     public void credit(String userId, Double amount) {
 
-        Optional<Wallet> lastWallet =
-                walletRepository.findTopByUserIdOrderByIdDesc(userId);
-
-        double previousBalance = lastWallet
+        double previousBalance = walletRepository
+                .findTopByUserIdOrderByIdDesc(userId)
                 .map(Wallet::getBalance)
                 .orElse(0.0);
 
@@ -39,7 +37,6 @@ public class WalletService {
         tx.setAmount(amount);
         tx.setType(TxType.CREDIT);
         tx.setBalance(previousBalance + amount);
-        tx.setCreatedAt(LocalDateTime.now());
 
         walletTransactionRepository.save(tx);
     }
