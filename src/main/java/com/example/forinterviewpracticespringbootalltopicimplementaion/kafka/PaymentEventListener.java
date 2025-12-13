@@ -16,30 +16,34 @@ public class PaymentEventListener {
     @Autowired
     private InvoiceService invoiceService;
 
-//    @KafkaListener(topics = "payment-events",
-//                   groupId = "invoice-group")
-//    public void consume(PaymentEvent event) {
-//        if ("PAYMENT_SUCCESS".equals(event.getEventType())) {
-//            invoiceService.generateInvoice(Long.valueOf(event.getOrderId()));
-//        }
-//    }
+    @KafkaListener(topics = "payment-events",
+                   groupId = "invoice-group")
+    public void consume(PaymentEvent event) {
+        log.info("Received payment event: {}", event);
 
-    @KafkaListener(topics = "payment-events", groupId = "invoice-group")
-    public void consume(String message) throws JsonProcessingException {
-
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            PaymentEvent event =
-                    mapper.readValue(message, PaymentEvent.class);
-
-            log.info("Received Payment Event: {}", event);
-
-            // Call invoice / notification logic here
-
-        } catch (Exception ex) {
-            log.error("Failed to process payment event", ex);
-            throw ex; // important for retry / DLQ
+        if ("PAYMENT_SUCCESS".equals(event.getEventType())) {
+            invoiceService.generateInvoice(Long.valueOf(event.getOrderId()));
         }
     }
+
+
+
+//    @KafkaListener(topics = "payment-events", groupId = "invoice-group")
+//    public void consume(String message) throws JsonProcessingException {
+//
+//        try {
+//            ObjectMapper mapper = new ObjectMapper();
+//            PaymentEvent event =
+//                    mapper.readValue(message, PaymentEvent.class);
+//
+//            log.info("Received Payment Event: {}", event);
+//
+//            // Call invoice / notification logic here
+//
+//        } catch (Exception ex) {
+//            log.error("Failed to process payment event", ex);
+//            throw ex; // important for retry / DLQ
+//        }
+//    }
 
 }
