@@ -35,15 +35,34 @@ public class WalletService {
                 .orElse(0.0);
 
         WalletTransaction tx = new WalletTransaction();
-        tx.setId(Long.valueOf(UUID.randomUUID().toString()));
         tx.setUserId(userId);
         tx.setAmount(amount);
         tx.setType(TxType.CREDIT);
         tx.setBalance(previousBalance + amount);
         tx.setCreatedAt(LocalDateTime.now());
 
-        walletTransactionRepository.save(tx); // ✅ CORRECT
+        walletTransactionRepository.save(tx);
     }
+
+//    public void credit(String userId, Double amount) {
+//
+//        Optional<Wallet> lastWallet =
+//                walletRepository.findTopByUserIdOrderByIdDesc(userId);
+//
+//        double previousBalance = lastWallet
+//                .map(Wallet::getBalance)
+//                .orElse(0.0);
+//
+//        WalletTransaction tx = new WalletTransaction();
+//        tx.setId(Long.valueOf(UUID.randomUUID().toString()));
+//        tx.setUserId(userId);
+//        tx.setAmount(amount);
+//        tx.setType(TxType.CREDIT);
+//        tx.setBalance(previousBalance + amount);
+//        tx.setCreatedAt(LocalDateTime.now());
+//
+//        walletTransactionRepository.save(tx); // ✅ CORRECT
+//    }
 
     @Transactional
     public void debit(String userId, Double amount) {

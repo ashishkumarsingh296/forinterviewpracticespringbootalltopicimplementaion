@@ -13,15 +13,10 @@ public class WalletTransaction {
     @Id
     private Long id;
     private String userId;
-
     private Double amount;
-
     @Enumerated(EnumType.STRING)
     private TxType type;
-
     private Double balance;
-
     private String reference;
-
     private LocalDateTime createdAt;
 }
