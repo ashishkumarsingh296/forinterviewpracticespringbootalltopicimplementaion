@@ -35,7 +35,7 @@ public class WalletService {
                 .orElse(0.0);
 
         WalletTransaction tx = new WalletTransaction();
-        tx.setId(UUID.randomUUID().toString());
+        tx.setId(Long.valueOf(UUID.randomUUID().toString()));
         tx.setUserId(userId);
         tx.setAmount(amount);
         tx.setType(TxType.CREDIT);

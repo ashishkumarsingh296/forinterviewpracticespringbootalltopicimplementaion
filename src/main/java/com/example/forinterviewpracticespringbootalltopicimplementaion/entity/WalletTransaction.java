@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class WalletTransaction {
 
     @Id
-    private String id;
+    private Long id;
 
     private Long userId;
 
