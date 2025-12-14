@@ -298,6 +298,156 @@ http://localhost:8080/swagger-ui.html
 http://localhost:8082/swagger-ui.html
 
 ---
+✅ 19. Distributed Transaction Management (Saga Pattern)
+
+This project implements a Saga Orchestrator Pattern for handling distributed transactions across multiple services (Wallet, Payment, Invoice).
+
+🔹 Why Saga?
+
+Traditional DB transactions do not work across:
+
+Multiple services
+
+Kafka-based async processing
+
+Payment & wallet systems
+
+Saga ensures:
+
+Data consistency
+
+Fault tolerance
+
+Crash recovery
+
+🧠 Saga Architecture Used
+
+✔ Saga Pattern: Orchestrator-based
+✔ Saga State Persistence: MySQL (order_saga table)
+✔ Saga Resume after crash
+✔ Compensation logic
+✔ Idempotency protection
+✔ Distributed Locking
+
+🔄 Saga Flow (Order → Payment → Invoice)
+STARTED
+  ↓
+WALLET_DEBITED
+  ↓
+PAYMENT_DONE
+  ↓
+INVOICE_GENERATED
+  ↓
+COMPLETED
+
+❌ Failure Path
+ANY STEP FAILED
+   ↓
+COMPENSATION (Wallet Refund)
+   ↓
+SAGA FAILED
+
+📦 Saga Components
+1️⃣ Saga Orchestrator
+
+Central OrderSagaService
+
+Controls execution order
+
+Updates saga state in DB
+
+2️⃣ Saga State Table
+order_saga
+- saga_id
+- order_id
+- status
+- created_at
+- updated_at
+
+🔐 Idempotency Support (Payment Safety)
+
+Idempotency-Key header used for payment APIs
+
+Prevents:
+
+Duplicate payment
+
+Kafka re-processing
+
+Retry double execution
+
+🔒 Distributed Locking (Redis)
+
+Redis-based distributed lock
+
+Prevents:
+
+Concurrent saga execution
+
+Double wallet debit
+
+Duplicate invoice generation avoid
+
+🔁 Saga Retry & Resume Mechanism
+⏰ Cron-Based Retry Job
+
+Automatically retries incomplete sagas
+
+Handles:
+
+Service crashes
+
+Kafka consumer failures
+
+Temporary DB/network issues
+
+🔄 Resume Logic
+
+Saga resumes execution from last successful step, not from beginning.
+
+📩 Kafka Event-Driven Communication
+
+Payment service publishes events:
+
+PAYMENT_SUCCESS
+
+PAYMENT_FAILED
+
+Invoice service consumes payment events
+
+Ensures loose coupling & async processing
+
+🧾 Compensation Logic (Rollback)
+
+If any step fails:
+
+Wallet amount is refunded
+
+Order marked as FAILED
+
+Saga status updated as FAILED
+
+✔ Compensation is idempotent
+✔ Safe to retry
+
+⚡ Resilience & Fault Tolerance
+
+Resilience4j Retry
+
+Kafka consumer retry with backoff
+
+Saga retry via scheduler
+
+Dead-letter handling ready (extensible)
+
+🧪 Saga Testing Scenarios
+
+✔ Kill application mid-transaction → Saga resumes
+✔ Payment failure → Wallet refunded
+✔ Invoice failure → Saga retried
+✔ Kafka re-delivery → No duplicate execution
+
+
 
 ## 👨‍💻 Author
 
