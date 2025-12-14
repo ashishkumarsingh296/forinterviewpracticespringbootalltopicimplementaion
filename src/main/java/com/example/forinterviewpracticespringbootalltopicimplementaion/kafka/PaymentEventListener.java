@@ -26,31 +26,14 @@ public class PaymentEventListener {
     @Transactional
     public void consume(PaymentEvent event) {
         log.info("Received payment event: {}", event);
+        log.info("Skipping invoice generation - handled by Saga");
 
-        if ("PAYMENT_SUCCESS".equals(event.getEventType())) {
-            invoiceService.generateInvoice(Long.valueOf(event.getOrderId()));
-        }
+
+//        if ("PAYMENT_SUCCESS".equals(event.getEventType())) {
+//            //commenting for avoiding duplicate invoices genrated in db from saga and kafka so for now i m just commenting and calling from saga
+////            invoiceService.generateInvoice(Long.valueOf(event.getOrderId()));
+//        }
 
     }
-
-
-
-//    @KafkaListener(topics = "payment-events", groupId = "invoice-group")
-//    public void consume(String message) throws JsonProcessingException {
-//
-//        try {
-//            ObjectMapper mapper = new ObjectMapper();
-//            PaymentEvent event =
-//                    mapper.readValue(message, PaymentEvent.class);
-//
-//            log.info("Received Payment Event: {}", event);
-//
-//            // Call invoice / notification logic here
-//
-//        } catch (Exception ex) {
-//            log.error("Failed to process payment event", ex);
-//            throw ex; // important for retry / DLQ
-//        }
-//    }
 
 }

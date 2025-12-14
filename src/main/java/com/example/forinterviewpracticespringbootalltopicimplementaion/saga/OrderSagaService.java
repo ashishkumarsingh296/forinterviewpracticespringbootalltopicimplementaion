@@ -88,4 +88,44 @@ public class OrderSagaService {
         sagaRepo.save(saga);
     }
 
+    @Transactional
+    public void resumeSaga(OrderSaga saga) throws Exception {
+
+        Order order = orderRepo.findById(saga.getOrderId()).orElseThrow();
+
+        switch (saga.getStatus()) {
+
+            case STARTED -> {
+                walletService.debit(
+                        String.valueOf(order.getUser().getId()),
+                        order.getTotalAmount(),
+                        "ORDER_" + order.getId()
+                );
+                saga.setStatus(SagaStatus.WALLET_DEBITED);
+            }
+
+            case WALLET_DEBITED -> {
+                paymentService.pay(UUID.randomUUID().toString(), order.getId());
+                saga.setStatus(SagaStatus.PAYMENT_DONE);
+            }
+
+            case PAYMENT_DONE -> {
+                invoiceService.generateInvoice(order.getId());
+                saga.setStatus(SagaStatus.INVOICE_GENERATED);
+            }
+
+            case INVOICE_GENERATED -> {
+                order.setOrderStatus(OrderStatus.COMPLETED);
+                saga.setStatus(SagaStatus.COMPLETED);
+            }
+
+            default -> {
+                return; // COMPLETED / FAILED
+            }
+        }
+
+        sagaRepo.save(saga);
+    }
+
+
 }

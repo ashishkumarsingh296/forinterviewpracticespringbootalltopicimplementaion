@@ -89,10 +89,12 @@ public class PaymentService {
             idempotentRepo.save(record);
 
             // 7️⃣ Publish event
-            kafkaTemplate.send(
-                    "payment-events",
-                    new PaymentEvent(orderId.toString(), "PAYMENT_SUCCESS")
-            );
+            //saga does not need kafka.
+//            kafkaTemplate.send(
+//                    "payment-events",
+//                    new PaymentEvent(orderId.toString(), "PAYMENT_SUCCESS")
+//            );
+
             return response;
 
         } finally {
